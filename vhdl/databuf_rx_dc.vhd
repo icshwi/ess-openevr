@@ -50,8 +50,8 @@ entity databuf_rx_dc is
     clear_flag        : in std_logic_vector(0 to 127);
 
     reset             : in std_logic;
-    
-    TRIG0             : out std_logic_vector(255 downto 0)    
+
+    TRIG0             : out std_logic_vector(255 downto 0)
     );
 end databuf_rx_dc;
 
@@ -538,18 +538,18 @@ begin
         topology_addr <= (others => '0');
       end if;
 
-      TRIG0(64) <= data_ena;
-      TRIG0(65) <= '0';
-      TRIG0(66) <= address_cycle;
+--      TRIG0(64) <= data_ena;
+--      TRIG0(65) <= '0';
+--      TRIG0(66) <= address_cycle;
 --      TRIG0(67) <= running;
-      TRIG0(79 downto 67) <= address;
-      TRIG0(91 downto 80) <= bytecnt;
-      TRIG0(94 downto 92) <= addr_decode;
-      TRIG0(127 downto 100) <= (others => '0');
-      TRIG0(184 downto 153) <= dc_value_in;
-      TRIG0(216 downto 185) <= topology_in;
-      TRIG0(232 downto 217) <= rx_checksum;
-      TRIG0(248 downto 233) <= checksum;
+--      TRIG0(79 downto 67) <= address;
+--      TRIG0(91 downto 80) <= bytecnt;
+--      TRIG0(94 downto 92) <= addr_decode;
+--      TRIG0(127 downto 100) <= (others => '0');
+--      TRIG0(184 downto 153) <= dc_value_in;
+--      TRIG0(216 downto 185) <= topology_in;
+--      TRIG0(232 downto 217) <= rx_checksum;
+--      TRIG0(248 downto 233) <= checksum;
     end if;
   end process;
 
@@ -567,20 +567,19 @@ begin
     end if;
   end process;
 
-  TRIG0(7 downto 0) <= databuf_data;
-  TRIG0(8) <= databuf_k;
-  TRIG0(9) <= databuf_ena;
-  TRIG0(20 downto 10) <= rx_addr;
-  TRIG0(28 downto 21) <= rx_data;
-  TRIG0(29) <= we_A;
-  TRIG0(39 downto 30) <= seg_addr;
-  TRIG0(55 downto 40) <= rx_size;
-  TRIG0(56) <= wr_size;
-  TRIG0(63 downto 57) <= (others => '0');
-  TRIG0(99 downto 95) <= delay_comp_cyc;
-  TRIG0(136 downto 128) <= addr_in;
-  TRIG0(152 downto 137) <= size_data_int(15 downto 0);
-  TRIG0(255 downto 249) <= (others => '0');
-  
+--  TRIG0(7 downto 0) <= databuf_data;
+--  TRIG0(8) <= databuf_k;
+--  TRIG0(9) <= databuf_ena;
+--  TRIG0(20 downto 10) <= rx_addr;
+--  TRIG0(28 downto 21) <= rx_data;
+--  TRIG0(29) <= we_A;
+--  TRIG0(39 downto 30) <= seg_addr;
+--  TRIG0(55 downto 40) <= rx_size;
+--  TRIG0(56) <= wr_size;
+--  TRIG0(63 downto 57) <= (others => '0');
+--  TRIG0(99 downto 95) <= delay_comp_cyc;
+--  TRIG0(136 downto 128) <= addr_in;
+--  TRIG0(152 downto 137) <= size_data_int(15 downto 0);
+--  TRIG0(255 downto 249) <= (others => '0');
+
 end implementation;
-      

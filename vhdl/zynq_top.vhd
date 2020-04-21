@@ -125,14 +125,14 @@ architecture structure of zynq_top is
       reset             : in std_logic);
   end component;
 
-  COMPONENT ila_0
-    PORT (
-      clk : IN STD_LOGIC;
-      probe0 : IN STD_LOGIC_VECTOR(255 DOWNTO 0)
-      );
-  END COMPONENT;
+--  COMPONENT ila_0
+--    PORT (
+--      clk : IN STD_LOGIC;
+--      probe0 : IN STD_LOGIC_VECTOR(255 DOWNTO 0)
+--      );
+--  END COMPONENT;
 
-  signal TRIG0 : std_logic_vector(255 downto 0);
+--  signal TRIG0 : std_logic_vector(255 downto 0);
 
   signal gnd     : std_logic;
   signal vcc     : std_logic;
@@ -190,10 +190,10 @@ architecture structure of zynq_top is
 begin
 
   -- ILA debug core
-  i_ila : ila_0
-    port map (
-      CLK => event_clk,
-      probe0 => TRIG0);
+--  i_ila : ila_0
+--    port map (
+--      CLK => event_clk,
+--      probe0 => TRIG0);
 
   i_bufg : bufg
     port map (
@@ -320,28 +320,28 @@ begin
     end if;
   end process;
 
-  process (event_clk)
-  begin
-    if rising_edge(event_clk) then
-      TRIG0(7 downto 0) <= event_rxd;
-      TRIG0(15 downto 8) <= dbus_rxd;
-      TRIG0(23 downto 16) <= databuf_rxd;
-      TRIG0(24) <= databuf_rx_k;
-      TRIG0(25) <= databuf_rx_ena;
-      TRIG0(26) <= databuf_rx_mode;
-      TRIG0(27) <= rx_link_ok;
-      TRIG0(28) <= rx_violation;
-      TRIG0(29) <= rx_clear_viol;
-      TRIG0(30) <= delay_comp_locked;
-      TRIG0(31) <= delay_comp_update;
-      TRIG0(63 downto 32) <= delay_comp_value;
-      TRIG0(95 downto 64) <= delay_comp_target;
-      TRIG0(127 downto 96) <= dc_status;
-      TRIG0(159 downto 128) <= delay_comp_rx_status;
-      TRIG0(191 downto 160) <= topology_addr;
-      TRIG0(255 downto 192) <= (others => '0');
-    end if;
-  end process;
+--  process (event_clk)
+--  begin
+--    if rising_edge(event_clk) then
+--      TRIG0(7 downto 0) <= event_rxd;
+--      TRIG0(15 downto 8) <= dbus_rxd;
+--      TRIG0(23 downto 16) <= databuf_rxd;
+--      TRIG0(24) <= databuf_rx_k;
+--      TRIG0(25) <= databuf_rx_ena;
+--      TRIG0(26) <= databuf_rx_mode;
+--      TRIG0(27) <= rx_link_ok;
+--      TRIG0(28) <= rx_violation;
+--      TRIG0(29) <= rx_clear_viol;
+--      TRIG0(30) <= delay_comp_locked;
+--      TRIG0(31) <= delay_comp_update;
+--      TRIG0(63 downto 32) <= delay_comp_value;
+--      TRIG0(95 downto 64) <= delay_comp_target;
+--      TRIG0(127 downto 96) <= dc_status;
+--      TRIG0(159 downto 128) <= delay_comp_rx_status;
+--      TRIG0(191 downto 160) <= topology_addr;
+--      TRIG0(255 downto 192) <= (others => '0');
+--    end if;
+--  end process;
 
   process (event_clk, event_rxd)
     variable pulse_cnt : std_logic_vector(19 downto 0) := X"00000";
