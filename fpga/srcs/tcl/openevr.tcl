@@ -23,7 +23,7 @@
 # 2. The following source(s) files that were local or imported into the original project.
 #    (Please see the '$orig_proj_dir' and '$origin_dir' variable setting below at the start of the script)
 #
-#    "ip/ila_0.xci"
+#    none
 #
 # 3. The following remote source files that were added to the original project:-
 #
@@ -41,7 +41,7 @@
 #*****************************************************************************************
 
 # Set the reference directory for source file relative paths (by default the value is script directory path)
-set origin_dir "."
+set origin_dir ".."
 
 # Use origin directory path location variable, if specified in the tcl shell
 if { [info exists ::origin_dir_loc] } {
@@ -105,10 +105,10 @@ if { $::argc > 0 } {
 }
 
 # Set the directory path for the original project from where this script was exported
-set orig_proj_dir "[file normalize "$origin_dir/openevr"]"
+set orig_proj_dir "[file normalize "$origin_dir/../../output/openevr"]"
 
 # Create project
-create_project ${project_name} ./${project_name} -part xc7z030sbg485-1
+create_project ${project_name} "../../output/${project_name}" -part xc7z030sbg485-1
 
 # Set the directory path for the new project
 set proj_dir [get_property directory [current_project]]
@@ -199,14 +199,6 @@ set_property -name "file_type" -value "VHDL" -objects $file_obj
 # Set 'sources_1' fileset properties
 set obj [get_filesets sources_1]
 set_property -name "top" -value "zynq_top" -objects $obj
-
-# Set 'sources_1' fileset object
-set obj [get_filesets sources_1]
-# Add local files from the original project (-no_copy_sources specified)
-set files [list \
- "[file normalize "$origin_dir/ip/ila_0.xci"]"\
-]
-set added_files [add_files -fileset sources_1 $files]
 
 # Set 'sources_1' fileset file properties for remote files
 # None
