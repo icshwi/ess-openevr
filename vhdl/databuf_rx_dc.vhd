@@ -28,7 +28,7 @@ entity databuf_rx_dc is
     size_data_out     : out std_logic_vector(31 downto 0);
     addr_in           : in std_logic_vector(10 downto 2);
     clk               : in std_logic;
-    
+
     -- Data stream interface
     databuf_data      : in std_logic_vector(7 downto 0);
     databuf_k         : in std_logic;
@@ -63,7 +63,7 @@ architecture implementation of databuf_rx_dc is
   signal rx_size          : std_logic_vector(15 downto 0);
   signal wr_size          : std_logic;
   signal size_data_int    : std_logic_vector(31 downto 0);
-  
+
   signal we_A             : std_logic;
   signal delay_comp_cyc   : std_logic_vector(4 downto 0);
 
@@ -111,7 +111,7 @@ architecture implementation of databuf_rx_dc is
     DOA_REG : integer := 0;
     DOB_REG : integer := 0;
     EN_ECC_READ : boolean := FALSE;
-    EN_ECC_WRITE : boolean := FALSE; 
+    EN_ECC_WRITE : boolean := FALSE;
     INITP_00 : bit_vector := X"0000000000000000000000000000000000000000000000000000000000000000";
     INITP_01 : bit_vector := X"0000000000000000000000000000000000000000000000000000000000000000";
     INITP_02 : bit_vector := X"0000000000000000000000000000000000000000000000000000000000000000";
@@ -283,7 +283,7 @@ architecture implementation of databuf_rx_dc is
     WRITE_MODE_B : string := "WRITE_FIRST";
     WRITE_WIDTH_A : integer := 0;
     WRITE_WIDTH_B : integer := 0
-    
+
   );
 port (
 
@@ -297,7 +297,7 @@ port (
     ECCPARITY : out std_logic_vector(7 downto 0);
     RDADDRECC : out std_logic_vector(8 downto 0);
     SBITERR : out std_ulogic;
-    
+
     ADDRARDADDR : in std_logic_vector(15 downto 0);
     ADDRBWRADDR : in std_logic_vector(15 downto 0);
     CASCADEINA : in std_ulogic;
@@ -341,7 +341,7 @@ begin
   gnd <= '0';
   gnd32 <= (others => '0');
   vcc <= '1';
-  
+
   i_ramb0 : buf_bsram
     port map (
       addra => rx_addr,
@@ -411,7 +411,7 @@ begin
   size_data_out(15 downto 0) <= size_data_int(15 downto 0);
 
   reception : process (event_clk, databuf_data, databuf_k, databuf_ena,
-		       reset, delay_comp_cyc)
+                       reset, delay_comp_cyc)
     variable data_ena       : std_logic;
     variable address_cycle  : std_logic;
     variable running        : std_logic;
@@ -435,39 +435,47 @@ begin
       we_A <= '0';
       wr_size <= '0';
       delay_comp_update <= '0';
+
       if databuf_ena = '1' then
-	rx_data <= databuf_data;
-	if databuf_k = '1' then
-	  if databuf_data = X"5C" then -- K28.2 start segmented data
-	    address := (others => '0');
+        rx_data <= databuf_data;
+
+        if databuf_k = '1' then
+          if databuf_data = X"5C" then -- K28.2 start segmented data
+            address := (others => '0');
             bytecnt := (others => '0');
-	    checksum := (others => '1');
-	    running := '1';
+            checksum := (others => '1');
+            running := '1';
             address_cycle := '1';
-	    data_ena := '1';
-	  end if;
-	  if databuf_data = X"3C" and running = '1' then -- K28.1 end data
-	    wordcnt := address(11 downto 2);
-	    address := "1000000000000";
-	    data_ena := '0';
+            data_ena := '1';
+          end if;
+
+          if databuf_data = X"3C" and running = '1' then -- K28.1 end data
+            wordcnt := address(11 downto 2);
+            address := "1000000000000";
+            data_ena := '0';
             rx_size(15 downto 12) <= (others => '0');
             rx_size(11 downto 0) <= bytecnt;
             wr_size <= '1';
-	  end if;
-	else
-	  if running = '1' then
+          end if;
+        else
+          if running = '1' then
             if delay_comp_cyc(delay_comp_cyc'high) = '1' then
+
               if delay_comp_cyc(3 downto 2) = "11" then
                 dc_value_in := dc_value_in(23 downto 0) & databuf_data;
               end if;
+
               if delay_comp_cyc(3 downto 2) = "10" then
                 dc_status_in := dc_status_in(23 downto 0) & databuf_data;
               end if;
+
               if delay_comp_cyc(3 downto 2) = "00" then
                 topology_in := topology_in(23 downto 0) & databuf_data;
               end if;
+
               delay_comp_cyc <= delay_comp_cyc - 1;
             end if;
+
             if address_cycle = '1' then
               checksum := checksum - databuf_data;
               address(10 downto 4) := databuf_data(6 downto 0);
@@ -475,44 +483,53 @@ begin
               seg_addr <= "000" & address(10 downto 4);
               segment := conv_integer(address(10 downto 4));
               address_cycle := '0';
+
               if databuf_data = X"FF" then
                 delay_comp_cyc <= "11111";
               end if;
             else
               rx_addr <= address(10 downto 0);
+
               if data_ena = '1' then
                 we_A <= '1';
                 bytecnt := bytecnt + 1;
                 checksum := checksum - databuf_data;
+
                 if rx_flag_i(segment) = '1' then
                   ov_flag_i(segment) <= '1';
                 end if;
               end if;
+
               addr_decode := address(12) & address(1 downto 0);
+
               case addr_decode is
                 when "100"  => rx_checksum(15 downto 8) := databuf_data;
                 when "101"  => rx_checksum(7 downto 0) := databuf_data;
-                when "110"  => running := '0';
---                               if rx_flag_i(segment) = '1' then
---                                 ov_flag_i(segment) <= '1';
---                               end if;
-                               rx_flag_i(segment) <= '1';
-                               if rx_checksum /= checksum then
-                                 cs_flag_i(segment) <= '1';
-                               else
-                                 if delay_comp_cyc = "01111" then
-                                   delay_comp_rx <= dc_value_in;
-                                   delay_comp_status <= dc_status_in;
-                                   delay_comp_cyc <= "00000";
-                                   delay_comp_update <= '1';
-                                   topology_addr <= topology_in;
-                                 end if;
-                               end if;
+                when "110"  =>
+                  running := '0';
+                  -- if rx_flag_i(segment) = '1' then
+                  --   ov_flag_i(segment) <= '1';
+                  -- end if;
+                  rx_flag_i(segment) <= '1';
+
+                  if rx_checksum /= checksum then
+                    cs_flag_i(segment) <= '1';
+                  else
+
+                    if delay_comp_cyc = "01111" then
+                      delay_comp_rx <= dc_value_in;
+                      delay_comp_status <= dc_status_in;
+                      delay_comp_cyc <= "00000";
+                      delay_comp_update <= '1';
+                      topology_addr <= topology_in;
+                    end if;
+                  end if;
                 when others =>
               end case;
+
               address := address + 1;
             end if;
-	  end if;
+          end if;
         end if;
       end if;
 
@@ -525,11 +542,11 @@ begin
       end loop;
 
       clear_flag_i := clear_flag;
-      
+
       if reset = '1' then
         address_cycle := '0';
-	running := '0';
-	data_ena := '0';
+        running := '0';
+        data_ena := '0';
         delay_comp_cyc <= "00000";
         rx_flag_i <= (others => '0');
         cs_flag_i <= (others => '0');
@@ -538,18 +555,18 @@ begin
         topology_addr <= (others => '0');
       end if;
 
---      TRIG0(64) <= data_ena;
---      TRIG0(65) <= '0';
---      TRIG0(66) <= address_cycle;
---      TRIG0(67) <= running;
---      TRIG0(79 downto 67) <= address;
---      TRIG0(91 downto 80) <= bytecnt;
---      TRIG0(94 downto 92) <= addr_decode;
---      TRIG0(127 downto 100) <= (others => '0');
---      TRIG0(184 downto 153) <= dc_value_in;
---      TRIG0(216 downto 185) <= topology_in;
---      TRIG0(232 downto 217) <= rx_checksum;
---      TRIG0(248 downto 233) <= checksum;
+      -- TRIG0(64) <= data_ena;
+      -- TRIG0(65) <= '0';
+      -- TRIG0(66) <= address_cycle;
+      -- TRIG0(67) <= running;
+      -- TRIG0(79 downto 67) <= address;
+      -- TRIG0(91 downto 80) <= bytecnt;
+      -- TRIG0(94 downto 92) <= addr_decode;
+      -- TRIG0(127 downto 100) <= (others => '0');
+      -- TRIG0(184 downto 153) <= dc_value_in;
+      -- TRIG0(216 downto 185) <= topology_in;
+      -- TRIG0(232 downto 217) <= rx_checksum;
+      -- TRIG0(248 downto 233) <= checksum;
     end if;
   end process;
 

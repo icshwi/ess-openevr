@@ -10,7 +10,7 @@
 --                Micro-Research Finland Oy
 --                <jukka.pietarinen@mrf.fi>
 --
---  		
+--
 --
 ---------------------------------------------------------------------------
 
@@ -34,7 +34,7 @@ entity delay_measure is
     fast_adjust      : in std_logic;
     slow_adjust      : in std_logic;
     reset            : in std_logic;
-    
+
     delay_out        : out std_logic_vector(31 downto 0);
     slow_delay_out   : out std_logic_vector(31 downto 0);
     delay_update_out : out std_logic;
@@ -57,7 +57,7 @@ architecture rtl of delay_measure is
   signal average_0      : std_logic_vector(MAX_DELAY_BITS+CYCLE_CNT_BITS_0-1 downto 0);
   signal average_1      : std_logic_vector(MAX_DELAY_BITS+CYCLE_CNT_BITS_1-1 downto 0);
   signal average_2      : std_logic_vector(MAX_DELAY_BITS+CYCLE_CNT_BITS_2-1 downto 0);
-  
+
   component average is
     generic (
       NAT_BITS  : integer := 16;
@@ -71,7 +71,7 @@ architecture rtl of delay_measure is
       average_valid   : out std_logic
       );
   end component;
-  
+
 begin
 
   debug_out(0) <= reset_count;
@@ -80,7 +80,7 @@ begin
   debug_out(5) <= delay_update;
   debug_out(MAX_DELAY_BITS-1+6 downto 6) <= delay_cnt;
   debug_out(28 downto MAX_DELAY_BITS+6) <= (others => '0');
-  
+
   i_ave_0 : average
     generic map (
       NAT_BITS => MAX_DELAY_BITS,
@@ -104,7 +104,7 @@ begin
       reset => reset_count,
       average_out => average_1,
       average_valid => valid(1));
-  
+
   i_ave_2 : average
     generic map (
       NAT_BITS => MAX_DELAY_BITS,
@@ -116,13 +116,13 @@ begin
       reset => reset_count_2,
       average_out => average_2,
       average_valid => valid(2));
-  
+
 --  o_delay_cnt <= delay_cnt;
 --  o_delay_update <= delay_update;
 
   gnd_vec <= (others => '0');
   vcc_vec <= (others => '1');
-  
+
   process (clk, beacon_0, beacon_1, reset)
     variable counting      : std_logic := '0';
     variable prev_cnt      : std_logic_vector(MAX_DELAY_BITS-1 downto 0);
@@ -160,7 +160,7 @@ begin
           prev_cnt := cnt;
         end if;
       end if;
-      
+
       if reset = '1' or cnt_valid = '0' then
         counting := '0';
       end if;
@@ -184,7 +184,7 @@ begin
     variable dly_diff  : std_logic_vector(22 downto 0);
     variable val_valid : std_logic_vector(2 downto 0);
   begin
-    debug_out(31 downto 29) <= val_valid; 
+    debug_out(31 downto 29) <= val_valid;
     if rising_edge(clk) then
       delay_update_out <= upd_cnt(upd_cnt'high);
       if upd_cnt(upd_cnt'high) = '1' then
@@ -265,6 +265,5 @@ begin
       end if;
     end if;
   end process;
-  
+
 end rtl;
-  

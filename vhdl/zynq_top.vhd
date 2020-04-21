@@ -21,7 +21,7 @@ entity zynq_top is
 
     BANK13_LVDS_8_P : out std_logic;
     BANK13_LVDS_8_N : out std_logic;
-    
+
     MGTREFCLK1_P : in std_logic;   -- JX3 pin 2,   Zynq U5
     MGTREFCLK1_N : in std_logic;   -- JX3 pin 3,   Zynq V5
 
@@ -47,7 +47,7 @@ architecture structure of zynq_top is
     sys_clk         : in std_logic;
     refclk_out      : out std_logic; -- Reference clock output
     event_clk_out   : out std_logic; -- Event clock output, delay compensated
-				     -- and locked to EVG
+                                     -- and locked to EVG
 
     -- Receiver side connections
     event_rxd       : out std_logic_vector(7 downto 0);  -- Received event code
@@ -56,13 +56,13 @@ architecture structure of zynq_top is
     databuf_rx_k    : out std_logic; -- Databuffer K-character
     databuf_rx_ena  : out std_logic; -- Databuf data enable
     databuf_rx_mode : in std_logic;  -- Databuf receive mode, '1' enabled, '0'
-				     -- disabled (only for non-DC)
+                                     -- disabled (only for non-DC)
     dc_mode         : in std_logic;  -- Delay compensation mode enable
-      
+
     rx_link_ok      : out   std_logic; -- Received link ok
     rx_violation    : out   std_logic; -- Receiver violation detected
     rx_clear_viol   : in    std_logic; -- Clear receiver violatio flag
-      
+
     -- Transmitter side connections
     event_txd       : in  std_logic_vector(7 downto 0); -- TX event code
     dbus_txd        : in  std_logic_vector(7 downto 0); -- TX distributed bus data
@@ -70,7 +70,7 @@ architecture structure of zynq_top is
     databuf_tx_k    : in  std_logic; -- TX databuffer K-character
     databuf_tx_ena  : out std_logic; -- TX databuffer data enable
     databuf_tx_mode : in  std_logic; -- TX databuffer transmit mode, '1'
-				     -- enabled, '0' disabled
+                                     -- enabled, '0' disabled
 
     reset           : in  std_logic; -- Transmitter reset
 
@@ -81,7 +81,6 @@ architecture structure of zynq_top is
     delay_comp_locked_out : out std_logic;
 
     -- MGT physical pins
-    
     MGTREFCLK0_P : in std_logic;
     MGTREFCLK0_N : in std_logic;
     MGTREFCLK1_P : in std_logic;   -- JX3 pin 2,   Zynq U5
@@ -101,13 +100,13 @@ architecture structure of zynq_top is
       size_data_out     : out std_logic_vector(31 downto 0);
       addr_in           : in std_logic_vector(10 downto 2);
       clk               : in std_logic;
-      
+
       -- Data stream interface
       databuf_data      : in std_logic_vector(7 downto 0);
       databuf_k         : in std_logic;
       databuf_ena       : in std_logic;
       event_clk         : in std_logic;
-      
+
       delay_comp_update : out std_logic;
       delay_comp_rx     : out std_logic_vector(31 downto 0);
       delay_comp_status : out std_logic_vector(31 downto 0);
@@ -121,7 +120,7 @@ architecture structure of zynq_top is
       cs_flag           : out std_logic_vector(0 to 127);
       ov_flag           : out std_logic_vector(0 to 127);
       clear_flag        : in std_logic_vector(0 to 127);
-      
+
       reset             : in std_logic);
   end component;
 
@@ -136,7 +135,7 @@ architecture structure of zynq_top is
 
   signal gnd     : std_logic;
   signal vcc     : std_logic;
-  
+
   signal sys_clk : std_logic;
   signal sys_reset : std_logic;
 
@@ -146,7 +145,7 @@ architecture structure of zynq_top is
   signal dc_mode         : std_logic;
 
   signal tx_reset : std_logic;
-  
+
   signal event_link_ok : std_logic;
 
   signal event_rxd       : std_logic_vector(7 downto 0);
@@ -155,7 +154,7 @@ architecture structure of zynq_top is
   signal databuf_rx_k    : std_logic;
   signal databuf_rx_ena  : std_logic;
   signal databuf_rx_mode : std_logic;
-    
+
   signal rx_link_ok      : std_logic;
   signal rx_violation    : std_logic;
   signal rx_clear_viol   : std_logic;
@@ -186,7 +185,7 @@ architecture structure of zynq_top is
   signal databuf_irq_dc      : std_logic;
 
   signal topology_addr       : std_logic_vector(31 downto 0);
-  
+
 begin
 
   -- ILA debug core
@@ -209,7 +208,7 @@ begin
       sys_clk => sys_clk,
       refclk_out => refclk,
       event_clk_out => event_clk,
-      
+
       -- Receiver side connections
       event_rxd => event_rxd,
       dbus_rxd => dbus_rxd,
@@ -218,11 +217,11 @@ begin
       databuf_rx_ena => databuf_rx_ena,
       databuf_rx_mode => databuf_rx_mode,
       dc_mode => dc_mode,
-      
+
       rx_link_ok => rx_link_ok,
       rx_violation => rx_violation,
       rx_clear_viol => rx_clear_viol,
-      
+
       -- Transmitter side connections
       event_txd => event_txd,
       dbus_txd => dbus_txd,
@@ -237,13 +236,13 @@ begin
       delay_comp_value => delay_comp_value,
       delay_comp_target => delay_comp_target,
       delay_comp_locked_out => delay_comp_locked,
-      
+
       MGTREFCLK0_P => gnd,
       MGTREFCLK0_N => gnd,
       MGTREFCLK1_P => MGTREFCLK1_P,
       MGTREFCLK1_N => MGTREFCLK1_N,
-      
-      
+
+
       MGTRX2_N => MGTRX2_N,
       MGTRX2_P => MGTRX2_p,
 
@@ -266,7 +265,7 @@ begin
       delay_comp_rx => delay_comp_value,
       delay_comp_status => delay_comp_rx_status,
       topology_addr => topology_addr,
-      
+
       irq_out => databuf_irq_dc,
 
       sirq_ena => databuf_sirq_ena,
@@ -279,7 +278,7 @@ begin
 
   gnd <= '0';
   vcc <= '1';
-  
+
   databuf_rx_mode <= '1';
   databuf_tx_mode <= '1';
   dc_mode <= '1';
@@ -297,14 +296,14 @@ begin
     if rising_edge(refclk) then
       event_txd <= X"00";
       if count(26) = '0' then
-	event_txd <= X"01";
-	count := X"FFFFFFFF";
+        event_txd <= X"01";
+        count := X"FFFFFFFF";
       end if;
       count := count - 1;
     end if;
   end process;
-  
-  
+
+
   process (sys_clk)
     variable count : std_logic_vector(31 downto 0) := X"FFFFFFFF";
   begin
@@ -351,16 +350,16 @@ begin
       BANK13_LVDS_8_P <= pulse_cnt(pulse_cnt'high);
       BANK13_LVDS_8_N <= not pulse_cnt(pulse_cnt'high);
       if pulse_cnt(pulse_cnt'high) = '1' then
-	pulse_cnt := pulse_cnt - 1;
+        pulse_cnt := pulse_cnt - 1;
       end if;
       if event_rxd = X"01" then
-	pulse_cnt := X"FFFFF";
+        pulse_cnt := X"FFFFF";
       end if;
       if rx_link_ok = '0' then
-	pulse_cnt := X"0000F";
+        pulse_cnt := X"0000F";
       end if;
     end if;
   end process;
-    
-  
+
+
 end structure;

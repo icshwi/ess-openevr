@@ -32,7 +32,7 @@ end average;
 architecture rtl of average is
 
 begin
-  
+
   process (clk, value_in, value_valid, reset)
     variable sum        : std_logic_vector(NAT_BITS+FRAC_BITS-1 downto 0);
     variable change     : std_logic_vector(NAT_BITS+FRAC_BITS-1 downto 0);

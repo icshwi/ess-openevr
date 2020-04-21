@@ -18,7 +18,7 @@ entity evr_dc is
     sys_clk         : in std_logic;
     refclk_out      : out std_logic; -- Reference clock output
     event_clk_out   : out std_logic; -- Event clock output, delay compensated
-				     -- and locked to EVG
+       -- and locked to EVG
 
     -- Receiver side connections
     event_rxd       : out std_logic_vector(7 downto 0);  -- Received event code
@@ -27,13 +27,13 @@ entity evr_dc is
     databuf_rx_k    : out std_logic; -- Databuffer K-character
     databuf_rx_ena  : out std_logic; -- Databuf data enable
     databuf_rx_mode : in std_logic;  -- Databuf receive mode, '1' enabled, '0'
-				     -- disabled (only for non-DC)
+       -- disabled (only for non-DC)
     dc_mode         : in std_logic;  -- Delay compensation mode enable
-      
+
     rx_link_ok      : out   std_logic; -- Received link ok
     rx_violation    : out   std_logic; -- Receiver violation detected
     rx_clear_viol   : in    std_logic; -- Clear receiver violatio flag
-      
+
     -- Transmitter side connections
     event_txd       : in  std_logic_vector(7 downto 0); -- TX event code
     dbus_txd        : in  std_logic_vector(7 downto 0); -- TX distributed bus data
@@ -41,7 +41,7 @@ entity evr_dc is
     databuf_tx_k    : in  std_logic; -- TX databuffer K-character
     databuf_tx_ena  : out std_logic; -- TX databuffer data enable
     databuf_tx_mode : in  std_logic; -- TX databuffer transmit mode, '1'
-				     -- enabled, '0' disabled
+       -- enabled, '0' disabled
 
     reset           : in  std_logic; -- Transceiver reset
 
@@ -50,9 +50,9 @@ entity evr_dc is
     delay_comp_value  : in std_logic_vector(31 downto 0);
     delay_comp_target : in std_logic_vector(31 downto 0);
     delay_comp_locked_out : out std_logic;
-    
+
     -- MGT physical pins
-    
+
     MGTREFCLK0_P : in std_logic;
     MGTREFCLK0_N : in std_logic;
     MGTREFCLK1_P : in std_logic;   -- JX3 pin 2,   Zynq U5
@@ -86,7 +86,7 @@ architecture structure of evr_dc is
       REFCLK_OUT      : out std_logic;
       recclk_out      : out std_logic;
       event_clk       : in std_logic;
-      
+
       -- Receiver side connections
       event_rxd       : out std_logic_vector(7 downto 0);
       dbus_rxd        : out std_logic_vector(7 downto 0);
@@ -95,19 +95,19 @@ architecture structure of evr_dc is
       databuf_rx_ena  : out std_logic;
       databuf_rx_mode : in std_logic;
       dc_mode         : in std_logic;
-      
+
       rx_link_ok      : out   std_logic;
       rx_violation    : out   std_logic;
       rx_clear_viol   : in    std_logic;
       rx_beacon       : out   std_logic;
       tx_beacon       : out   std_logic;
       rx_int_beacon   : out   std_logic;
-      
+
       delay_inc       : in    std_logic;
       delay_dec       : in    std_logic;
-      
+
       reset           : in    std_logic;
-      
+
       -- Transmitter side connections
       event_txd       : in  std_logic_vector(7 downto 0);
       dbus_txd        : in  std_logic_vector(7 downto 0);
@@ -115,10 +115,10 @@ architecture structure of evr_dc is
       databuf_tx_k    : in  std_logic;
       databuf_tx_ena  : out std_logic;
       databuf_tx_mode : in  std_logic;
-      
+
       RXN             : in    std_logic;
       RXP             : in    std_logic;
-      
+
       TXN             : out   std_logic;
       TXP             : out   std_logic
       );
@@ -139,7 +139,7 @@ architecture structure of evr_dc is
       fast_adjust      : in std_logic;
       slow_adjust      : in std_logic;
       reset            : in std_logic;
-    
+
       delay_out        : out std_logic_vector(31 downto 0);
       slow_delay_out   : out std_logic_vector(31 downto 0);
       delay_update_out : out std_logic;
@@ -149,29 +149,29 @@ architecture structure of evr_dc is
   component delay_adjust is
     port (
       clk        : in std_logic;
-      
+
       psclk      : in  std_logic;
       psen       : out std_logic;
       psincdec   : out std_logic;
       psdone     : in  std_logic;
-      
+
       link_ok    : in  std_logic;
       delay_inc  : out std_logic;
       delay_dec  : out std_logic;
       int_clk_mode : in std_logic;
-      
+
       adjust_locked     : out std_logic;
 
       feedback   : in  std_logic_vector(1 downto 0);
       pwm_param  : in  std_logic_vector(1 downto 0);
       disable           : in  std_logic;
       dc_mode           : in  std_logic;
-      
+
       override_mode     : in  std_logic;
       override_update   : in  std_logic;
       override_adjust   : in  std_logic_vector(31 downto 0);
       dc_status         : out std_logic_vector(31 downto 0);
-    
+
       delay_comp_update : in std_logic;
       delay_comp_value  : in std_logic_vector(31 downto 0);
       delay_comp_target : in std_logic_vector(31 downto 0);
@@ -182,7 +182,7 @@ architecture structure of evr_dc is
 
   signal gnd     : std_logic;
   signal vcc     : std_logic;
-  
+
   signal refclk  : std_logic;
   signal test_mode       : std_logic;
 
@@ -203,7 +203,7 @@ architecture structure of evr_dc is
   signal up_databuf_rx_k    : std_logic;
   signal up_databuf_rx_ena  : std_logic;
   signal up_databuf_rx_mode : std_logic;
-    
+
   signal up_rx_link_ok      : std_logic;
   signal up_rx_violation    : std_logic;
   signal up_rx_clear_viol   : std_logic;
@@ -235,10 +235,10 @@ architecture structure of evr_dc is
   signal mmcm_psen      : std_logic;
   signal mmcm_psincdec  : std_logic;
   signal mmcm_clkinsel  : std_logic;
-  
+
   signal psinc          : std_logic;
   signal psdec          : std_logic;
-  
+
   signal int_delay_value      : std_logic_vector(31 downto 0);
   signal int_slow_delay_value : std_logic_vector(31 downto 0);
   signal int_delay_update     : std_logic;
@@ -266,7 +266,7 @@ begin
       REFCLK_OUT => refclk,
       recclk_out => up_event_clk,
       event_clk => event_clk,
-      
+
       -- Receiver side connections
       event_rxd => up_event_rxd,
       dbus_rxd => up_dbus_rxd,
@@ -275,7 +275,7 @@ begin
       databuf_rx_ena => up_databuf_rx_ena,
       databuf_rx_mode => up_databuf_rx_mode,
       dc_mode => dc_mode,
-      
+
       rx_link_ok => up_rx_link_ok,
       rx_violation => up_rx_violation,
       rx_clear_viol => up_rx_clear_viol,
@@ -285,7 +285,7 @@ begin
 
       delay_inc => up_delay_inc,
       delay_dec => up_delay_dec,
-      
+
       reset => reset,
 
       -- Transmitter side connections
@@ -313,7 +313,7 @@ begin
       delay_out => int_delay_value,
       slow_delay_out => int_slow_delay_value,
       delay_update_out => int_delay_update,
-      init_done => int_delay_init);  
+      init_done => int_delay_init);
 
   int_dly_adj : delay_adjust
     port map (
@@ -322,24 +322,24 @@ begin
       psen       => mmcm_psen,
       psincdec   => mmcm_psincdec,
       psdone     => mmcm_psdone,
-      
+
       link_ok    => up_rx_link_ok,
       delay_inc  => up_delay_inc,
       delay_dec  => up_delay_dec,
       int_clk_mode => run_on_refclk,
 
       adjust_locked => delay_comp_locked,
-      
+
       feedback   => da_feedback, -- test_out(2 downto 1),
       pwm_param  => da_pwm_param, -- test_out(4 downto 3),
       disable    => test_mode,
       dc_mode    => dc_mode,
-      
+
       override_mode => da_override_mode,
       override_update => da_override_update,
       override_adjust => da_override_adjust,
       dc_status => dc_status,
-      
+
       delay_comp_update => delay_comp_update,
       delay_comp_value  => delay_comp_value,
       delay_comp_target => delay_comp_target,
@@ -442,28 +442,28 @@ begin
   rx_violation <= up_rx_violation;
   up_rx_clear_viol <= rx_clear_viol;
   databuf_tx_ena <= up_databuf_tx_ena;
-  
+
   gnd <= '0';
   vcc <= '1';
-  
+
   da_feedback <= "01";
   da_pwm_param <= "11";
   da_override_mode <= '0';
-  
+
   up_databuf_rx_mode <= databuf_rx_mode;
   up_databuf_tx_mode <= databuf_tx_mode;
 
   dc_fast_adjust <= not delay_comp_locked;
   dc_slow_adjust <= '0'; -- test_out(0);
   delay_comp_locked_out <= delay_comp_locked;
-  
+
   run_on_refclk <= '0';
   test_mode <= '0';
   int_delay_reset <= not up_rx_link_ok;
 
   mmcm_clkinsel <= not run_on_refclk; -- high: select CLKIN1
   mmcm_reset <= not up_rx_link_ok;
-  
+
   process (sys_clk, mmcm_psen, mmcm_psincdec)
   begin
     if rising_edge(sys_clk) then

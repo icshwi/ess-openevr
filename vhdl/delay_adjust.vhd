@@ -49,40 +49,40 @@ entity delay_adjust is
     delay_inc    : out std_logic;
     delay_dec    : out std_logic;
     int_clk_mode : in std_logic;
-    
+
     adjust_locked     : out std_logic;
 
     feedback   : in  std_logic_vector(1 downto 0);
     pwm_param  : in  std_logic_vector(1 downto 0);
     disable    : in  std_logic;
     dc_mode    : in  std_logic;
-    
+
     override_mode     : in  std_logic;
     override_update   : in  std_logic;
     override_adjust   : in  std_logic_vector(31 downto 0);
     dc_status         : out std_logic_vector(31 downto 0);
-    
+
     delay_comp_update : in std_logic;
     delay_comp_value  : in std_logic_vector(31 downto 0);
     delay_comp_target : in std_logic_vector(31 downto 0);
     int_delay_value   : in std_logic_vector(31 downto 0);
     int_delay_update  : in std_logic;
-    int_delay_init    : in std_logic    
+    int_delay_init    : in std_logic
     );
 end entity delay_adjust;
 
 architecture struct of delay_adjust is
-  
+
   signal phase_error     : std_logic_vector(31 downto 0);
   signal delay_valid     : std_logic;
   signal delay_too_short : std_logic;
   signal delay_too_long  : std_logic;
-  
+
   signal dcm_adjust      : std_logic;
   signal dcm_inc         : std_logic;
   signal dcm_fine_adjust : std_logic;
   signal dcm_reload_err  : std_logic;
-  
+
   signal ce              : std_logic;
 
   signal state_i         : std_logic_vector(2 downto 0);
@@ -119,7 +119,7 @@ architecture struct of delay_adjust is
 
   signal swallow_inc_i : std_logic;
   signal swallow_dec_i : std_logic;
-  
+
   signal TRIG0 : std_logic_vector(255 downto 0);
 
   COMPONENT ila_0
@@ -141,7 +141,7 @@ begin
   dc_status(2) <= delay_too_short;
   dc_status(1) <= delay_valid;
   dc_status(0) <= adjust_locked_i;
-  
+
   process (clk, delay_comp_update, delay_comp_value, delay_comp_target,
            int_delay_value, int_delay_update, int_delay_init, dc_mode)
     variable sync_dc_value  : std_logic_vector(31 downto 0) := X"00000000";
@@ -173,7 +173,7 @@ begin
       sync_id_update := sync_id_update(0) & int_delay_update;
       sync_init := sync_init(0) & int_delay_init;
 
-      
+
       delay_too_short <= '0';
       if delay_short(delay_short'high) = '1' then
         delay_too_short <= '1';
@@ -187,7 +187,7 @@ begin
     end if;
   end process;
 
-  cycle_adjust: process (clk, phase_error, delay_valid, disable, feedback) 
+  cycle_adjust: process (clk, phase_error, delay_valid, disable, feedback)
     variable state            : std_logic_vector(2 downto 0) := "000";
     variable cycle_error      : std_logic_vector(15 downto 0);
     variable cnt              : std_logic_vector(4 downto 0) := "00000";
@@ -208,7 +208,7 @@ begin
     fe_dec_i <= fe_dec;
     dcm_adjust_frac <= fraction_error;
     adjust_locked <= adjust_locked_i;
-    
+
     if rising_edge(clk) then
       delay_value_updt := '0';
       if updt_delay_sr(2 downto 1) = "01" then
@@ -250,10 +250,10 @@ begin
             fe_inc(fe_inc'high) = '1' and fe_dec(fe_dec'high) = '1' then
             dcm_step_change <= "110";
             dcm_phase_change <= "000000";
-          end if;          
+          end if;
           dcm_update <= '1';
         end if;
-        
+
         case state is
           when "000" =>
             if delay_value_updt = '1' then
@@ -308,7 +308,7 @@ begin
       cnt := cnt + 1;
     end if;
   end process;
-  
+
   dcm_control: process (psclk, dcm_step_change, dcm_phase_change, dcm_update, link_ok)
     variable dcm_step_phase : std_logic_vector(3 downto 0) := "0000";
     variable dcm_phase      : std_logic_vector(5 downto 0) := "000000";
@@ -345,7 +345,7 @@ begin
             pulse_cnt := '0' & dcm_phase(5 downto 2) & "000000";
           when others =>
             pulse_cnt := '0' & dcm_phase(5 downto 3) & "0000000";
-        end case;    
+        end case;
         zero_phase := '0';
         pwm_done := '0';
         if dcm_phase = "000000" then
@@ -366,7 +366,7 @@ begin
         end if;
       end if;
       case pwm_param is
-        when "00" => 
+        when "00" =>
           pwm_cnt := pwm_cnt - 1;
           pulse_cnt := pulse_cnt - 1;
         when "01" =>
