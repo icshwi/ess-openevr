@@ -1,0 +1,7 @@
+# Output files for Vivado
+fpga/output/*
+
+# Vivado log files
+*.str
+*.jou
+vivado*.log

@@ -1,6 +1,6 @@
 # =============================================================================
 # @file   ess_evr.xdc
-# @brief  Top constraint file for the ESS openEVR in standalone mode
+# @brief  Top constraint file for the ESS openEVR in IP mode
 # -----------------------------------------------------------------------------
 # @author Felipe Torres González <felipe.torresgonzalez@ess.eu>
 # @company European Spallation Source ERIC
@@ -79,5 +79,3 @@ set_property PACKAGE_PIN AB3  [get_ports {o_EVR_TX_N        }];  # "AB3.MGTTX0_N
 #set_property PACKAGE_PIN W11  [get_ports {EVR_MOD_DEF_2   }];  # "W11.BANK13_LVDS_11_N"
 #set_property PACKAGE_PIN V11  [get_ports {EVR_MOD_DEF_1   }];  # "V11.BANK13_LVDS_11_P"
 
-create_clock -period 11.2 -name clk_mgt [get_ports i_ZYNQ_CLKREF0_N];
-create_clock -period 11.2 -name clk_sys [get_ports i_ZYNQ_MRCC_LVDS_N];
