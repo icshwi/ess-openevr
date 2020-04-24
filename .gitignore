@@ -5,3 +5,4 @@ fpga/output/*
 *.str
 *.jou
 vivado*.log
+fpga/doc/html/*
