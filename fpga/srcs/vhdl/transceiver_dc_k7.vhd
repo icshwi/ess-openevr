@@ -1036,7 +1036,7 @@ begin
     end if;
   end process;
 
-  link_ok_detection : process (refclk, link_ok, reset, rx_error_i)
+  link_ok_detection : process (refclk, link_ok, reset, rx_error_i, rx_link_ok_i)
     variable link_ok_delay : std_logic_vector(19 downto 0) := (others => '0');
   begin
     rx_link_ok <= rx_link_ok_i;
