@@ -150,7 +150,7 @@ set files [list \
  "[file normalize "$origin_dir/vhdl/evr_dc.vhd"]"\
  "[file normalize "$origin_dir/vhdl/transceiver_dc_k7.vhd"]"\
  "[file normalize "$origin_dir/vhdl/zynq_top.vhd"]"\
- "[file normalize "$origin_dir/vhdl/ess_evr_top.vhd"]" \
+ "[file normalize "$origin_dir/vhdl/ess_evr_top.vhd"]"\
  "[file normalize "$origin_dir/ip/ess_evr_ip/component.xml"]"\
 ]
 add_files -norecurse -fileset $obj $files

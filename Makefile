@@ -6,7 +6,7 @@
 ################################################################################
 
 # Debug Flag: Vivado verbose mode and reports
-DEBUG ?= 0
+DEBUG ?= 1
 
 # Configuration files path
 SRC_PATH=fpga/srcs
@@ -25,7 +25,7 @@ PROJECT_NAME       := $(shell grep -e 'project.name'     $(CONFIG_NAME) | sed 's
 PROJECT_DIR        := $(shell grep -e 'project.dir'      $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
 HDL_FILES_FILENAME := $(shell grep -e 'files.hdl'        $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
 XDC_FILES_FILENAME := $(shell grep -e 'files.xdc'        $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
-TCL_FILES_FILENAME := $(shell grep -e 'files.tcl'        $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
+TCL_SOURCEDIR      := $(shell grep -e 'files.tcl'        $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
 PROJECT_TCL        := $(shell grep -e 'project.tcl'      $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
 DOC_OUTDIR         := $(shell grep -e 'doc.output.html'  $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
 DOC_SOURCES        := $(shell grep -e 'directory.doc'    $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
@@ -46,9 +46,9 @@ endif
 TCLARGS := --name $(PROJECT_NAME) --% --debug $(DEBUG) --import-dcp $(IMPORT_PRODUCTS) 2>&1 | tee  $(LOG_DIR)/%.log
 
 # Targets
-.PHONY: all clean project
+.PHONY: all clean
 
-all: bitstream
+all: doc project bitstream
 
 project: $(PROJECT_DIR)/$(PROJECT_NAME).xpr
 doc: $(OUTPUT_DIR)/$(DOC_OUTDIR)/index.html
@@ -56,11 +56,22 @@ doc: $(OUTPUT_DIR)/$(DOC_OUTDIR)/index.html
 
 # Vivado workflow steps
 
-#project file generation.
-$(PROJECT_DIR)/$(PROJECT_NAME).xpr: $(TCL_FILES_FILENAME)/$(PROJECT_TCL)
+# Vivado project generation
+
+$(PROJECT_DIR)/$(PROJECT_NAME).xpr: $(TCL_SOURCEDIR)/$(PROJECT_TCL)
 	@echo "\033[1;92mBuilding: $@\033[0m"
 	@mkdir -p $(LOG_DIR)
 	@vivado $(VIVADO_OPTS) -source $^ 2>&1 | tee $(LOG_DIR)/project.log
+ifeq ($(SO), LINUX)
+	@! grep -e '^ERROR' $(LOG_DIR)/project.log
+endif
+
+# Vivado bitstream generation
+
+bitstream: $(TCL_SOURCEDIR)/prj_build.tcl $(PROJECT_DIR)/$(PROJECT_NAME).xpr
+	@echo "\033[1;92mBuilding: $@\033[0m"
+	@mkdir -p $(LOG_DIR)
+	@vivado $(VIVADO_OPTS) -source $< -tclargs $(PROJECT_NAME) $(PROJECT_DIR) 2>&1 | tee $(LOG_DIR)/project.log
 ifeq ($(SO), LINUX)
 	@! grep -e '^ERROR' $(LOG_DIR)/project.log
 endif
