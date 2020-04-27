@@ -43,7 +43,7 @@
 #*****************************************************************************************
 
 # Set the reference directory for source file relative paths (by default the value is script directory path)
-set origin_dir ".."
+set origin_dir "fpga/srcs"
 
 # Use origin directory path location variable, if specified in the tcl shell
 if { [info exists ::origin_dir_loc] } {
@@ -107,10 +107,10 @@ if { $::argc > 0 } {
 }
 
 # Set the directory path for the original project from where this script was exported
-set orig_proj_dir "[file normalize "$origin_dir/../../output/openevr"]"
+set orig_proj_dir "[file normalize "$origin_dir/output/openevr"]"
 
 # Create project
-create_project ${_xil_proj_name_} "../../output/${_xil_proj_name_}" -part xc7z030sbg485-1
+create_project ${_xil_proj_name_} "fpga/output/${_xil_proj_name_}" -part xc7z030sbg485-1
 
 # Set the directory path for the new project
 set proj_dir [get_property directory [current_project]]
