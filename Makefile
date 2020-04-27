@@ -27,6 +27,8 @@ HDL_FILES_FILENAME := $(shell grep -e 'files.hdl'        $(CONFIG_NAME) | sed 's
 XDC_FILES_FILENAME := $(shell grep -e 'files.xdc'        $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
 TCL_FILES_FILENAME := $(shell grep -e 'files.tcl'        $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
 PROJECT_TCL        := $(shell grep -e 'project.tcl'      $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
+DOC_OUTDIR         := $(shell grep -e 'doc.output.html'  $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
+DOC_SOURCES        := $(shell grep -e 'directory.doc'    $(CONFIG_NAME) | sed 's/[^:]*:\s*//')
 
 # create lists of files to be used in targets
 #IP_FILES          := $(strip $(shell cat $(IP_FILES_FILENAME)))
@@ -46,9 +48,10 @@ TCLARGS := --name $(PROJECT_NAME) --% --debug $(DEBUG) --import-dcp $(IMPORT_PRO
 # Targets
 .PHONY: all clean project
 
-all: stamp ip synthesis implementation bitstream
+all: bitstream
 
 project: $(PROJECT_DIR)/$(PROJECT_NAME).xpr
+doc: $(OUTPUT_DIR)/$(DOC_OUTDIR)/index.html
 
 
 # Vivado workflow steps
@@ -62,9 +65,17 @@ ifeq ($(SO), LINUX)
 	@! grep -e '^ERROR' $(LOG_DIR)/project.log
 endif
 
+# Documentation rules
+
+$(OUTPUT_DIR)/$(DOC_OUTDIR)/index.html: $(DOC_SOURCES)/Doxyfile
+	@echo "\033[1;92mBuilding: $@\033[0m"
+	@mkdir -p $(LOG_DIR)
+	@mkdir -p $(OUTPUT_DIR)/$(DOC_OUTDIR) 
+	@doxygen $^ 2>&1 | tee $(LOG_DIR)/doc.log
+
 clean:
 	@echo "\033[1;92mDeleting all generated files\033[0m"
-	@rm -rf $(BUILD_DIR)
+	@rm -rf $(OUTPUT_DIR)
 	@rm -rf $(LOG_DIR)
 	@rm -f *.jou
 	@rm -f *.log

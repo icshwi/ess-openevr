@@ -2,10 +2,13 @@ directory.src: ..
 directory.output: fpga/output
 directory.build: fpga/output/build
 directory.log: fpga/output/log
+directory.doc: fpga/doc
 
 files.hdl: fpga/srcs/script/hdlFiles.txt
 files.xdc: fpga/srcs/script/xdcFiles.txt
 files.tcl: fpga/srcs/tcl
+
+doc.output.html: doc/html
 
 project.name: openevr
 project.dir: fpga/output/openevr
