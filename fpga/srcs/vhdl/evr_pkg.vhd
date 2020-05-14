@@ -71,7 +71,9 @@ package evr_pkg is
     MGTTX2_P     : out std_logic;  -- JX3 pin 25,  Zynq AA5
     MGTTX2_N     : out std_logic;  -- JX3 pin 27,  Zynq AB5
     MGTRX2_P     : in std_logic;   -- JX3 pin 20,  Zynq AA9
-    MGTRX2_N     : in std_logic    -- JX3 pin 22,  Zynq AB9
+    MGTRX2_N     : in std_logic;    -- JX3 pin 22,  Zynq AB9
+
+    EVENT_CLK_o  : out std_logic -- EVR event single-ended clock output - 88.0525 MHz
   );
   end component;
 

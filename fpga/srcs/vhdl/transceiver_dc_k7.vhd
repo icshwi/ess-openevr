@@ -80,7 +80,8 @@ entity transceiver_dc_k7 is
     RXP             : in    std_logic;
 
     TXN             : out   std_logic;
-    TXP             : out   std_logic
+    TXP             : out   std_logic;
+    EVENT_CLK_o     : out   std_logic
     );
 end transceiver_dc_k7;
 
@@ -958,6 +959,8 @@ begin
   tied_to_ground_i                    <= '0';
   tied_to_ground_vec_i(63 downto 0)   <= (others => '0');
   tied_to_vcc_i                       <= '1';
+
+  EVENT_CLK_o <= REFCLK1; -- Assign output of clock buf back to top
 
   RXEQMIX <= "01";
   RXDFELPMRESET_in <= reset;

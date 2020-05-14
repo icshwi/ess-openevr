@@ -61,7 +61,9 @@ entity evr_dc is
     MGTTX2_P     : out std_logic;  -- JX3 pin 25,  Zynq AA5
     MGTTX2_N     : out std_logic;  -- JX3 pin 27,  Zynq AB5
     MGTRX2_P     : in std_logic;   -- JX3 pin 20,  Zynq AA9
-    MGTRX2_N     : in std_logic    -- JX3 pin 22,  Zynq AB9
+    MGTRX2_N     : in std_logic;    -- JX3 pin 22,  Zynq AB9
+
+    EVENT_CLK_o  : out std_logic -- EVR event single-ended clock output - 88.0525 MHz
     );
 end evr_dc;
 
@@ -120,7 +122,9 @@ architecture structure of evr_dc is
       RXP             : in    std_logic;
 
       TXN             : out   std_logic;
-      TXP             : out   std_logic
+      TXP             : out   std_logic;
+
+      EVENT_CLK_o     : out   std_logic
       );
   end component;
 
@@ -300,7 +304,9 @@ begin
       RXP => MGTRX2_p,
 
       TXN => MGTTX2_N,
-      TXP => MGTTX2_P);
+      TXP => MGTTX2_P,
+
+      EVENT_CLK_o => EVENT_CLK_o);
 
   int_dly : delay_measure
     port map (

@@ -4,5 +4,8 @@ fpga/output/*
 # Vivado log files
 *.str
 *.jou
-vivado*.log
+*.log
 fpga/doc/html/*
+
+# Misc Vivado files
+.Xil/
