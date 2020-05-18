@@ -1,8 +1,10 @@
 # Definitional proc to organize widgets for parameters.
 proc init_gui { IPINST } {
   ipgui::add_param $IPINST -name "Component_Name"
-  set g_DEBUG_WIDTH [ipgui::add_param $IPINST -name "g_DEBUG_WIDTH"]
-  set_property tooltip {Width of the debug port} ${g_DEBUG_WIDTH}
+  #Adding Page
+  set Page_0 [ipgui::add_page $IPINST -name "Page 0"]
+  ipgui::add_param $IPINST -name "g_DEBUG_WIDTH" -parent ${Page_0}
+
 
 }
 
