@@ -58,6 +58,20 @@
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
+      <spirit:view>
+        <spirit:name>xilinx_testbench</spirit:name>
+        <spirit:displayName>Test Bench</spirit:displayName>
+        <spirit:envIdentifier>:vivado.xilinx.com:simulation.testbench</spirit:envIdentifier>
+        <spirit:fileSetRef>
+          <spirit:localName>xilinx_testbench_view_fileset</spirit:localName>
+        </spirit:fileSetRef>
+        <spirit:parameters>
+          <spirit:parameter>
+            <spirit:name>viewChecksum</spirit:name>
+            <spirit:value>65314d45</spirit:value>
+          </spirit:parameter>
+        </spirit:parameters>
+      </spirit:view>
     </spirit:views>
     <spirit:ports>
       <spirit:port>
@@ -359,6 +373,15 @@
         <spirit:userFileType>XGUI_VERSION_2</spirit:userFileType>
       </spirit:file>
     </spirit:fileSet>
+    <spirit:fileSet>
+      <spirit:name>xilinx_testbench_view_fileset</spirit:name>
+      <spirit:file>
+        <spirit:name>src/delay_measure_tb.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+        <spirit:userFileType>USED_IN_simulation</spirit:userFileType>
+        <spirit:userFileType>USED_IN_synthesis</spirit:userFileType>
+      </spirit:file>
+    </spirit:fileSet>
   </spirit:fileSets>
   <spirit:description>ess_openEVR_v0_1</spirit:description>
   <spirit:parameters>
@@ -461,29 +484,6 @@
         <xilinx:tag xilinx:name="ui.data.coregen.dd@105b2809_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
         <xilinx:tag xilinx:name="ui.data.coregen.dd@18885b38_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
         <xilinx:tag xilinx:name="ui.data.coregen.dd@93b88cc_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
-        <xilinx:tag xilinx:name="ui.data.coregen.dd@49a57329_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
-        <xilinx:tag xilinx:name="ui.data.coregen.dd@7b73adbe_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
-        <xilinx:tag xilinx:name="ui.data.coregen.dd@77bdfd8f_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
-        <xilinx:tag xilinx:name="ui.data.coregen.dd@3ed8300b_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
-        <xilinx:tag xilinx:name="ui.data.coregen.dd@2647ec77_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
-        <xilinx:tag xilinx:name="ui.data.coregen.dd@752ed0b_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
-        <xilinx:tag xilinx:name="ui.data.coregen.dd@475c2e9_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
-        <xilinx:tag xilinx:name="ui.data.coregen.dd@1f2af057_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
-        <xilinx:tag xilinx:name="ui.data.coregen.dd@4903882e_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
-        <xilinx:tag xilinx:name="ui.data.coregen.dd@10dbe799_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
-        <xilinx:tag xilinx:name="ui.data.coregen.dd@71185a8a_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
-        <xilinx:tag xilinx:name="ui.data.coregen.dd@199f657f_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
-        <xilinx:tag xilinx:name="ui.data.coregen.dd@3da493d0_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
-        <xilinx:tag xilinx:name="ui.data.coregen.dd@126ba2de_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
-        <xilinx:tag xilinx:name="ui.data.coregen.dd@5db48ab7_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
-        <xilinx:tag xilinx:name="ui.data.coregen.dd@12575b04_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
-        <xilinx:tag xilinx:name="ui.data.coregen.dd@69882ec7_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
-        <xilinx:tag xilinx:name="ui.data.coregen.dd@196e5a9e_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
-        <xilinx:tag xilinx:name="ui.data.coregen.dd@6428ce05_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
-        <xilinx:tag xilinx:name="ui.data.coregen.dd@61c8b91_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
-        <xilinx:tag xilinx:name="ui.data.coregen.dd@793bb19a_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
-        <xilinx:tag xilinx:name="ui.data.coregen.dd@5ce36613_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
-        <xilinx:tag xilinx:name="ui.data.coregen.dd@469684c5_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
       </xilinx:tags>
     </xilinx:coreExtensions>
     <xilinx:packagingInfo>
