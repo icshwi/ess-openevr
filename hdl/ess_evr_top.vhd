@@ -344,7 +344,10 @@ begin
   databuf_txd <= X"00";
   databuf_tx_k <= '0';
 
-
+  -- assign soft reset signals from register bank
+  gt0_resets.gbl_async <= logic_read_data_t.master_reset(0);
+  gt0_resets.tx_async  <= logic_read_data_t.txpath_reset(0);
+  gt0_resets.rx_async  <= logic_read_data_t.rxpath_reset(0);
 
   transceiver_reset <= logic_read_data_t.master_reset(0);
 
