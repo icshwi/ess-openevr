@@ -42,9 +42,9 @@ use IEEE.NUMERIC_STD.ALL;
 Library UNISIM;
 use UNISIM.vcomponents.all;
 
-library work;
-use work.evr_pkg.ALL;
-use work.ess_evr_gtx_z7_pkg.all;
+library openevr;
+use openevr.evr_pkg.ALL;
+use openevr.ess_evr_gtx_z7_pkg.all;
 
 library essffw;
 use essffw.axi4.all;
@@ -66,28 +66,28 @@ entity ess_evr_top is
     );
   Port (
     --! AXI4-Lite Register interface
-      s_axi_aclk              : in  std_logic;
-      s_axi_aresetn           : in  std_logic;
-      s_axi_awaddr            : in  std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
-      s_axi_awprot            : in  std_logic_vector(AXI4_PROT_WIDTH-1 downto 0);
-      s_axi_awvalid           : in  std_logic;
-      s_axi_awready           : out std_logic;
-      s_axi_wdata             : in  std_logic_vector(AXI_DATA_WIDTH-1 downto 0);
-      s_axi_wstrb             : in  std_logic_vector(AXI_WSTRB_WIDTH-1 downto 0);
-      s_axi_wvalid            : in  std_logic;
-      s_axi_wready            : out std_logic;
-      s_axi_bresp             : out std_logic_vector(AXI4_RESP_WIDTH-1 downto 0);
-      s_axi_bvalid            : out std_logic;
-      s_axi_bready            : in  std_logic;
-      s_axi_araddr            : in  std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
-      s_axi_arprot            : in  std_logic_vector(AXI4_PROT_WIDTH-1 downto 0);
-      s_axi_arvalid           : in  std_logic;
-      s_axi_arready           : out std_logic;
-      s_axi_rdata             : out std_logic_vector(AXI_DATA_WIDTH-1 downto 0);
-      s_axi_rresp             : out std_logic_vector(AXI4_RESP_WIDTH-1 downto 0);
-      s_axi_rvalid            : out std_logic;
-      s_axi_rready            : in  std_logic;
-  
+    s_axi_aclk              : in  std_logic;
+    s_axi_aresetn           : in  std_logic;
+    s_axi_awaddr            : in  std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
+    s_axi_awprot            : in  std_logic_vector(AXI4_PROT_WIDTH-1 downto 0);
+    s_axi_awvalid           : in  std_logic;
+    s_axi_awready           : out std_logic;
+    s_axi_wdata             : in  std_logic_vector(AXI_DATA_WIDTH-1 downto 0);
+    s_axi_wstrb             : in  std_logic_vector(AXI_WSTRB_WIDTH-1 downto 0);
+    s_axi_wvalid            : in  std_logic;
+    s_axi_wready            : out std_logic;
+    s_axi_bresp             : out std_logic_vector(AXI4_RESP_WIDTH-1 downto 0);
+    s_axi_bvalid            : out std_logic;
+    s_axi_bready            : in  std_logic;
+    s_axi_araddr            : in  std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
+    s_axi_arprot            : in  std_logic_vector(AXI4_PROT_WIDTH-1 downto 0);
+    s_axi_arvalid           : in  std_logic;
+    s_axi_arready           : out std_logic;
+    s_axi_rdata             : out std_logic_vector(AXI_DATA_WIDTH-1 downto 0);
+    s_axi_rresp             : out std_logic_vector(AXI4_RESP_WIDTH-1 downto 0);
+    s_axi_rvalid            : out std_logic;
+    s_axi_rready            : in  std_logic;
+
     --! Global logic clock, differential input from Si5346 Out2
     i_ZYNQ_MRCC_LVDS_P : in std_logic;
     i_ZYNQ_MRCC_LVDS_N : in std_logic;
@@ -303,6 +303,42 @@ begin
       clear_flag => databuf_clear_flag,
 
       reset => gt0_resets.gbl_async);
+
+  axi_reg_bank : register_bank_axi
+    generic map (
+      AXI_ADDR_WIDTH => ADDRESS_WIDTH+2,
+      REG_ADDR_WIDTH	=> ADDRESS_WIDTH,    --! Width of the address signals
+      AXI_WSTRB_WIDTH => 4,                  --! Width of the AXI wstrb signal, may be determined by ADDRESS_WIDTH
+      REGISTER_WIDTH  => REGISTER_WIDTH,     --! Width of the registers
+      AXI_DATA_WIDTH  => AXI4L_DATA_WIDTH)   --! Width of the AXI data signals
+    port map (
+      --! AXI4-Lite Register interface
+      s_axi_aclk     => s_axi_aclk,
+      s_axi_aresetn  => s_axi_aresetn,
+      s_axi_awaddr   => s_axi_awaddr,
+      s_axi_awprot   => s_axi_awprot,
+      s_axi_awvalid  => s_axi_awvalid,
+      s_axi_awready  => s_axi_awready,
+      s_axi_wdata    => s_axi_wdata,
+      s_axi_wstrb    => s_axi_wstrb,
+      s_axi_wvalid   => s_axi_wvalid,
+      s_axi_wready   => s_axi_wready,
+      s_axi_bresp    => s_axi_bresp,
+      s_axi_bvalid   => s_axi_bvalid,
+      s_axi_bready   => s_axi_bready,
+      s_axi_araddr   => s_axi_araddr,
+      s_axi_arprot   => s_axi_arprot,
+      s_axi_arvalid  => s_axi_arvalid,
+      s_axi_arready  => s_axi_arready,
+      s_axi_rdata    => s_axi_rdata,
+      s_axi_rresp    => s_axi_rresp,
+      s_axi_rvalid   => s_axi_rvalid,
+      s_axi_rready   => s_axi_rready,
+
+      transfer_shadow_group_i => transfer_shadow_group_t,
+      register_data_o         => logic_read_data_t,
+      register_return_i       => logic_return_t);
+
 
   dbus_txd <= X"00";
   databuf_txd <= X"00";

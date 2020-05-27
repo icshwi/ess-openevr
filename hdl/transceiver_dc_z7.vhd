@@ -36,9 +36,9 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
-library work;
-use work.evr_pkg.all;
-use work.ess_evr_gtx_z7_pkg.all;
+library openevr;
+use openevr.evr_pkg.all;
+use openevr.ess_evr_gtx_z7_pkg.all;
 
 library UNISIM;
 use UNISIM.VCOMPONENTS.ALL;
