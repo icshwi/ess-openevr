@@ -1,39 +1,38 @@
- -- =============================================================================
- --! @file   ess_evr_top.vhd
- --! @brief  OpenEVR Top entity supporting the picoZED carrier by Tallinn
- -- -----------------------------------------------------------------------------
- --! @author Felipe Torres González <felipe.torresgonzalez@ess.eu>
- --! @company European Spallation Source ERIC
- --! @date 20200421
- --! @version 0.1
- --
- -- Platform: picoZED 7030
- -- Carrier board:  Tallinn picoZED carrier board (aka FPGA-based IOC) rev. B
- -- Based on the AVNET xdc file for the picozed 7z030 RevC v2
- -- -----------------------------------------------------------------------------
- --! @details
- --     Top entity to include MRF's openEVR in the FPGA-IOC rev. B carrier board.
- --     The GTX wrapper and the databuf modules are not yet touched. The only
- --     modifications to the MRF's code has been motivated by the use of a
- --     different carrier board.
- --
- -------------------------------------------------------------------------------
- --! @copyright
- --      Copyright (C) 2019- 2020 European Spallation Source ERIC
- --
- --      This program is free software: you can redistribute it and/or modify
- --      it under the terms of the GNU General Public License as published by
- --      the Free Software Foundation, either version 3 of the License, or
- --      (at your option) any later version.
- --
- --      This program is distributed in the hope that it will be useful,
- --      but WITHOUT ANY WARRANTY; without even the implied warranty of
- --      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- --      GNU General Public License for more details.
- --
- --      You should have received a copy of the GNU General Public License
- --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
- -- =============================================================================
+-- =============================================================================
+--! @file   ess_evr_top.vhd
+--! @brief  OpenEVR Top entity supporting the picoZED carrier by Tallinn
+--!
+--! @details
+--!
+--! Top entity to include MRF's openEVR in the FPGA-IOC rev. B carrier board.
+--! The GTX wrapper and the databuf modules are not yet touched. The only
+--! modifications to the MRF's code has been motivated by the use of a
+--! different carrier board.
+--!
+--! @author Felipe Torres González <felipe.torresgonzalez@ess.eu>
+--! @author Ross Elliot <ross.elliot@ess.eu>
+--!
+--! @date 20200421
+--! @version 0.4
+--!
+--! Company: European Spallation Source ERIC \n
+--! Platform: picoZED 7030 \n
+--! Carrier board: Tallinn picoZED carrier board (aka FPGA-based IOC) rev. B \n
+--!
+--! @copyright
+--!
+--! Copyright (C) 2019- 2020 European Spallation Source ERIC \n
+--! This program is free software: you can redistribute it and/or modify
+--! it under the terms of the GNU General Public License as published by
+--! the Free Software Foundation, either version 3 of the License, or
+--! (at your option) any later version. \n
+--! This program is distributed in the hope that it will be useful,
+--! but WITHOUT ANY WARRANTY; without even the implied warranty of
+--! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--! GNU General Public License for more details. \n
+--! You should have received a copy of the GNU General Public License
+--! along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-- =============================================================================
 
 
 library IEEE;
