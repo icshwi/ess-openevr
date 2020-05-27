@@ -1,39 +1,40 @@
- -- =============================================================================
- --! @file   ess_evr_top.vhd
- --! @brief  OpenEVR Top entity supporting the picoZED carrier by Tallinn
- -- -----------------------------------------------------------------------------
- --! @author Felipe Torres González <felipe.torresgonzalez@ess.eu>
- --! @company European Spallation Source ERIC
- --! @date 20200421
- --! @version 0.1
- --
- -- Platform: picoZED 7030
- -- Carrier board:  Tallinn picoZED carrier board (aka FPGA-based IOC) rev. B
- -- Based on the AVNET xdc file for the picozed 7z030 RevC v2
- -- -----------------------------------------------------------------------------
- --! @details
- --     Top entity to include MRF's openEVR in the FPGA-IOC rev. B carrier board.
- --     The GTX wrapper and the databuf modules are not yet touched. The only
- --     modifications to the MRF's code has been motivated by the use of a
- --     different carrier board.
- --
- -------------------------------------------------------------------------------
- --! @copyright
- --      Copyright (C) 2019- 2020 European Spallation Source ERIC
- --
- --      This program is free software: you can redistribute it and/or modify
- --      it under the terms of the GNU General Public License as published by
- --      the Free Software Foundation, either version 3 of the License, or
- --      (at your option) any later version.
- --
- --      This program is distributed in the hope that it will be useful,
- --      but WITHOUT ANY WARRANTY; without even the implied warranty of
- --      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- --      GNU General Public License for more details.
- --
- --      You should have received a copy of the GNU General Public License
- --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
- -- =============================================================================
+-- =============================================================================
+--! @file   ess_evr_top.vhd
+--! @brief  OpenEVR Top entity supporting the picoZED carrier by Tallinn
+-- -----------------------------------------------------------------------------
+--! @author Felipe Torres González <felipe.torresgonzalez@ess.eu>
+--! @author Ross Elliot <ross.elliot@ess.eu>
+--! @company European Spallation Source ERIC
+--! @date 20200421
+--! @version 0.4
+--
+-- Platform: picoZED 7030
+-- Carrier board:  Tallinn picoZED carrier board (aka FPGA-based IOC) rev. B
+-- Based on the AVNET xdc file for the picozed 7z030 RevC v2
+-- -----------------------------------------------------------------------------
+--! @details
+--     Top entity to include MRF's openEVR in the FPGA-IOC rev. B carrier board.
+--     The GTX wrapper and the databuf modules are not yet touched. The only
+--     modifications to the MRF's code has been motivated by the use of a
+--     different carrier board.
+--
+--------------------------------------------------------------------------------
+--! @copyright
+--      Copyright (C) 2019- 2020 European Spallation Source ERIC
+--
+--      This program is free software: you can redistribute it and/or modify
+--      it under the terms of the GNU General Public License as published by
+--      the Free Software Foundation, either version 3 of the License, or
+--      (at your option) any later version.
+--
+--      This program is distributed in the hope that it will be useful,
+--      but WITHOUT ANY WARRANTY; without even the implied warranty of
+--      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--      GNU General Public License for more details.
+--
+--      You should have received a copy of the GNU General Public License
+--      along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-- =============================================================================
 
 
 library IEEE;
@@ -77,8 +78,7 @@ entity ess_evr_top is
     o_GLBL_LOGIC_CLK : out std_logic;
 
     --! Debug port (to connect to fmc-dio-5ch-ttl mezzanine card)
-    o_DEBUG          : out std_logic_vector(g_DEBUG_WIDTH-1 downto 0)
-    );
+    o_DEBUG          : out std_logic_vector(g_DEBUG_WIDTH-1 downto 0));
 end ess_evr_top;
 
 architecture rtl of ess_evr_top is
@@ -88,16 +88,18 @@ architecture rtl of ess_evr_top is
 
   --------------- Clocks  -------------------
   --! Global system clock - 88.0525 MHz
-  signal clk_sys      : std_logic;
-  signal clk_sys_buff : std_logic;
+  signal sys_clk       : std_logic;
+  signal sys_clk_buf   : std_logic;
   --! Recovered clock from the transveiver
-  signal refclk       : std_logic;
+  signal refclk        : std_logic;
   --! Recovered clock with Delay Compensation
-  signal event_clk    : std_logic;
-  --! Downscaled clock from clk_sys (clk_sys/8)
-  signal local_clk    : std_logic := '0';
+  signal event_clk     : std_logic;
+  --! Downscaled clock from sys_clk (sys_clk/8)
+  signal local_clk     : std_logic := '0';
   --! Single-ended clock from transceiver wrapper
-  signal event_clk_se : std_logic;
+  signal event_clk_se  : std_logic;
+  --! Reference clock for the EVR GT - single ended
+  signal gt0_refclk0   : std_logic;
 
   --------------- Resets ------------------
   --! Reset signal needed by the GTX. This reset should be driven
@@ -155,31 +157,39 @@ architecture rtl of ess_evr_top is
 
 begin
 
-  clk_sys_bufds : IBUFDS
+  sys_clk_bufds : IBUFDS
     generic map (
       DIFF_TERM => FALSE,
       IBUF_LOW_PWR => FALSE,
       IOSTANDARD => "LVDS_25")
     port map (
-      O => clk_sys_buff,
-      I => i_ZYNQ_MRCC_LVDS_P,
-      IB => i_ZYNQ_MRCC_LVDS_N);
+      O   => sys_clk_buf,
+      I   => i_ZYNQ_MRCC_LVDS_P,
+      IB  => i_ZYNQ_MRCC_LVDS_N);
 
-  clk_sys_buf : BUFG
+  sys_clk_buffer : BUFG
     port map (
-      O => clk_sys,
-      I => clk_sys_buff);
+      O => sys_clk,
+      I => sys_clk_buf);
+
+  gt0_ref_clk_bufds : IBUFDS_GTE2
+    port map (
+      O     => gt0_refclk0,
+      ODIV2 => open,
+		  CEB   => gnd,
+      I     => i_ZYNQ_CLKREF0_P,
+      IB    => i_ZYNQ_CLKREF0_N);
 
   -- Send single-ended clock signal to top-level
-  o_GLBL_LOGIC_CLK <= clk_sys;
+  o_GLBL_LOGIC_CLK <= sys_clk;
 
-  evr_mgt_wrapper : evr_dc
+  i_evr_dc : evr_dc
     generic map (
       RX_POLARITY => '0',
       TX_POLARITY => '0',
       refclksel => '1')
     port map (
-      sys_clk => clk_sys,
+      sys_clk => sys_clk,
       refclk_out => refclk,
       event_clk_out => event_clk,
 
@@ -211,29 +221,23 @@ begin
       delay_comp_target => delay_comp_target,
       delay_comp_locked_out => delay_comp_locked,
 
-      MGTREFCLK0_P => gnd,
-      MGTREFCLK0_N => gnd,
-      MGTREFCLK1_P => i_ZYNQ_CLKREF0_P,
-      MGTREFCLK1_N => i_ZYNQ_CLKREF0_N,
+      i_mgt_ref0clk  => gt0_refclk0,
+      i_mgt_ref1clk  => gnd,
 
       MGTRX2_N => i_EVR_RX_N,
       MGTRX2_P => i_EVR_RX_P,
 
       MGTTX2_N => o_EVR_TX_N,
-      MGTTX2_P => o_EVR_TX_P,
+      MGTTX2_P => o_EVR_TX_P);
 
-      -- Single-ended clock signals
-      EVENT_CLK_o => event_clk_se
-      );
-
-  o_EVR_EVENT_CLK <= event_clk_se;
+  o_EVR_EVENT_CLK <= event_clk;
 
   databuf_dc : databuf_rx_dc
     port map (
       data_out => databuf_dc_data_out,
       size_data_out => databuf_dc_size_out,
       addr_in(10 downto 2) => databuf_dc_addr,
-      clk => clk_sys,
+      clk => sys_clk,
 
       databuf_data => databuf_rxd,
       databuf_k => databuf_rx_k,
@@ -261,15 +265,15 @@ begin
 
   -- Reset signal for the Transceiver ---------------
 
-  --! @brief local_clk_scaler: Slow clock from clk_sys (clk_sys/8)
+  --! @brief local_clk_scaler: Slow clock from sys_clk (sys_clk/8)
   --!
   --! Generate a low speed clock from the sys clock
-  --! clk_sys = 11 ns * 8 = 88 ns period / 50% duty cycle
+  --! sys_clk = 11 ns * 8 = 88 ns period / 50% duty cycle
 
-  local_clk_scaler : process (clk_sys)
+  local_clk_scaler : process (sys_clk)
     variable scaler : unsigned(2 downto 0) := "000";
   begin
-    if rising_edge(clk_sys) then
+    if rising_edge(sys_clk) then
       if scaler < "100" then
         local_clk <= '1';
       else
@@ -324,12 +328,12 @@ begin
   o_EVR_EVNT_LED <= '0';
 
   -- Debug port signal assignment
-  o_DEBUG <= event_clk_se & clk_sys & refclk & rx_link_ok & event_clk;
+  o_DEBUG <= event_clk & sys_clk & refclk & rx_link_ok & event_clk;
 
-  -- process (clk_sys)
+  -- process (sys_clk)
   --   variable count : std_logic_vector(31 downto 0) := X"FFFFFFFF";
   -- begin
-  --   if rising_edge(clk_sys) then
+  --   if rising_edge(sys_clk) then
       -- rx_clear_viol <= PL_PB1;
       -- tx_reset <= PL_PB2;
       -- sys_reset <= PL_PB3;

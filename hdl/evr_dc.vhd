@@ -2,6 +2,11 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
+
+library work;
+use work.evr_pkg.ALL;
+
+
 library UNISIM;
 use UNISIM.Vcomponents.ALL;
 
@@ -51,12 +56,8 @@ entity evr_dc is
     delay_comp_target : in std_logic_vector(31 downto 0);
     delay_comp_locked_out : out std_logic;
 
-    -- MGT physical pins
-
-    MGTREFCLK0_P : in std_logic;
-    MGTREFCLK0_N : in std_logic;
-    MGTREFCLK1_P : in std_logic;   -- JX3 pin 2,   Zynq U5
-    MGTREFCLK1_N : in std_logic;   -- JX3 pin 3,   Zynq V5
+    i_mgt_ref0clk  : in std_logic;
+    i_mgt_ref1clk  : in std_logic;
 
     MGTTX2_P     : out std_logic;  -- JX3 pin 25,  Zynq AA5
     MGTTX2_N     : out std_logic;  -- JX3 pin 27,  Zynq AB5
@@ -69,64 +70,7 @@ end evr_dc;
 
 architecture structure of evr_dc is
 
-  component transceiver_dc_k7 is
-    generic
-      (
-        RX_DFE_KL_CFG2_IN            : bit_vector :=  X"3010D90C";
-        PMA_RSV_IN                   : bit_vector :=  x"00018480";
-        PCS_RSVD_ATTR_IN             : bit_vector :=  X"000000000002";
-        RX_POLARITY                  : std_logic := '0';
-        TX_POLARITY                  : std_logic := '0';
-        REFCLKSEL                    : std_logic := '0' -- 0 - REFCLK0, 1 - REFCLK1
-        );
-    port (
-      sys_clk         : in std_logic;
-      REFCLK0P        : in std_logic;
-      REFCLK0N        : in std_logic;
-      REFCLK1P        : in std_logic;
-      REFCLK1N        : in std_logic;
-      REFCLK_OUT      : out std_logic;
-      recclk_out      : out std_logic;
-      event_clk       : in std_logic;
 
-      -- Receiver side connections
-      event_rxd       : out std_logic_vector(7 downto 0);
-      dbus_rxd        : out std_logic_vector(7 downto 0);
-      databuf_rxd     : out std_logic_vector(7 downto 0);
-      databuf_rx_k    : out std_logic;
-      databuf_rx_ena  : out std_logic;
-      databuf_rx_mode : in std_logic;
-      dc_mode         : in std_logic;
-
-      rx_link_ok      : out   std_logic;
-      rx_violation    : out   std_logic;
-      rx_clear_viol   : in    std_logic;
-      rx_beacon       : out   std_logic;
-      tx_beacon       : out   std_logic;
-      rx_int_beacon   : out   std_logic;
-
-      delay_inc       : in    std_logic;
-      delay_dec       : in    std_logic;
-
-      reset           : in    std_logic;
-
-      -- Transmitter side connections
-      event_txd       : in  std_logic_vector(7 downto 0);
-      dbus_txd        : in  std_logic_vector(7 downto 0);
-      databuf_txd     : in  std_logic_vector(7 downto 0);
-      databuf_tx_k    : in  std_logic;
-      databuf_tx_ena  : out std_logic;
-      databuf_tx_mode : in  std_logic;
-
-      RXN             : in    std_logic;
-      RXP             : in    std_logic;
-
-      TXN             : out   std_logic;
-      TXP             : out   std_logic;
-
-      EVENT_CLK_o     : out   std_logic
-      );
-  end component;
 
   component delay_measure is
     generic (
@@ -193,6 +137,7 @@ architecture structure of evr_dc is
   signal CLKCLN_OUT         : std_logic;
 
   signal event_clk : std_logic;
+  signal recovered_clk : std_logic;
   signal cdr_clk : std_logic;
   signal dcm_clk : std_logic;
   signal event_link_ok : std_logic;
@@ -256,57 +201,47 @@ architecture structure of evr_dc is
 
 begin
 
-  i_upstream : transceiver_dc_k7
-    generic map (
-      RX_POLARITY => '0',
-      TX_POLARITY => '0',
-      refclksel => '1')
+  evr_gt0_wrapper : evr_gtx_phy_z7
+    generic map(
+      g_SIM_GTRESET_SPEEDUP => "TRUE",
+      g_STABLE_CLOCK_PERIOD => 10,
+      g_EVENT_CODE_WIDTH    => 8,
+      g_DBUS_WORD_WIDTH     => 8,
+      g_DATABUF_WORD_WIDTH  => 8
+    )
     port map (
-      sys_clk => sys_clk,
-      REFCLK0P => gnd,
-      REFCLK0N => gnd,
-      REFCLK1P => MGTREFCLK1_P,
-      REFCLK1N => MGTREFCLK1_N,
-      REFCLK_OUT => refclk,
-      recclk_out => up_event_clk,
-      event_clk => event_clk,
-
-      -- Receiver side connections
-      event_rxd => up_event_rxd,
-      dbus_rxd => up_dbus_rxd,
-      databuf_rxd => up_databuf_rxd,
-      databuf_rx_k => up_databuf_rx_k,
-      databuf_rx_ena => up_databuf_rx_ena,
-      databuf_rx_mode => up_databuf_rx_mode,
-      dc_mode => dc_mode,
-
-      rx_link_ok => up_rx_link_ok,
-      rx_violation => up_rx_violation,
-      rx_clear_viol => up_rx_clear_viol,
-      rx_beacon => up_rx_beacon,
-      tx_beacon => up_tx_beacon,
-      rx_int_beacon => up_rx_int_beacon,
-
-      delay_inc => up_delay_inc,
-      delay_dec => up_delay_dec,
-
-      reset => reset,
-
-      -- Transmitter side connections
-      event_txd => event_txd,
-      dbus_txd => dbus_txd,
-      databuf_txd => databuf_txd,
-      databuf_tx_k => databuf_tx_k,
-      databuf_tx_ena => databuf_tx_ena,
-      databuf_tx_mode => databuf_tx_mode,
-
-      RXN => MGTRX2_N,
-      RXP => MGTRX2_p,
-
-      TXN => MGTTX2_N,
-      TXP => MGTTX2_P,
-
-      EVENT_CLK_o => EVENT_CLK_o);
+      i_sys_clk           => sys_clk,
+      i_ref0_clk          => i_mgt_ref0clk,
+      i_ref1_clk          => gnd,
+      o_refclock          => refclk,
+      o_rxclock           => recovered_clk,
+      i_evntclk_delay     => event_clk,
+      event_rxd           => event_rxd,
+      dbus_rxd            => dbus_rxd,
+      databuf_rxd         => databuf_rxd,
+      databuf_rx_k        => databuf_rx_k,
+      databuf_rx_ena      => databuf_rx_ena,
+      databuf_rx_mode     => dc_mode,
+      rx_link_ok          => rx_link_ok,
+      rx_violation        => rx_violation,
+      rx_clear_viol       => rx_clear_viol,
+      rx_int_beacon       => up_rx_int_beacon,
+      dc_mode             => dc_mode,
+      delay_inc           => up_delay_inc,
+      delay_dec           => up_delay_dec,
+      reset               => reset,
+      event_txd           => event_txd,
+      tx_event_ena        => open,
+      dbus_txd            => dbus_txd,
+      databuf_txd         => databuf_txd,
+      databuf_tx_k        => databuf_tx_k,
+      databuf_tx_ena      => databuf_tx_ena,
+      databuf_tx_mode     => databuf_tx_mode,
+      tx_beacon           => up_rx_beacon,
+      i_rx_n              => MGTRX2_N,
+      i_rx_p              => MGTRX2_P,
+      o_tx_n              => MGTTX2_N,
+      o_tx_p              => MGTTX2_P);
 
   int_dly : delay_measure
     port map (
@@ -417,7 +352,7 @@ begin
       CLKFBSTOPPED => open,
       CLKINSTOPPED => open,
       LOCKED => open,
-      CLKIN1 => up_event_clk,
+      CLKIN1 => recovered_clk,
       CLKIN2 => refclk,
       CLKINSEL => mmcm_clkinsel,
       PWRDWN => gnd,
