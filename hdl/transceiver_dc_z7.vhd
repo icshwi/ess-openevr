@@ -248,6 +248,8 @@ architecture structure of evr_gtx_phy_z7 is
   signal drpwe   : std_logic;
   signal drprdy  : std_logic;
 
+
+  signal reset   : std_logic;
   -- debug attributes
   attribute mark_debug of gt0_pll_locked: signal is "true";
   attribute mark_debug of GTRXRESET_in: signal is "true";
@@ -352,6 +354,7 @@ begin
   -- Input record for the different reset sources
   gt0_tx_async_rst <= i_resets.tx_async;
   gt0_rx_async_rst <= i_resets.rx_async;
+  reset            <= i_resets.gbl_async;
 
   --!@brief EVR Rx FIFO
   i_dc_fifo : FIFO36E1

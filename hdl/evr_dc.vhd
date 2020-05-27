@@ -152,7 +152,6 @@ begin
   evr_gt0_wrapper : evr_gtx_phy_z7
     generic map(
       g_SIM_GTRESET_SPEEDUP => "TRUE",
-      g_STABLE_CLOCK_PERIOD => 10,
       g_EVENT_CODE_WIDTH    => 8,
       g_DBUS_WORD_WIDTH     => 8,
       g_DATABUF_WORD_WIDTH  => 8
@@ -179,7 +178,6 @@ begin
       dc_mode             => dc_mode,
       delay_inc           => up_delay_inc,
       delay_dec           => up_delay_dec,
-      reset               => reset,
       event_txd           => event_txd,
       tx_event_ena        => open,
       dbus_txd            => dbus_txd,
