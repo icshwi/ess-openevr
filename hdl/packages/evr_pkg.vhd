@@ -19,177 +19,66 @@ package evr_pkg is
 
   component evr_dc is
     generic (
-      RX_POLARITY : std_logic;
-      TX_POLARITY : std_logic;
-      REFCLKSEL   : std_logic
-    );
+      -- MGT RX&TX signal pair polarity
+      RX_POLARITY                  : std_logic := '0'; -- '1' for inverted polarity
+      TX_POLARITY                  : std_logic := '0'; -- '1' for inverted polarity
+      -- MGT reference clock selection
+      REFCLKSEL                    : std_logic := '0' -- 0 - REFCLK0, 1 - REFCLK1
+      );
     port (
-      sys_clk               : in  std_logic;
-      refclk_out            : out std_logic;
-      event_clk_out         : out std_logic;
-      event_rxd             : out std_logic_vector(7 downto 0);
-      dbus_rxd              : out std_logic_vector(7 downto 0);
-      databuf_rxd           : out std_logic_vector(7 downto 0);
-      databuf_rx_k          : out std_logic;
-      databuf_rx_ena        : out std_logic;
-      databuf_rx_mode       : in  std_logic;
-      dc_mode               : in  std_logic;
-      rx_link_ok            : out std_logic;
-      rx_violation          : out std_logic;
-      rx_clear_viol         : in  std_logic;
-      event_txd             : in  std_logic_vector(7 downto 0);
-      dbus_txd              : in  std_logic_vector(7 downto 0);
-      databuf_txd           : in  std_logic_vector(7 downto 0);
-      databuf_tx_k          : in  std_logic;
-      databuf_tx_ena        : out std_logic;
-      databuf_tx_mode       : in  std_logic;
-      reset                 : in  std_logic;
-      delay_comp_update     : in  std_logic;
-      delay_comp_value      : in  std_logic_vector(31 downto 0);
-      delay_comp_target     : in  std_logic_vector(31 downto 0);
+      -- System bus clock
+      sys_clk         : in std_logic;
+      refclk_out      : out std_logic; -- Reference clock output
+      event_clk_out   : out std_logic; -- Event clock output, delay compensated
+         -- and locked to EVG
+
+      -- GT wrapper control flags
+      o_gt0_ctrl_flags : out gt_ctrl_flags;
+      -- GT wrapper resets
+      i_gt0_resets     : in gt_resets;
+
+      -- Receiver side connections
+      event_rxd       : out std_logic_vector(7 downto 0);  -- Received event code
+      dbus_rxd        : out std_logic_vector(7 downto 0);  -- Distributed bus data
+      databuf_rxd     : out std_logic_vector(7 downto 0);  -- Databuffer data
+      databuf_rx_k    : out std_logic; -- Databuffer K-character
+      databuf_rx_ena  : out std_logic; -- Databuf data enable
+      databuf_rx_mode : in std_logic;  -- Databuf receive mode, '1' enabled, '0'
+         -- disabled (only for non-DC)
+      dc_mode         : in std_logic;  -- Delay compensation mode enable
+
+      rx_link_ok      : out   std_logic; -- Received link ok
+      rx_violation    : out   std_logic; -- Receiver violation detected
+      rx_clear_viol   : in    std_logic; -- Clear receiver violatio flag
+
+      -- Transmitter side connections
+      event_txd       : in  std_logic_vector(7 downto 0); -- TX event code
+      dbus_txd        : in  std_logic_vector(7 downto 0); -- TX distributed bus data
+      databuf_txd     : in  std_logic_vector(7 downto 0); -- TX databuffer data
+      databuf_tx_k    : in  std_logic; -- TX databuffer K-character
+      databuf_tx_ena  : out std_logic; -- TX databuffer data enable
+      databuf_tx_mode : in  std_logic; -- TX databuffer transmit mode, '1'
+         -- enabled, '0' disabled
+
+      reset           : in  std_logic; -- Transceiver reset
+
+      -- Delay compensation signals
+      delay_comp_update : in std_logic;
+      delay_comp_value  : in std_logic_vector(31 downto 0);
+      delay_comp_target : in std_logic_vector(31 downto 0);
       delay_comp_locked_out : out std_logic;
-      i_mgt_ref0clk         : in  std_logic;
-      i_mgt_ref1clk         : in  std_logic;
-      MGTTX2_P              : out std_logic;
-      MGTTX2_N              : out std_logic;
-      MGTRX2_P              : in  std_logic;
-      MGTRX2_N              : in  std_logic;
-      EVENT_CLK_o           : out std_logic);
+
+      i_mgt_ref0clk  : in std_logic;
+      i_mgt_ref1clk  : in std_logic;
+
+      MGTTX2_P     : out std_logic;  -- JX3 pin 25,  Zynq AA5
+      MGTTX2_N     : out std_logic;  -- JX3 pin 27,  Zynq AB5
+      MGTRX2_P     : in std_logic;   -- JX3 pin 20,  Zynq AA9
+      MGTRX2_N     : in std_logic;    -- JX3 pin 22,  Zynq AB9
+
+      EVENT_CLK_o  : out std_logic -- EVR event single-ended clock output - 88.0525 MHz
+      );
   end component;
-
-  component evr_gtx_phy_z7 is
-    generic (
-      g_SIM_GTRESET_SPEEDUP : string;
-      g_STABLE_CLOCK_PERIOD : integer := 10;
-      g_EVENT_CODE_WIDTH    : integer := 8;
-      g_DBUS_WORD_WIDTH     : integer := 8;
-      g_DATABUF_WORD_WIDTH  : integer := 8);
-    port (
-      i_sys_clk       : in  std_logic;
-      i_ref0_clk      : in  std_logic;
-      i_ref1_clk      : in  std_logic;
-      o_refclock      : out std_logic;
-      o_rxclock       : out std_logic;
-      i_evntclk_delay : in  std_logic;
-      reset           : in  std_logic;
-      event_rxd       : out std_logic_vector(g_EVENT_CODE_WIDTH-1 downto 0);
-      dbus_rxd        : out std_logic_vector(g_DBUS_WORD_WIDTH-1 downto 0);
-      databuf_rxd     : out std_logic_vector(g_DATABUF_WORD_WIDTH-1 downto 0);
-      databuf_rx_k    : out std_logic;
-      databuf_rx_ena  : out std_logic;
-      databuf_rx_mode : in  std_logic;
-      rx_link_ok      : out std_logic;
-      rx_violation    : out std_logic;
-      rx_clear_viol   : in  std_logic;
-      rx_int_beacon   : out std_logic;
-      dc_mode         : in  std_logic;
-      delay_inc       : in  std_logic;
-      delay_dec       : in  std_logic;
-      event_txd       : in  std_logic_vector(7 downto 0);
-      tx_event_ena    : out std_logic;
-      dbus_txd        : in  std_logic_vector(7 downto 0);
-      databuf_txd     : in  std_logic_vector(7 downto 0);
-      databuf_tx_k    : in  std_logic;
-      databuf_tx_ena  : out std_logic;
-      databuf_tx_mode : in  std_logic;
-      tx_beacon       : out std_logic;
-      i_rx_n          : in  std_logic;
-      i_rx_p          : in  std_logic;
-      o_tx_n          : out std_logic;
-      o_tx_p          : out std_logic);
-  end component;
-
-  component z7_gtx_evr is
-    port (
-      SYSCLK_IN                               : in   std_logic;
-      SOFT_RESET_TX_IN                        : in   std_logic;
-      SOFT_RESET_RX_IN                        : in   std_logic;
-      DONT_RESET_ON_DATA_ERROR_IN             : in   std_logic;
-      GT0_TX_FSM_RESET_DONE_OUT               : out  std_logic;
-      GT0_RX_FSM_RESET_DONE_OUT               : out  std_logic;
-      GT0_DATA_VALID_IN                       : in   std_logic;
-
-      --_________________________________________________________________________
-      --GT0  (X0Y0)
-      --____________________________CHANNEL PORTS________________________________
-      --------------------------------- CPLL Ports -------------------------------
-      gt0_cpllfbclklost_out                   : out  std_logic;
-      gt0_cplllock_out                        : out  std_logic;
-      gt0_cplllockdetclk_in                   : in   std_logic;
-      gt0_cpllreset_in                        : in   std_logic;
-      -------------------------- Channel - Clocking Ports ------------------------
-      gt0_gtrefclk0_in                        : in   std_logic;
-      gt0_gtrefclk1_in                        : in   std_logic;
-      ---------------------------- Channel - DRP Ports  --------------------------
-      gt0_drpaddr_in                          : in   std_logic_vector(8 downto 0);
-      gt0_drpclk_in                           : in   std_logic;
-      gt0_drpdi_in                            : in   std_logic_vector(15 downto 0);
-      gt0_drpdo_out                           : out  std_logic_vector(15 downto 0);
-      gt0_drpen_in                            : in   std_logic;
-      gt0_drprdy_out                          : out  std_logic;
-      gt0_drpwe_in                            : in   std_logic;
-      --------------------------- Digital Monitor Ports --------------------------
-      gt0_dmonitorout_out                     : out  std_logic_vector(7 downto 0);
-      --------------------- RX Initialization and Reset Ports --------------------
-      gt0_eyescanreset_in                     : in   std_logic;
-      gt0_rxuserrdy_in                        : in   std_logic;
-      -------------------------- RX Margin Analysis Ports ------------------------
-      gt0_eyescandataerror_out                : out  std_logic;
-      gt0_eyescantrigger_in                   : in   std_logic;
-      ------------------ Receive Ports - FPGA RX Interface Ports -----------------
-      gt0_rxusrclk_in                         : in   std_logic;
-      gt0_rxusrclk2_in                        : in   std_logic;
-      ------------------ Receive Ports - FPGA RX interface Ports -----------------
-      gt0_rxdata_out                          : out  std_logic_vector(15 downto 0);
-      ------------------ Receive Ports - RX 8B/10B Decoder Ports -----------------
-      gt0_rxdisperr_out                       : out  std_logic_vector(1 downto 0);
-      gt0_rxnotintable_out                    : out  std_logic_vector(1 downto 0);
-      --------------------------- Receive Ports - RX AFE -------------------------
-      gt0_gtxrxp_in                           : in   std_logic;
-      ------------------------ Receive Ports - RX AFE Ports ----------------------
-      gt0_gtxrxn_in                           : in   std_logic;
-      ------------------- Receive Ports - RX Buffer Bypass Ports -----------------
-      gt0_rxphmonitor_out                     : out  std_logic_vector(4 downto 0);
-      gt0_rxphslipmonitor_out                 : out  std_logic_vector(4 downto 0);
-      --------------------- Receive Ports - RX Equalizer Ports -------------------
-      gt0_rxdfelpmreset_in                    : in   std_logic;
-      gt0_rxmonitorout_out                    : out  std_logic_vector(6 downto 0);
-      gt0_rxmonitorsel_in                     : in   std_logic_vector(1 downto 0);
-      --------------- Receive Ports - RX Fabric Output Control Ports -------------
-      gt0_rxoutclk_out                        : out  std_logic;
-      gt0_rxoutclkfabric_out                  : out  std_logic;
-      ------------- Receive Ports - RX Initialization and Reset Ports ------------
-      gt0_gtrxreset_in                        : in   std_logic;
-      gt0_rxpmareset_in                       : in   std_logic;
-      ---------------------- Receive Ports - RX gearbox ports --------------------
-      gt0_rxslide_in                          : in   std_logic;
-      ------------------- Receive Ports - RX8B/10B Decoder Ports -----------------
-      gt0_rxcharisk_out                       : out  std_logic_vector(1 downto 0);
-      -------------- Receive Ports -RX Initialization and Reset Ports ------------
-      gt0_rxresetdone_out                     : out  std_logic;
-      --------------------- TX Initialization and Reset Ports --------------------
-      gt0_gttxreset_in                        : in   std_logic;
-      gt0_txuserrdy_in                        : in   std_logic;
-      ------------------ Transmit Ports - FPGA TX Interface Ports ----------------
-      gt0_txusrclk_in                         : in   std_logic;
-      gt0_txusrclk2_in                        : in   std_logic;
-      ------------------ Transmit Ports - TX Data Path interface -----------------
-      gt0_txdata_in                           : in   std_logic_vector(15 downto 0);
-      ---------------- Transmit Ports - TX Driver and OOB signaling --------------
-      gt0_gtxtxn_out                          : out  std_logic;
-      gt0_gtxtxp_out                          : out  std_logic;
-      ----------- Transmit Ports - TX Fabric Clock Output Control Ports ----------
-      gt0_txoutclk_out                        : out  std_logic;
-      gt0_txoutclkfabric_out                  : out  std_logic;
-      gt0_txoutclkpcs_out                     : out  std_logic;
-      --------------------- Transmit Ports - TX Gearbox Ports --------------------
-      gt0_txcharisk_in                        : in   std_logic_vector(1 downto 0);
-      ------------- Transmit Ports - TX Initialization and Reset Ports -----------
-      gt0_txresetdone_out                     : out  std_logic;
-      --____________________________COMMON PORTS________________________________
-      GT0_QPLLOUTCLK_IN  : in std_logic;
-      GT0_QPLLOUTREFCLK_IN : in std_logic);
-   end component;
 
   component databuf_rx_dc is
     port (
@@ -219,8 +108,74 @@ package evr_pkg is
       ov_flag           : out std_logic_vector(0 to 127);
       clear_flag        : in std_logic_vector(0 to 127);
 
-      reset             : in std_logic);
+      reset             : in std_logic
+    );
   end component;
+
+  component delay_measure is
+    generic (
+      MAX_DELAY_BITS         : integer := 16;
+      FRAC_DELAY_BITS        : integer := 16;
+      CYCLE_CNT_BITS_0       : integer := 10;
+      CYCLE_CNT_BITS_1       : integer := 16;
+      CYCLE_CNT_BITS_2       : integer := 20);
+    port (
+      clk              : in std_logic;
+      beacon_0         : in std_logic;
+      beacon_1         : in std_logic;
+
+      fast_adjust      : in std_logic;
+      slow_adjust      : in std_logic;
+      reset            : in std_logic;
+
+      delay_out        : out std_logic_vector(31 downto 0);
+      slow_delay_out   : out std_logic_vector(31 downto 0);
+      delay_update_out : out std_logic;
+      init_done        : out std_logic);
+  end component;
+
+  component delay_adjust is
+    port (
+      clk        : in std_logic;
+
+      psclk      : in  std_logic;
+      psen       : out std_logic;
+      psincdec   : out std_logic;
+      psdone     : in  std_logic;
+
+      link_ok    : in  std_logic;
+      delay_inc  : out std_logic;
+      delay_dec  : out std_logic;
+      int_clk_mode : in std_logic;
+
+      adjust_locked     : out std_logic;
+
+      feedback   : in  std_logic_vector(1 downto 0);
+      pwm_param  : in  std_logic_vector(1 downto 0);
+      disable           : in  std_logic;
+      dc_mode           : in  std_logic;
+
+      override_mode     : in  std_logic;
+      override_update   : in  std_logic;
+      override_adjust   : in  std_logic_vector(31 downto 0);
+      dc_status         : out std_logic_vector(31 downto 0);
+
+      delay_comp_update : in std_logic;
+      delay_comp_value  : in std_logic_vector(31 downto 0);
+      delay_comp_target : in std_logic_vector(31 downto 0);
+      int_delay_value   : in std_logic_vector(31 downto 0);
+      int_delay_update  : in std_logic;
+      int_delay_init    : in std_logic);
+  end component;
+  --!@name Global definitions
+  --!@{
+
+  --! System clock period (ns)
+  constant g_SYS_CLK_PERIOD    : integer := 10;
+
+  --!@}
+
+
 
   type integer_array is array (integer range <>) of integer;
   constant EVENT_RATE          : integer := 125000000;
