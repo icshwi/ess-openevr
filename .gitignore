@@ -4,7 +4,11 @@ doc/html/*
 *.str
 *.jou
 *.log
-fpga/doc/html/*
+doc/html/*
 
 # Misc Vivado files
 .Xil/
+
+# IP folder
+ip/*
+!ip/*.xci

@@ -85,6 +85,108 @@ package ess_evr_gtx_z7_pkg is
       COMMON_RESET             : out std_logic:= '0');
     end component z7_gtx_evr_common_reset;
 
+  component evr_gtx_phy_z7 is
+    generic
+    (
+    g_SIM_GTRESET_SPEEDUP : string  := "TRUE";
+    --! Events are coded using n bits. See \ref TransceiverDocs to check MRF's event codes list.
+    g_EVENT_CODE_WIDTH    : integer := 8;
+    --! Distributed Bus word width
+    g_DBUS_WORD_WIDTH     : integer := 8;
+    --! Data Buffer word width
+    g_DATABUF_WORD_WIDTH  : integer := 8
+    );
+    port (
+    --!@name GT Clocks
+    --!@{
+
+    --! System clock - 100 MHz (From PLL Si5346 Out2)
+    i_sys_clk       : in std_logic;
+    --! Reference clock for the GTX (single ended) - 88.0525 MHz
+    i_ref0_clk      : in std_logic;
+    --! Reference clock for the GTX (single ended) - Not used
+    i_ref1_clk      : in std_logic;
+    --! Tx clock for the synchronous transmission logic
+    o_refclock      : out std_logic;
+    --! Rx clock - recovered from the upstream node in the network
+    o_rxclock       : out std_logic;
+    --! Event clock - phase shifted by DCM (when DC is on?)
+    i_evntclk_delay : in std_logic;
+    --!@}
+
+    --! Control flags. Check definition in the package.
+    o_ctrl_flags    : out gt_ctrl_flags;
+
+    --! Reset sources. Check definition in the package.
+    i_resets        : in gt_resets;
+
+    --!@name Receiver side connections
+    --!@{
+
+    --! RX event code output
+    event_rxd       : out std_logic_vector(g_EVENT_CODE_WIDTH-1 downto 0);
+    --! RX distributed bus bits
+    dbus_rxd        : out std_logic_vector(g_DBUS_WORD_WIDTH-1 downto 0);
+    --! RX data buffer data
+    databuf_rxd     : out std_logic_vector(g_DATABUF_WORD_WIDTH-1 downto 0);
+    --! RX data buffer K-character flag
+    databuf_rx_k    : out std_logic;
+    --! RX data buffer data enable
+    databuf_rx_ena  : out std_logic;
+    --! RX data buffer mode, must be '1' - enabled for delay compensation mode
+    databuf_rx_mode : in std_logic;
+    --! RX link OK
+    rx_link_ok      : out   std_logic;
+    --! RX violation detected
+    rx_violation    : out   std_logic;
+    --! Clear RX violation
+    rx_clear_viol   : in    std_logic;
+    --! Received DC beacon after DC FIFO
+    rx_int_beacon   : out   std_logic;
+    --!@}
+
+    --!@name Delay compensation
+    --!@{
+
+    --! Delay Compensation mode enabled when '1'
+    dc_mode         : in std_logic;
+    --! Insert extra event in FIFO
+    delay_inc       : in    std_logic;
+    --! Drop event from FIFO
+    delay_dec       : in    std_logic;
+    --!@}
+
+    --!@name Transmitter side connections
+    --!@{
+
+    --! TX event code
+    event_txd       : in  std_logic_vector(7 downto 0);
+    --! Send event
+    tx_event_ena    : out std_logic;
+    --! TX distributed bus data
+    dbus_txd        : in  std_logic_vector(7 downto 0);
+    --! TX data buffer data
+    databuf_txd     : in  std_logic_vector(7 downto 0);
+    --! TX data buffer K-character
+    databuf_tx_k    : in  std_logic;
+    --! TX data buffer data enable
+    databuf_tx_ena  : out std_logic;
+    --! TX data buffer mode enabled when '1'
+    databuf_tx_mode : in  std_logic;
+    --! Transmitted DC beacon
+    tx_beacon       : out   std_logic;
+    --!@}
+
+    --!@name SFP lines
+    --@{
+
+    i_rx_n          : in    std_logic;
+    i_rx_p          : in    std_logic;
+    o_tx_n          : out   std_logic;
+    o_tx_p          : out   std_logic);
+    --!@}
+  end component;
+ 
   -- GTX wrapper for the openEVR
   component z7_gtx_evr is
     port

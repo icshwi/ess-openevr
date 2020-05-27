@@ -1,39 +1,33 @@
 -- =============================================================================
---! @file   transceiver_dc_k7.vhd
---! @brief  MGT wrapper for the openEVR
--- -----------------------------------------------------------------------------
+--! @file   transceiver_dc_z7.vhd
+--! @brief  z7 GTX wrapper for the openEVR
+--!
+--! @details
+--! Vaguely based in the GT wrapper available in the MRF's openEVR project.
+--!
 --! @author Ross Elliot <ross.elliot@ess.eu>
 --! @author Felipe Torres González <felipe.torresgonzalez@ess.eu>
---! @company European Spallation Source ERIC
+--!
 --! @date 20200515
 --! @version 0.1
---
--- Platform: picoZED 7030
--- Carrier board:  Tallinn picoZED carrier board (aka FPGA-based IOC) rev. B
--- Based on the AVNET xdc file for the picozed 7z030 RevC v2
--- -----------------------------------------------------------------------------
---! @details
---     Vaguely based in the GT wrapper available in the MRF's openEVR project.
---
---------------------------------------------------------------------------------
---! @references
---  -# [1]: 7 Series FFPGAS GTX/GTH Transceivers User Gude (UG476)
---------------------------------------------------------------------------------
+--!
+--! Company: European Spallation Source ERIC \n
+--! Platform: picoZED 7030 \n
+--! Carrier board: Tallinn picoZED carrier board (aka FPGA-based IOC) rev. B \n
+--!
 --! @copyright
---      Copyright (C) 2019- 2020 European Spallation Source ERIC
---
---      This program is free software: you can redistribute it and/or modify
---      it under the terms of the GNU General Public License as published by
---      the Free Software Foundation, either version 3 of the License, or
---      (at your option) any later version.
---
---      This program is distributed in the hope that it will be useful,
---      but WITHOUT ANY WARRANTY; without even the implied warranty of
---      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
---      GNU General Public License for more details.
---
---      You should have received a copy of the GNU General Public License
---      along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--!
+--! Copyright (C) 2019- 2020 European Spallation Source ERIC \n
+--! This program is free software: you can redistribute it and/or modify
+--! it under the terms of the GNU General Public License as published by
+--! the Free Software Foundation, either version 3 of the License, or
+--! (at your option) any later version. \n
+--! This program is distributed in the hope that it will be useful,
+--! but WITHOUT ANY WARRANTY; without even the implied warranty of
+--! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--! GNU General Public License for more details. \n
+--! You should have received a copy of the GNU General Public License
+--! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -- =============================================================================
 
 -- TODO: Change to NUMERIC_STD
@@ -42,19 +36,22 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
-library work;
-use work.evr_pkg.all;
+library openevr;
+use openevr.evr_pkg.all;
+use openevr.ess_evr_gtx_z7_pkg.all;
 
-library unisim;
-use unisim.vcomponents.ALL;
+library UNISIM;
+use UNISIM.VCOMPONENTS.ALL;
 
 entity evr_gtx_phy_z7 is
   generic
   (
     g_SIM_GTRESET_SPEEDUP : string  := "TRUE";
-    g_STABLE_CLOCK_PERIOD : integer := 10;
+    --! Events are coded using n bits. See \ref TransceiverDocs to check MRF's event codes list.
     g_EVENT_CODE_WIDTH    : integer := 8;
+    --! Distributed Bus word width
     g_DBUS_WORD_WIDTH     : integer := 8;
+    --! Data Buffer word width
     g_DATABUF_WORD_WIDTH  : integer := 8
   );
   port (
@@ -65,18 +62,21 @@ entity evr_gtx_phy_z7 is
     i_sys_clk       : in std_logic;
     --! Reference clock for the GTX (single ended) - 88.0525 MHz
     i_ref0_clk      : in std_logic;
-    --! Reference clock for the GTX (single ended)
+    --! Reference clock for the GTX (single ended) - Not used
     i_ref1_clk      : in std_logic;
     --! Tx clock for the synchronous transmission logic
     o_refclock      : out std_logic;
-    --! Rx clock - recovered from upstream node in the network
+    --! Rx clock - recovered from the upstream node in the network
     o_rxclock       : out std_logic;
-    --! Event clock - phase shifted by DCM
+    --! Event clock - phase shifted by DCM (when DC is on?)
     i_evntclk_delay : in std_logic;
     --!@}
 
-    --! Transceiver reset
-    reset           : in    std_logic;
+    --! Control flags. Check definition in the package.
+    o_ctrl_flags    : out gt_ctrl_flags;
+
+    --! Reset sources. Check definition in the package.
+    i_resets        : in gt_resets;
 
     --!@name Receiver side connections
     --!@{
@@ -104,7 +104,7 @@ entity evr_gtx_phy_z7 is
     --!@}
 
     --!@name Delay compensation
-    --!{@
+    --!@{
 
     --! Delay Compensation mode enabled when '1'
     dc_mode         : in std_logic;
@@ -114,31 +114,41 @@ entity evr_gtx_phy_z7 is
     delay_dec       : in    std_logic;
     --!@}
 
-    --! Transmitter side connections
+    --!@name Transmitter side connections
+    --!@{
+
     --! TX event code
     event_txd       : in  std_logic_vector(7 downto 0);
-    tx_event_ena    : out std_logic; -- 1 when event is sent out
-                                     -- With backward events the beacon event
-                                     -- has highest priority
-    dbus_txd        : in  std_logic_vector(7 downto 0); -- TX distributed bus data
-    databuf_txd     : in  std_logic_vector(7 downto 0); -- TX data buffer data
-    databuf_tx_k    : in  std_logic; -- TX data buffer K-character
-    databuf_tx_ena  : out std_logic; -- TX data buffer data enable
-    databuf_tx_mode : in  std_logic; -- TX data buffer mode enabled when '1'
+    --! Send event
+    tx_event_ena    : out std_logic;
+    --! TX distributed bus data
+    dbus_txd        : in  std_logic_vector(7 downto 0);
+    --! TX data buffer data
+    databuf_txd     : in  std_logic_vector(7 downto 0);
+    --! TX data buffer K-character
+    databuf_tx_k    : in  std_logic;
+    --! TX data buffer data enable
+    databuf_tx_ena  : out std_logic;
+    --! TX data buffer mode enabled when '1'
+    databuf_tx_mode : in  std_logic;
     --! Transmitted DC beacon
     tx_beacon       : out   std_logic;
+    --!@}
 
     --!@name SFP lines
     --@{
+
     i_rx_n          : in    std_logic;
     i_rx_p          : in    std_logic;
     o_tx_n          : out   std_logic;
-    o_tx_p          : out   std_logic
+    o_tx_p          : out   std_logic);
     --!@}
-    );
+
 end evr_gtx_phy_z7;
 
 architecture structure of evr_gtx_phy_z7 is
+
+  attribute mark_debug : string;
 
   -- Common constant values
   constant vcc       : std_logic := '1';
@@ -146,18 +156,33 @@ architecture structure of evr_gtx_phy_z7 is
   constant gnd_32b   : std_logic_vector(31 downto 0) := (others => '0');
   constant c_gnd_64b : std_logic_vector(63 downto 0) := (others => '0');
 
-  -- GT0 related signals
+  constant c_WORD_WIDTH : integer := g_EVENT_CODE_WIDTH + g_DBUS_WORD_WIDTH;
+
+  -- GT0 related signals =======================================================
   -- Clocks
   signal refclk        : std_logic;
   signal gt0_rxoutclk  : std_logic;
   signal gt0_txoutclk  : std_logic;
 
   -- Resets
-  signal i_gt0_tx_async_rst : std_logic;
-  signal i_gt0_rx_async_rst : std_logic;
+  signal gt0_tx_async_rst   : std_logic;
+  signal gt0_rx_async_rst   : std_logic;
+  signal gt0_gbl_async_rst  : std_logic;
+
+  -- Control signals
+  signal gt0_tx_fsm_reset_done : std_logic; --TODO: send upstream
+  signal gt0_rx_fsm_reset_done : std_logic; --TODO: send upstream
+  signal gt0_rx_data_valid     : std_logic; --TODO: send upstream
+  signal gt0_cpll_fb_clk_lost  : std_logic; --TODO: send upstream
+  signal gt0_pll_locked        : std_logic; --TODO: send upstream
+
+  signal gt0_rxdata            : std_logic_vector(c_WORD_WIDTH-1 downto 0);
+
+  signal gt0_txdata            : std_logic_vector(c_WORD_WIDTH-1 downto 0);
 
   signal rx_charisk    : std_logic_vector(1 downto 0);
   signal rx_data       : std_logic_vector(15 downto 0);
+  attribute mark_debug of rx_data: signal is "true";
   signal rx_disperr    : std_logic_vector(1 downto 0);
   signal rx_notintable : std_logic_vector(1 downto 0);
   signal rx_beacon_i   : std_logic;
@@ -176,8 +201,7 @@ architecture structure of evr_gtx_phy_z7 is
   signal rx_error_i      : std_logic;
 
   signal tx_charisk    : std_logic_vector(1 downto 0);
-  signal tx_data       : std_logic_vector(15 downto 0);
-
+  attribute mark_debug of tx_charisk: signal is "true";
   signal databuf_rxd_i : std_logic_vector(7 downto 0);
   signal databuf_rx_k_i    : std_logic;
 
@@ -202,45 +226,17 @@ architecture structure of evr_gtx_phy_z7 is
   signal tx_event_ena_i : std_logic;
 
   -- RX Datapath signals
-  signal rxdata_i                         :   std_logic_vector(63 downto 0);
   signal rxcharisk_float_i                :   std_logic_vector(5 downto 0);
   signal rxdisperr_float_i                :   std_logic_vector(7 downto 0);
   signal rxnotintable_float_i             :   std_logic_vector(5 downto 0);
 
   -- TX Datapath signals
-  signal txdata_i                         :   std_logic_vector(63 downto 0);
   signal txbufstatus_i                    :   std_logic_vector(1 downto 0);
-
-  signal gt0_pll_locked : std_logic;
-  signal gt0_cpll_reset : std_logic;
   signal RXUSERRDY_in : std_logic;
-  signal RXDLYEN_in : std_logic;
-  signal RXDLYSRESET_in : std_logic;
-  signal RXPHALIGN_in : std_logic;
-  signal RXPHALIGNEN_in : std_logic;
-  signal RXPHDLYRESET_in : std_logic;
-  signal RXPHMONITOR_out : std_logic_vector(4 downto 0);
-  signal RXPHSLIPMONITOR_out : std_logic_vector(4 downto 0);
-  signal RXDFELPMRESET_in : std_logic;
   signal RXOUTCLK_out : std_logic;
   signal GTRXRESET_in : std_logic;
-  signal RXPCSRESET_in : std_logic;
-  signal RXPMARESET_in : std_logic;
-  signal RXSLIDE_in : std_logic;
   signal RXRESETDONE_out : std_logic;
-  signal GTTXRESET_in : std_logic;
   signal TXUSERRDY_in : std_logic;
-  signal TXDLYEN_in : std_logic;
-  signal TXDLYSRESET_in : std_logic;
-  signal TXPHALIGN_in : std_logic;
-  signal TXPHALIGNEN_in : std_logic;
-  signal TXPHDLYRESET_in : std_logic;
-  signal TXPHINIT_in : std_logic;
-  signal TXOUTCLKFABRIC_out : std_logic;
-  signal TXOUTCLKPCS_out : std_logic;
-  signal TXPCSRESET_in : std_logic;
-  signal TXPMARESET_in : std_logic;
-  signal TXRESETDONE_out : std_logic;
 
   signal phase_acc    : std_logic_vector(6 downto 0);
   signal phase_acc_en : std_logic;
@@ -251,6 +247,12 @@ architecture structure of evr_gtx_phy_z7 is
   signal drpen   : std_logic;
   signal drpwe   : std_logic;
   signal drprdy  : std_logic;
+
+
+  signal reset   : std_logic;
+  -- debug attributes
+  attribute mark_debug of gt0_pll_locked: signal is "true";
+  attribute mark_debug of GTRXRESET_in: signal is "true";
 
 begin
 
@@ -264,117 +266,97 @@ begin
       O => gt0_txclk,
       I => gt0_txoutclk);
 
+  --!@brief Reset module for the Transceiver
+  --!@details
+  --!   The module ensures a 500 ns width reset signal for the Transceiver.
+  --!   See Answer Record 43482.
+  gt0_common_reset : z7_gtx_evr_common_reset
+    generic map (
+      STABLE_CLOCK_PERIOD      => g_SYS_CLK_PERIOD)
+    port map (
+      STABLE_CLOCK             => i_sys_clk,
+      SOFT_RESET               => i_resets.gbl_async,
+      COMMON_RESET             => gt0_gbl_async_rst);
+
+  --!@brief Wrapper for the GTX channel primitive
   gt0_x0y0 : z7_gtx_evr
     port map (
-      --! System clock - 100 MHz (From PLL Si5346 Out2)
       SYSCLK_IN                   => i_sys_clk,
-      --! Soft reset for the GT Tx FSM
-      SOFT_RESET_TX_IN            => i_gt0_tx_async_rst,
-      --! Soft reset for the Rx FSM
-      SOFT_RESET_RX_IN            => i_gt0_rx_async_rst,
+      SOFT_RESET_TX_IN            => gt0_tx_async_rst,
+      SOFT_RESET_RX_IN            => gt0_rx_async_rst,
       DONT_RESET_ON_DATA_ERROR_IN => gnd,
-      --! Indicates Tx Initialization complete. Use it to reset a frame generator
-      GT0_TX_FSM_RESET_DONE_OUT   => open,
-      GT0_RX_FSM_RESET_DONE_OUT   => open,
-      --! Indicates that data is valid on the Rx side - RXUSRCLK2 domain
-      GT0_DATA_VALID_IN           => gnd,
-      --_________________________________________________________________________
-      --GT0  (X0Y0)
-      --____________________________CHANNEL PORTS________________________________
-      --------------------------------- CPLL Ports -------------------------------
-      --! A High on this signal indicates the feedback clock from the CPLL
-      --! feedback divider to the phase frequency detector of the CPLL is lost.
-      gt0_cpllfbclklost_out           =>      open,
-      --! PLL freq. locked. Transceiver and clock outs reliable when this is 1.
-      gt0_cplllock_out                =>      gt0_pll_locked,
-      --! Stable reference clock for the detection of the feedback and
-      --! reference clock signals to the CPLL.
-      --! NOT USE a clock generated by the CPLL nor the reference clock for it!
-      gt0_cplllockdetclk_in           =>      i_sys_clk,
-      gt0_cpllreset_in                =>      gt0_cpll_reset,
-      -------------------------- Channel - Clocking Ports ----------------------
-      gt0_gtrefclk0_in                =>      i_ref0_clk,
-      gt0_gtrefclk1_in                =>      gnd,
-      ---------------------------- Channel - DRP Ports  ------------------------
-      --! Dynamic Reconfiguration Port not used by the moment
-      --! TODO: do we need this?
-      gt0_drpaddr_in                  =>      gnd_32b(8 downto 0),
-      --! Use the Tx clock
-      gt0_drpclk_in                   =>      gt0_txclk,
-      gt0_drpdi_in                    =>      gnd_32b(15 downto 0),
-      gt0_drpdo_out                   =>      open,
-      gt0_drpen_in                    =>      gnd,
-      gt0_drprdy_out                  =>      open,
-      gt0_drpwe_in                    =>      gnd,
-      --------------------------- Digital Monitor Ports ------------------------
-      gt0_dmonitorout_out             =>      open,
-      --------------------- RX Initialization and Reset Ports ------------------
-      gt0_eyescanreset_in             =>      gnd,
-      gt0_rxuserrdy_in                =>      RXUSERRDY_in,
-      -------------------------- RX Margin Analysis Ports ----------------------
-      gt0_eyescandataerror_out        =>      open,
-      gt0_eyescantrigger_in           =>      gnd,
-      ------------------ Receive Ports - FPGA RX Interface Ports ---------------
-      --! Generated from RxOutCLK
-      gt0_rxusrclk_in                 =>      gt0_rxclk,
-      gt0_rxusrclk2_in                =>      gt0_rxclk,
-      ------------------ Receive Ports - FPGA RX interface Ports ---------------
-      gt0_rxdata_out                  =>      rxdata_i(15 downto 0),
-      ------------------ Receive Ports - RX 8B/10B Decoder Ports ---------------
-      gt0_rxdisperr_out               =>     rx_disperr,
-      gt0_rxnotintable_out            =>     rx_notintable,
-      --------------------------- Receive Ports - RX AFE -----------------------
-      gt0_gtxrxp_in                   =>      i_rx_p,
-      ------------------------ Receive Ports - RX AFE Ports --------------------
-      gt0_gtxrxn_in                   =>      i_rx_n,
-      ------------------- Receive Ports - RX Buffer Bypass Ports ---------------
-      --! Rx phase alignment monitor
-      gt0_rxphmonitor_out             =>      RXPHMONITOR_out,
-      --! Rx phase slip monitor
-      gt0_rxphslipmonitor_out         =>      RXPHSLIPMONITOR_out,
-      --------------------- Receive Ports - RX Equalizer Ports -----------------
-      gt0_rxdfelpmreset_in            =>      gnd,
-      gt0_rxmonitorout_out            =>      open,
-      gt0_rxmonitorsel_in             =>      gnd_32b(1 downto 0),
-      --------------- Receive Ports - RX Fabric Output Control Ports -----------
-      --! Recovered clock for the FPGA logic
-      gt0_rxoutclk_out                =>      gt0_rxoutclk,
-      --! RXoutCLK * 2 and without Delay alignment - see p.210 [1]
-      gt0_rxoutclkfabric_out          =>      open,
-      ------------- Receive Ports - RX Initialization and Reset Ports ----------
-      gt0_gtrxreset_in                =>      GTRXRESET_in,
-      gt0_rxpmareset_in               =>      RXPMARESET_in,
-      ---------------------- Receive Ports - RX gearbox ports ------------------
-      gt0_rxslide_in                  =>      RXSLIDE_in,
-      ------------------- Receive Ports - RX8B/10B Decoder Ports ---------------
-      gt0_rxcharisk_out               =>      rx_charisk,
-      -------------- Receive Ports -RX Initialization and Reset Ports ----------
-      gt0_rxresetdone_out             =>      RXRESETDONE_out,
-      --------------------- TX Initialization and Reset Ports ------------------
-      gt0_gttxreset_in                =>      GTTXRESET_in,
-      gt0_txuserrdy_in                =>      TXUSERRDY_in,
-      ------------------ Transmit Ports - FPGA TX Interface Ports --------------
-      gt0_txusrclk_in                 =>      gt0_txclk,
-      gt0_txusrclk2_in                =>      gt0_txclk,
-      ------------------ Transmit Ports - TX Data Path interface ---------------
-      gt0_txdata_in                   =>      txdata_i(15 DOWNTO 0),
-      ---------------- Transmit Ports - TX Driver and OOB signaling ------------
-      gt0_gtxtxn_out                  =>      o_tx_n,
-      gt0_gtxtxp_out                  =>      o_tx_p,
-      ----------- Transmit Ports - TX Fabric Clock Output Control Ports ----------
-      gt0_txoutclk_out                =>      gt0_txoutclk,
-      gt0_txoutclkfabric_out          =>      TXOUTCLKFABRIC_out,
-      gt0_txoutclkpcs_out             =>      TXOUTCLKPCS_out,
-      --------------------- Transmit Ports - TX Gearbox Ports --------------------
-      gt0_txcharisk_in                =>      tx_charisk,
-      ------------- Transmit Ports - TX Initialization and Reset Ports -----------
-      gt0_txresetdone_out             =>      TXRESETDONE_out,
+      GT0_TX_FSM_RESET_DONE_OUT   => gt0_tx_fsm_reset_done,
+      GT0_RX_FSM_RESET_DONE_OUT   => gt0_rx_fsm_reset_done,
+      GT0_DATA_VALID_IN           => gt0_rx_data_valid,
+      gt0_cpllfbclklost_out       => gt0_cpll_fb_clk_lost,
+      gt0_cplllock_out            => gt0_pll_locked,
+      gt0_cplllockdetclk_in       => i_sys_clk,
+      gt0_cpllreset_in            => gt0_gbl_async_rst,
+      gt0_gtrefclk0_in            => i_ref0_clk,
+      gt0_gtrefclk1_in            => gnd,
+      gt0_drpaddr_in              => gnd_32b(8 downto 0),
+      gt0_drpclk_in               => gt0_txclk,
+      gt0_drpdi_in                => gnd_32b(15 downto 0),
+      gt0_drpdo_out               => open,
+      gt0_drpen_in                => gnd,
+      gt0_drprdy_out              => open,
+      gt0_drpwe_in                => gnd,
+      gt0_dmonitorout_out         => open,
+      gt0_eyescanreset_in         => gnd,
+      gt0_rxuserrdy_in            => RXUSERRDY_in, -- TODO: need to handle this?
+      gt0_eyescandataerror_out    => open,
+      gt0_eyescantrigger_in       => gnd,
+      gt0_rxusrclk_in             => gt0_rxclk,
+      gt0_rxusrclk2_in            => gt0_rxclk,
+      gt0_rxdata_out              => gt0_rxdata,
+      gt0_rxdisperr_out           => rx_disperr,
+      gt0_rxnotintable_out        => rx_notintable,
+      gt0_gtxrxp_in               => i_rx_p,
+      gt0_gtxrxn_in               => i_rx_n,
+      gt0_rxphmonitor_out         => open,
+      gt0_rxphslipmonitor_out     => open,
+      gt0_rxdfelpmreset_in        => gnd,
+      gt0_rxmonitorout_out        => open,
+      gt0_rxmonitorsel_in         => gnd_32b(1 downto 0),
+      gt0_rxoutclk_out            => gt0_rxoutclk,
+      gt0_rxoutclkfabric_out      => open,
+      gt0_gtrxreset_in            => gnd, -- Not needed, driving general soft reset
+      gt0_rxpmareset_in           => gnd, -- Not needed, driving general soft reset
+      gt0_rxslide_in              => gnd,
+      gt0_rxcharisk_out           => rx_charisk,
+      gt0_rxresetdone_out         => open, -- Not used
+      gt0_gttxreset_in            => gnd,
+      gt0_txuserrdy_in            => vcc,
+      gt0_txusrclk_in             => gt0_txclk,
+      gt0_txusrclk2_in            => gt0_txclk,
+      gt0_txdata_in               => gt0_txdata,
+      gt0_gtxtxn_out              => o_tx_n,
+      gt0_gtxtxp_out              => o_tx_p,
+      gt0_txoutclk_out            => gt0_txoutclk,
+      gt0_txoutclkfabric_out      => open,
+      gt0_txoutclkpcs_out         => open, --TODO: Do we need this?
+      gt0_txcharisk_in            => tx_charisk,
+      gt0_txresetdone_out         => open,
+      GT0_QPLLOUTCLK_IN           => gnd,
+      GT0_QPLLOUTREFCLK_IN        => gnd);
 
-      --____________________________COMMON PORTS________________________________
-      GT0_QPLLOUTCLK_IN               => gnd,
-      GT0_QPLLOUTREFCLK_IN            => gnd);
+  refclk <= gt0_txclk;
+  o_rxclock <= gt0_rxclk;
+  o_refclock <= gt0_txclk;
 
-  --! @brief EVR Rx FIFO
+  -- Output record for the control flags
+  o_ctrl_flags.tx_fsm_done   <= gt0_tx_fsm_reset_done;
+  o_ctrl_flags.rx_fsm_done   <= gt0_rx_fsm_reset_done;
+  o_ctrl_flags.pll_locked    <= gt0_pll_locked;
+  o_ctrl_flags.fbclk_lost    <= gt0_cpll_fb_clk_lost;
+  o_ctrl_flags.rx_data_valid <= gt0_rx_data_valid;
+
+  -- Input record for the different reset sources
+  gt0_tx_async_rst <= i_resets.tx_async;
+  gt0_rx_async_rst <= i_resets.rx_async;
+  reset            <= i_resets.gbl_async;
+
+  --!@brief EVR Rx FIFO
   i_dc_fifo : FIFO36E1
     generic map (
       ALMOST_EMPTY_OFFSET => X"0080",
@@ -413,7 +395,7 @@ begin
       INJECTDBITERR => gnd,
       INJECTSBITERR => gnd);
 
-  --! @brief EVR Tx FIFO
+  --!@brief EVR Tx FIFO
   i_txfifo : FIFO18E1
     generic map (
       ALMOST_EMPTY_OFFSET => X"0080",
@@ -446,28 +428,6 @@ begin
       WREN => tx_fifo_wren,
       DI => tx_fifo_di,
       DIP => tx_fifo_dip);
-
-  RXDFELPMRESET_in <= reset;
-  RXDLYEN_in <= '0';
-  RXDLYSRESET_in <= reset;
-  RXPCSRESET_in <= reset;
-  RXPHALIGN_in <= '0';
-  RXPHALIGNEN_in <= '0';
-  RXPHDLYRESET_in <= reset;
-  RXPMARESET_in <= reset;
-  RXSLIDE_in <= '0';
-  TXDLYEN_in <= '0';
-  TXDLYSRESET_in <= reset;
-  TXPCSRESET_in <= '0';
-  TXPHALIGN_in <= '0';
-  TXPHALIGNEN_in <= '0';
-  TXPHDLYRESET_in <= '0';
-  TXPHINIT_in <= '0';
-  TXPMARESET_in <= '0';
-
-  refclk <= gt0_txclk;
-  o_rxclock <= gt0_rxclk;
-  o_refclock <= gt0_txclk;
 
   fifo_di(63 downto 16) <= (others => '0');
   fifo_di(15 downto 0) <= rx_data;
@@ -683,44 +643,6 @@ begin
     end if;
   end process;
 
---  TRIG0(15 downto 0) <= rx_data;
---  TRIG0(17 downto 16) <= rx_charisk;
---  TRIG0(19 downto 18) <= rx_disperr;
---  TRIG0(21 downto 20) <= "00";
---  TRIG0(23 downto 22) <= rx_notintable;
---  TRIG0(24) <= link_ok;
---  TRIG0(25) <= gt0_cpll_reset;
---  TRIG0(26) <= GTTXRESET_in;
---  TRIG0(27) <= TXUSERRDY_in;
---  TRIG0(28) <= GTRXRESET_in;
---  TRIG0(29) <= RXUSERRDY_in;
---  TRIG0(30) <= '0';
---  TRIG0(31) <= '0';
---  TRIG0(47 downto 32) <= tx_data;
---  TRIG0(49 downto 48) <= tx_charisk;
---  TRIG0(50) <= rx_error;
---  TRIG0(51) <= rxcdrreset;
---  TRIG0(52) <= align_error;
---  TRIG0(87 downto 80) <= databuf_rxd_i;
---  TRIG0(88) <= databuf_rx_k_i;
---  TRIG0(90) <= RXPCSRESET_in;
---  TRIG0(91) <= RXPMARESET_in;
---  TRIG0(92) <= RXRESETDONE_out;
---  TRIG0(116 downto 93) <= (others => '0');
---  TRIG0(117) <= databuf_tx_mode;
---  TRIG0(119) <= databuf_tx_k;
---  TRIG0(127 downto 120) <= databuf_txd;
---  TRIG0(143 downto 128) <= fifo_do(15 downto 0);
---  TRIG0(147 downto 144) <= fifo_dop(3 downto 0);
---  TRIG0(148) <= fifo_rden;
---  TRIG0(156 downto 149) <= tx_fifo_do(7 downto 0);
---  TRIG0(164 downto 157) <= tx_fifo_di(7 downto 0);
---  TRIG0(165) <= tx_fifo_wren;
---  TRIG0(166) <= tx_fifo_rden;
---  TRIG0(167) <= tx_fifo_empty;
---  TRIG0(168) <= tx_event_ena_i;
---  TRIG0(250 downto 170) <= (others => '0');
-
 --  process (gt0_rxclk)
 --    variable toggle : std_logic := '0';
 --  begin
@@ -730,8 +652,7 @@ begin
 --    end if;
 --  end process;
 
-  rx_data <= rxdata_i(15 downto 0);
-  txdata_i <= (c_gnd_64b(47 downto 0) & tx_data);
+  rx_data <= gt0_rxdata; -- TODO: clean this!
 
   -- Scalers for clocks for debugging purposes to see which clocks
   -- are running using the ILA core
@@ -796,25 +717,25 @@ begin
 --    end if;
 --  end process;
 
-  cpll_reset: process (i_sys_clk, reset)
-    variable cnt : std_logic_vector(25 downto 0) := (others => '1');
-  begin
-    if rising_edge(i_sys_clk) then
-      gt0_cpll_reset <= cnt(cnt'high);
-      if cnt(cnt'high) = '1' then
-        cnt := cnt - 1;
-        GTTXRESET_in <= '1';
-        TXUSERRDY_in <= '0';
-      end if;
-      if reset = '1' then
-        cnt := (others => '1');
-      end if;
-      if gt0_pll_locked = '1' then
-        GTTXRESET_in <= '0';
-        TXUSERRDY_in <= '1';
-      end if;
-    end if;
-  end process;
+  -- cpll_reset: process (i_sys_clk, reset)
+  --   variable cnt : std_logic_vector(25 downto 0) := (others => '1');
+  -- begin
+  --   if rising_edge(i_sys_clk) then
+  --     gt0_cpll_reset <= cnt(cnt'high);
+  --     if cnt(cnt'high) = '1' then
+  --       cnt := cnt - 1;
+  --       GTTXRESET_in <= '1';
+  --       TXUSERRDY_in <= '0';
+  --     end if;
+  --     if reset = '1' then
+  --       cnt := (others => '1');
+  --     end if;
+  --     if gt0_pll_locked = '1' then
+  --       GTTXRESET_in <= '0';
+  --       TXUSERRDY_in <= '1';
+  --     end if;
+  --   end if;
+  -- end process;
 
   rx_resetting: process (refclk, rxcdrreset)
     variable cnt : std_logic_vector(25 downto 0) := (others => '1');
@@ -849,25 +770,25 @@ begin
     end if;
     if rising_edge(gt0_txclk) then
       tx_charisk <= "00";
-      tx_data(15 downto 8) <= (others => '0');
+      gt0_txdata(15 downto 8) <= (others => '0');
       tx_beacon <= beacon_cnt(1);
       if beacon_cnt(1 downto 0) = "10" and dc_mode = '1' then
-        tx_data(15 downto 8) <= C_EVENT_BEACON; -- Beacon event
+        gt0_txdata(15 downto 8) <= C_EVENT_BEACON; -- Beacon event
       elsif tx_fifo_rderr = '0' then
-        tx_data(15 downto 8) <= tx_fifo_do(7 downto 0);
+        gt0_txdata(15 downto 8) <= tx_fifo_do(7 downto 0);
         fifo_pend := '0';
       elsif even = "00" then
         tx_charisk <= "10";
-        tx_data(15 downto 8) <= X"BC"; -- K28.5 character
+        gt0_txdata(15 downto 8) <= X"BC"; -- K28.5 character
       end if;
 
       if tx_fifo_empty = '0' then
         fifo_pend := '1';
       end if;
 
-      tx_data(7 downto 0) <= dbus_txd;
+      gt0_txdata(7 downto 0) <= dbus_txd;
       if even(0) = '0' and databuf_tx_mode = '1' then
-        tx_data(7 downto 0) <= databuf_txd;
+        gt0_txdata(7 downto 0) <= databuf_txd;
         tx_charisk(0) <= databuf_tx_k;
       end if;
       databuf_tx_ena <= even(0);

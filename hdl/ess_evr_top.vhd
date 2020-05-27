@@ -42,8 +42,9 @@ use IEEE.NUMERIC_STD.ALL;
 Library UNISIM;
 use UNISIM.vcomponents.all;
 
-library work;
-use work.evr_pkg.ALL;
+library openevr;
+use openevr.evr_pkg.ALL;
+use openevr.ess_evr_gtx_z7_pkg.all;
 
 library essffw;
 use essffw.axi4.all;
@@ -65,28 +66,28 @@ entity ess_evr_top is
     );
   Port (
     --! AXI4-Lite Register interface
-      s_axi_aclk              : in  std_logic;
-      s_axi_aresetn           : in  std_logic;
-      s_axi_awaddr            : in  std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
-      s_axi_awprot            : in  std_logic_vector(AXI4_PROT_WIDTH-1 downto 0);
-      s_axi_awvalid           : in  std_logic;
-      s_axi_awready           : out std_logic;
-      s_axi_wdata             : in  std_logic_vector(AXI_DATA_WIDTH-1 downto 0);
-      s_axi_wstrb             : in  std_logic_vector(AXI_WSTRB_WIDTH-1 downto 0);
-      s_axi_wvalid            : in  std_logic;
-      s_axi_wready            : out std_logic;
-      s_axi_bresp             : out std_logic_vector(AXI4_RESP_WIDTH-1 downto 0);
-      s_axi_bvalid            : out std_logic;
-      s_axi_bready            : in  std_logic;
-      s_axi_araddr            : in  std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
-      s_axi_arprot            : in  std_logic_vector(AXI4_PROT_WIDTH-1 downto 0);
-      s_axi_arvalid           : in  std_logic;
-      s_axi_arready           : out std_logic;
-      s_axi_rdata             : out std_logic_vector(AXI_DATA_WIDTH-1 downto 0);
-      s_axi_rresp             : out std_logic_vector(AXI4_RESP_WIDTH-1 downto 0);
-      s_axi_rvalid            : out std_logic;
-      s_axi_rready            : in  std_logic;
-  
+    s_axi_aclk              : in  std_logic;
+    s_axi_aresetn           : in  std_logic;
+    s_axi_awaddr            : in  std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
+    s_axi_awprot            : in  std_logic_vector(AXI4_PROT_WIDTH-1 downto 0);
+    s_axi_awvalid           : in  std_logic;
+    s_axi_awready           : out std_logic;
+    s_axi_wdata             : in  std_logic_vector(AXI_DATA_WIDTH-1 downto 0);
+    s_axi_wstrb             : in  std_logic_vector(AXI_WSTRB_WIDTH-1 downto 0);
+    s_axi_wvalid            : in  std_logic;
+    s_axi_wready            : out std_logic;
+    s_axi_bresp             : out std_logic_vector(AXI4_RESP_WIDTH-1 downto 0);
+    s_axi_bvalid            : out std_logic;
+    s_axi_bready            : in  std_logic;
+    s_axi_araddr            : in  std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
+    s_axi_arprot            : in  std_logic_vector(AXI4_PROT_WIDTH-1 downto 0);
+    s_axi_arvalid           : in  std_logic;
+    s_axi_arready           : out std_logic;
+    s_axi_rdata             : out std_logic_vector(AXI_DATA_WIDTH-1 downto 0);
+    s_axi_rresp             : out std_logic_vector(AXI4_RESP_WIDTH-1 downto 0);
+    s_axi_rvalid            : out std_logic;
+    s_axi_rready            : in  std_logic;
+
     --! Global logic clock, differential input from Si5346 Out2
     i_ZYNQ_MRCC_LVDS_P : in std_logic;
     i_ZYNQ_MRCC_LVDS_N : in std_logic;
@@ -193,6 +194,9 @@ architecture rtl of ess_evr_top is
   signal logic_read_data_t       : logic_read_data_t;
   signal logic_return_t          : logic_return_t;
 
+  signal gt0_ctrl_flags      : gt_ctrl_flags;
+  signal gt0_resets          : gt_resets;
+
 begin
 
   sys_clk_bufds : IBUFDS
@@ -231,6 +235,9 @@ begin
       refclk_out => refclk,
       event_clk_out => event_clk,
 
+      o_gt0_ctrl_flags => gt0_ctrl_flags,
+      i_gt0_resets     => gt0_resets,
+
       -- Receiver side connections
       event_rxd => event_rxd,
       dbus_rxd => dbus_rxd,
@@ -252,7 +259,7 @@ begin
       databuf_tx_ena => databuf_tx_ena,
       databuf_tx_mode => databuf_tx_mode,
 
-      reset => transceiver_reset,
+      reset => gt0_resets.gbl_async,
 
       delay_comp_update => delay_comp_update,
       delay_comp_value => delay_comp_value,
@@ -295,10 +302,10 @@ begin
       ov_flag => databuf_ov_flag,
       clear_flag => databuf_clear_flag,
 
-      reset => transceiver_reset);
-  
+      reset => gt0_resets.gbl_async);
+
   axi_reg_bank : register_bank_axi
-    generic map (    
+    generic map (
       AXI_ADDR_WIDTH => ADDRESS_WIDTH+2,
       REG_ADDR_WIDTH	=> ADDRESS_WIDTH,    --! Width of the address signals
       AXI_WSTRB_WIDTH => 4,                  --! Width of the AXI wstrb signal, may be determined by ADDRESS_WIDTH
@@ -306,28 +313,28 @@ begin
       AXI_DATA_WIDTH  => AXI4L_DATA_WIDTH)   --! Width of the AXI data signals
     port map (
       --! AXI4-Lite Register interface
-      s_axi_aclk     => s_axi_aclk,    
-      s_axi_aresetn  => s_axi_aresetn, 
-      s_axi_awaddr   => s_axi_awaddr,  
-      s_axi_awprot   => s_axi_awprot,  
-      s_axi_awvalid  => s_axi_awvalid, 
-      s_axi_awready  => s_axi_awready, 
-      s_axi_wdata    => s_axi_wdata,   
-      s_axi_wstrb    => s_axi_wstrb,   
-      s_axi_wvalid   => s_axi_wvalid,  
-      s_axi_wready   => s_axi_wready,  
-      s_axi_bresp    => s_axi_bresp,   
-      s_axi_bvalid   => s_axi_bvalid,  
-      s_axi_bready   => s_axi_bready,  
-      s_axi_araddr   => s_axi_araddr,  
-      s_axi_arprot   => s_axi_arprot, 
-      s_axi_arvalid  => s_axi_arvalid, 
-      s_axi_arready  => s_axi_arready, 
-      s_axi_rdata    => s_axi_rdata,   
-      s_axi_rresp    => s_axi_rresp,   
-      s_axi_rvalid   => s_axi_rvalid,  
+      s_axi_aclk     => s_axi_aclk,
+      s_axi_aresetn  => s_axi_aresetn,
+      s_axi_awaddr   => s_axi_awaddr,
+      s_axi_awprot   => s_axi_awprot,
+      s_axi_awvalid  => s_axi_awvalid,
+      s_axi_awready  => s_axi_awready,
+      s_axi_wdata    => s_axi_wdata,
+      s_axi_wstrb    => s_axi_wstrb,
+      s_axi_wvalid   => s_axi_wvalid,
+      s_axi_wready   => s_axi_wready,
+      s_axi_bresp    => s_axi_bresp,
+      s_axi_bvalid   => s_axi_bvalid,
+      s_axi_bready   => s_axi_bready,
+      s_axi_araddr   => s_axi_araddr,
+      s_axi_arprot   => s_axi_arprot,
+      s_axi_arvalid  => s_axi_arvalid,
+      s_axi_arready  => s_axi_arready,
+      s_axi_rdata    => s_axi_rdata,
+      s_axi_rresp    => s_axi_rresp,
+      s_axi_rvalid   => s_axi_rvalid,
       s_axi_rready   => s_axi_rready,
-      
+
       transfer_shadow_group_i => transfer_shadow_group_t,
       register_data_o         => logic_read_data_t,
       register_return_i       => logic_return_t);
@@ -337,52 +344,9 @@ begin
   databuf_txd <= X"00";
   databuf_tx_k <= '0';
 
-  -- Reset signal for the Transceiver ---------------
 
-  --! @brief local_clk_scaler: Slow clock from sys_clk (sys_clk/8)
-  --!
-  --! Generate a low speed clock from the sys clock
-  --! sys_clk = 11 ns * 8 = 88 ns period / 50% duty cycle
 
-  local_clk_scaler : process (sys_clk)
-    variable scaler : unsigned(2 downto 0) := "000";
-  begin
-    if rising_edge(sys_clk) then
-      if scaler < "100" then
-        local_clk <= '1';
-      else
-        local_clk <= '0';
-      end if;
-
-      scaler := scaler + "001";
-    end if;
-  end process local_clk_scaler;
-
-  --! @brief gtx_reset: local reset generator after GSR
-  --!
-  --! While a valid reset signal is generated by any element in the PS,
-  --! a valid reset signal is needed to drive the reset input of the GT.
-  --
-  --! Wait for 6 cycles of the local_clk after GSR, then
-  --! assert the reset signal for 1 period
-
-  gtx_reset : process (local_clk)
-    variable count : unsigned(2 downto 0) := "000";
-  begin
-    if rising_edge(local_clk) then
-      if count <= "101" then
-        local_transceiver_reset <= '0';
-        count := count + "001";
-      elsif count <= "110" then
-        local_transceiver_reset <= '1';
-        count := count + "001";
-      else
-        local_transceiver_reset <= '0';
-      end if;
-    end if;
-  end process gtx_reset;
-
-  transceiver_reset <= local_transceiver_reset OR logic_read_data_t.master_reset(0);
+  transceiver_reset <= logic_read_data_t.master_reset(0);
 
   -- Process to send out event 0x01 periodically
   process (refclk)

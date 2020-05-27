@@ -3,8 +3,9 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
-library work;
-use work.evr_pkg.ALL;
+library openevr;
+use openevr.evr_pkg.ALL;
+use openevr.ess_evr_gtx_z7_pkg.all;
 
 
 library UNISIM;
@@ -24,6 +25,11 @@ entity evr_dc is
     refclk_out      : out std_logic; -- Reference clock output
     event_clk_out   : out std_logic; -- Event clock output, delay compensated
        -- and locked to EVG
+
+    -- GT wrapper control flags
+    o_gt0_ctrl_flags : out gt_ctrl_flags;
+    -- GT wrapper resets
+    i_gt0_resets     : in gt_resets;
 
     -- Receiver side connections
     event_rxd       : out std_logic_vector(7 downto 0);  -- Received event code
@@ -69,64 +75,6 @@ entity evr_dc is
 end evr_dc;
 
 architecture structure of evr_dc is
-
-
-
-  component delay_measure is
-    generic (
-      MAX_DELAY_BITS         : integer := 16;
-      FRAC_DELAY_BITS        : integer := 16;
-      CYCLE_CNT_BITS_0       : integer := 10;
-      CYCLE_CNT_BITS_1       : integer := 16;
-      CYCLE_CNT_BITS_2       : integer := 20);
-    port (
-      clk              : in std_logic;
-      beacon_0         : in std_logic;
-      beacon_1         : in std_logic;
-
-      fast_adjust      : in std_logic;
-      slow_adjust      : in std_logic;
-      reset            : in std_logic;
-
-      delay_out        : out std_logic_vector(31 downto 0);
-      slow_delay_out   : out std_logic_vector(31 downto 0);
-      delay_update_out : out std_logic;
-      init_done        : out std_logic);
-  end component;
-
-  component delay_adjust is
-    port (
-      clk        : in std_logic;
-
-      psclk      : in  std_logic;
-      psen       : out std_logic;
-      psincdec   : out std_logic;
-      psdone     : in  std_logic;
-
-      link_ok    : in  std_logic;
-      delay_inc  : out std_logic;
-      delay_dec  : out std_logic;
-      int_clk_mode : in std_logic;
-
-      adjust_locked     : out std_logic;
-
-      feedback   : in  std_logic_vector(1 downto 0);
-      pwm_param  : in  std_logic_vector(1 downto 0);
-      disable           : in  std_logic;
-      dc_mode           : in  std_logic;
-
-      override_mode     : in  std_logic;
-      override_update   : in  std_logic;
-      override_adjust   : in  std_logic_vector(31 downto 0);
-      dc_status         : out std_logic_vector(31 downto 0);
-
-      delay_comp_update : in std_logic;
-      delay_comp_value  : in std_logic_vector(31 downto 0);
-      delay_comp_target : in std_logic_vector(31 downto 0);
-      int_delay_value   : in std_logic_vector(31 downto 0);
-      int_delay_update  : in std_logic;
-      int_delay_init    : in std_logic);
-  end component;
 
   signal gnd     : std_logic;
   signal vcc     : std_logic;
@@ -204,7 +152,6 @@ begin
   evr_gt0_wrapper : evr_gtx_phy_z7
     generic map(
       g_SIM_GTRESET_SPEEDUP => "TRUE",
-      g_STABLE_CLOCK_PERIOD => 10,
       g_EVENT_CODE_WIDTH    => 8,
       g_DBUS_WORD_WIDTH     => 8,
       g_DATABUF_WORD_WIDTH  => 8
@@ -216,6 +163,8 @@ begin
       o_refclock          => refclk,
       o_rxclock           => recovered_clk,
       i_evntclk_delay     => event_clk,
+      o_ctrl_flags        => o_gt0_ctrl_flags,
+      i_resets            => i_gt0_resets,
       event_rxd           => event_rxd,
       dbus_rxd            => dbus_rxd,
       databuf_rxd         => databuf_rxd,
@@ -229,7 +178,6 @@ begin
       dc_mode             => dc_mode,
       delay_inc           => up_delay_inc,
       delay_dec           => up_delay_dec,
-      reset               => reset,
       event_txd           => event_txd,
       tx_event_ena        => open,
       dbus_txd            => dbus_txd,
@@ -293,7 +241,7 @@ begin
       BANDWIDTH => "OPTIMIZED",
       CLKFBOUT_MULT_F => 7.0,
       CLKFBOUT_PHASE => 0.0,
-      CLKIN1_PERIOD => 7.0,
+      CLKIN1_PERIOD => 11.35,
       CLKIN2_PERIOD => 0.0,
       CLKOUT0_DIVIDE_F => 7.000,
       CLKOUT1_DIVIDE => 1,
