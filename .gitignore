@@ -1,5 +1,4 @@
-# Output files for Vivado
-fpga/output/*
+doc/html/*
 
 # Vivado log files
 *.str
