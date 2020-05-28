@@ -189,7 +189,7 @@ architecture rtl of ess_evr_top is
   signal databuf_irq_dc      : std_logic;
 
   signal debug_out           : std_logic_vector(g_DEBUG_WIDTH-1 downto 0) := (others => '0');
-  
+
   signal transfer_shadow_group_t : transfer_shadow_group_t;
   signal logic_read_data_t       : logic_read_data_t;
   signal logic_return_t          : logic_return_t;
@@ -349,6 +349,12 @@ begin
   gt0_resets.tx_async  <= logic_read_data_t.txpath_reset(0);
   gt0_resets.rx_async  <= logic_read_data_t.rxpath_reset(0);
 
+  -- readback of value to processor
+  logic_return_t.master_reset <= logic_read_data_t.master_reset;
+  logic_return_t.txpath_reset <= logic_read_data_t.txpath_reset;
+  logic_return_t.rxpath_reset  <= logic_read_data_t.rxpath_reset;
+
+  -- Assign transceiver reset
   transceiver_reset <= logic_read_data_t.master_reset(0);
 
   -- Process to send out event 0x01 periodically
