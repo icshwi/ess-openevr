@@ -247,6 +247,22 @@
         </spirit:portMap>
       </spirit:portMaps>
     </spirit:busInterface>
+    <spirit:busInterface>
+      <spirit:name>i_DEBUG_clk</spirit:name>
+      <spirit:busType spirit:vendor="xilinx.com" spirit:library="signal" spirit:name="clock" spirit:version="1.0"/>
+      <spirit:abstractionType spirit:vendor="xilinx.com" spirit:library="signal" spirit:name="clock_rtl" spirit:version="1.0"/>
+      <spirit:slave/>
+      <spirit:portMaps>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>CLK</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>i_DEBUG_clk</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+      </spirit:portMaps>
+    </spirit:busInterface>
   </spirit:busInterfaces>
   <spirit:memoryMaps>
     <spirit:memoryMap>
@@ -277,7 +293,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>a3078910</spirit:value>
+            <spirit:value>78bbaadf</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -1146,9 +1162,9 @@
     <spirit:fileSet>
       <spirit:name>xilinx_xpgui_view_fileset</spirit:name>
       <spirit:file>
-        <spirit:name>xgui/ess_openEVR_v0_4.tcl</spirit:name>
+        <spirit:name>xgui/ess_openEVR_v0_1.tcl</spirit:name>
         <spirit:fileType>tclSource</spirit:fileType>
-        <spirit:userFileType>CHECKSUM_ea044624</spirit:userFileType>
+        <spirit:userFileType>CHECKSUM_0ee8dca8</spirit:userFileType>
         <spirit:userFileType>XGUI_VERSION_2</spirit:userFileType>
       </spirit:file>
     </spirit:fileSet>
@@ -1175,7 +1191,7 @@
     </spirit:parameter>
     <spirit:parameter>
       <spirit:name>AXI_ADDR_WIDTH</spirit:name>
-      <spirit:displayName>AXI Address Width</spirit:displayName>
+      <spirit:displayName>Axi Addr Width</spirit:displayName>
       <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.AXI_ADDR_WIDTH">14</spirit:value>
     </spirit:parameter>
     <spirit:parameter>
@@ -1185,7 +1201,7 @@
     </spirit:parameter>
     <spirit:parameter>
       <spirit:name>AXI_WSTRB_WIDTH</spirit:name>
-      <spirit:displayName>AXI WSTRB Width</spirit:displayName>
+      <spirit:displayName>Axi Wstrb Width</spirit:displayName>
       <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.AXI_WSTRB_WIDTH">4</spirit:value>
     </spirit:parameter>
     <spirit:parameter>
@@ -1195,7 +1211,7 @@
     </spirit:parameter>
     <spirit:parameter>
       <spirit:name>AXI_DATA_WIDTH</spirit:name>
-      <spirit:displayName>AXI Data Width</spirit:displayName>
+      <spirit:displayName>Axi Data Width</spirit:displayName>
       <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.AXI_DATA_WIDTH">32</spirit:value>
     </spirit:parameter>
   </spirit:parameters>

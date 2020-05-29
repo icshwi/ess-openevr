@@ -32,7 +32,7 @@
 -- =============================================================================
 --! @page TransceiverDocs
 --! @see
---!   \li [1]: 7 Series FPGAS GTX/GTH Transceivers User Gude (UG476)
+--!   \li [1]: 7 Series FPGAS GTX/GTH Transceivers User Guide (UG476)
 --!   \li [2]: 7 Series FPGAS Transceivers Wizard (PG168)
 --!   \li [3]: MRF's event code list (section 1.3.1), http://mrf.fi/fw/DCManual-191127.pdf
 
@@ -186,7 +186,7 @@ package ess_evr_gtx_z7_pkg is
     o_tx_p          : out   std_logic);
     --!@}
   end component;
- 
+
   -- GTX wrapper for the openEVR
   component z7_gtx_evr is
     port

@@ -20,11 +20,12 @@ entity evr_dc is
     REFCLKSEL                    : std_logic := '0' -- 0 - REFCLK0, 1 - REFCLK1
     );
   port (
-    -- System bus clock
-    sys_clk         : in std_logic;
+    -- System clock
+    i_sys_clk       : in std_logic;
     refclk_out      : out std_logic; -- Reference clock output
-    event_clk_out   : out std_logic; -- Event clock output, delay compensated
-       -- and locked to EVG
+    event_clk_out   : out std_logic; -- Event clock output, delay compensated and locked to EVG
+    -- Global reset
+    i_reset         : in  std_logic;
 
     -- GT wrapper control flags
     o_gt0_ctrl_flags : out gt_ctrl_flags;
@@ -53,8 +54,6 @@ entity evr_dc is
     databuf_tx_ena  : out std_logic; -- TX databuffer data enable
     databuf_tx_mode : in  std_logic; -- TX databuffer transmit mode, '1'
        -- enabled, '0' disabled
-
-    reset           : in  std_logic; -- Transceiver reset
 
     -- Delay compensation signals
     delay_comp_update : in std_logic;
@@ -157,7 +156,7 @@ begin
       g_DATABUF_WORD_WIDTH  => 8
     )
     port map (
-      i_sys_clk           => sys_clk,
+      i_sys_clk           => i_sys_clk,
       i_ref0_clk          => i_mgt_ref0clk,
       i_ref1_clk          => gnd,
       o_refclock          => refclk,
@@ -206,7 +205,7 @@ begin
 
   int_dly_adj : delay_adjust
     port map (
-      clk        => sys_clk,
+      clk        => i_sys_clk,
       psclk      => refclk, -- mmcm_psclk,
       psen       => mmcm_psen,
       psincdec   => mmcm_psincdec,
@@ -353,9 +352,9 @@ begin
   mmcm_clkinsel <= not run_on_refclk; -- high: select CLKIN1
   mmcm_reset <= not up_rx_link_ok;
 
-  process (sys_clk, mmcm_psen, mmcm_psincdec)
+  process (i_sys_clk, mmcm_psen, mmcm_psincdec)
   begin
-    if rising_edge(sys_clk) then
+    if rising_edge(i_sys_clk) then
       psinc <= '0';
       psdec <= '0';
       if mmcm_psen = '1' then

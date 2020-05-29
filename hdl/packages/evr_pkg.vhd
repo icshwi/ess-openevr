@@ -27,9 +27,10 @@ package evr_pkg is
       REFCLKSEL   : std_logic
     );
     port (
-      sys_clk               : in  std_logic;
+      i_sys_clk             : in  std_logic;
       refclk_out            : out std_logic;
       event_clk_out         : out std_logic;
+      i_reset               : in  std_logic;
       -- GT wrapper control flags
       o_gt0_ctrl_flags      : out gt_ctrl_flags;
       -- GT wrapper resets
@@ -51,7 +52,6 @@ package evr_pkg is
       databuf_tx_k          : in  std_logic;
       databuf_tx_ena        : out std_logic;
       databuf_tx_mode       : in  std_logic;
-      reset                 : in  std_logic;
       delay_comp_update     : in  std_logic;
       delay_comp_value      : in  std_logic_vector(31 downto 0);
       delay_comp_target     : in  std_logic_vector(31 downto 0);
