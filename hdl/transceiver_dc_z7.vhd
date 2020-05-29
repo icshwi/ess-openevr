@@ -148,14 +148,18 @@ end evr_gtx_phy_z7;
 
 architecture structure of evr_gtx_phy_z7 is
 
+  -- Attribute definitions =====================================================
   attribute mark_debug : string;
 
-  -- Common constant values
+  -- Constant definitions ======================================================
   constant vcc       : std_logic := '1';
   constant gnd       : std_logic := '0';
   constant gnd_32b   : std_logic_vector(31 downto 0) := (others => '0');
   constant c_gnd_64b : std_logic_vector(63 downto 0) := (others => '0');
 
+  -- Word length for the data transmitted through EVR's GT
+  -- LS 8-b -> Data buffer or Distributed bus
+  -- MS 8-b -> Event code
   constant c_WORD_WIDTH : integer := g_EVENT_CODE_WIDTH + g_DBUS_WORD_WIDTH;
 
   -- GT0 related signals =======================================================
@@ -168,11 +172,13 @@ architecture structure of evr_gtx_phy_z7 is
   signal gt0_tx_async_rst   : std_logic;
   signal gt0_rx_async_rst   : std_logic;
   signal gt0_gbl_async_rst  : std_logic;
+  -- Dummy reset supporting old code - to be cleaned!
+  signal reset              : std_logic;
 
   -- Control signals
   signal gt0_tx_fsm_reset_done : std_logic; --TODO: send upstream
   signal gt0_rx_fsm_reset_done : std_logic; --TODO: send upstream
-  signal gt0_rx_data_valid     : std_logic; --TODO: send upstream
+  signal gt0_rx_data_valid     : std_logic := '1'; --TODO: send upstream
   signal gt0_cpll_fb_clk_lost  : std_logic; --TODO: send upstream
   signal gt0_pll_locked        : std_logic; --TODO: send upstream
 
@@ -182,7 +188,6 @@ architecture structure of evr_gtx_phy_z7 is
 
   signal rx_charisk    : std_logic_vector(1 downto 0);
   signal rx_data       : std_logic_vector(15 downto 0);
-  attribute mark_debug of rx_data: signal is "true";
   signal rx_disperr    : std_logic_vector(1 downto 0);
   signal rx_notintable : std_logic_vector(1 downto 0);
   signal rx_beacon_i   : std_logic;
@@ -248,11 +253,14 @@ architecture structure of evr_gtx_phy_z7 is
   signal drpwe   : std_logic;
   signal drprdy  : std_logic;
 
-
-  signal reset   : std_logic;
-  -- debug attributes
+  -- debug attributes ==========================================================
   attribute mark_debug of gt0_pll_locked: signal is "true";
   attribute mark_debug of GTRXRESET_in: signal is "true";
+  attribute mark_debug of rx_data: signal is "true";
+  attribute mark_debug of gt0_rx_fsm_reset_done: signal is "true";
+  attribute mark_debug of gt0_tx_fsm_reset_done: signal is "true";
+  attribute mark_debug of gt0_gbl_async_rst : signal is "true";
+  attribute mark_debug of i_resets : signal is "true";
 
 begin
 
@@ -303,7 +311,8 @@ begin
       gt0_drpwe_in                => gnd,
       gt0_dmonitorout_out         => open,
       gt0_eyescanreset_in         => gnd,
-      gt0_rxuserrdy_in            => RXUSERRDY_in, -- TODO: need to handle this?
+      -- See p. 72 [1]
+      gt0_rxuserrdy_in            => vcc, -- TODO: need to handle this?
       gt0_eyescandataerror_out    => open,
       gt0_eyescantrigger_in       => gnd,
       gt0_rxusrclk_in             => gt0_rxclk,
@@ -315,13 +324,13 @@ begin
       gt0_gtxrxn_in               => i_rx_n,
       gt0_rxphmonitor_out         => open,
       gt0_rxphslipmonitor_out     => open,
-      gt0_rxdfelpmreset_in        => gnd,
+      gt0_rxdfelpmreset_in        => gt0_gbl_async_rst,
       gt0_rxmonitorout_out        => open,
       gt0_rxmonitorsel_in         => gnd_32b(1 downto 0),
       gt0_rxoutclk_out            => gt0_rxoutclk,
       gt0_rxoutclkfabric_out      => open,
-      gt0_gtrxreset_in            => gnd, -- Not needed, driving general soft reset
-      gt0_rxpmareset_in           => gnd, -- Not needed, driving general soft reset
+      gt0_gtrxreset_in            => gt0_gbl_async_rst, -- Not needed, driving general soft reset
+      gt0_rxpmareset_in           => gt0_gbl_async_rst, -- Not needed, driving general soft reset
       gt0_rxslide_in              => gnd,
       gt0_rxcharisk_out           => rx_charisk,
       gt0_rxresetdone_out         => open, -- Not used
