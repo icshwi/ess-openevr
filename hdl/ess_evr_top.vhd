@@ -58,6 +58,7 @@ entity ess_evr_top is
   Generic (
     --! width of debug port
     g_DEBUG_WIDTH   : integer := 5;
+    g_HAS_DEBUG_CLK : boolean := false;
     AXI_ADDR_WIDTH  : integer := ADDRESS_WIDTH+2;
     REG_ADDR_WIDTH  : integer := ADDRESS_WIDTH;    --! Width of the address signals
     AXI_WSTRB_WIDTH : integer := 4;                --! Width of the AXI wstrb signal, may be determined by ADDRESS_WIDTH
@@ -113,6 +114,7 @@ entity ess_evr_top is
 
     --! Debug port (to connect to fmc-dio-5ch-ttl mezzanine card)
     o_DEBUG          : out std_logic_vector(g_DEBUG_WIDTH-1 downto 0);
+
     i_DEBUG_clk      : in std_logic);
 end ess_evr_top;
 
@@ -222,9 +224,9 @@ begin
       I => sys_clk_buf);
 
   dbg_clk_buffer : BUFG
-          port map (
-            O => debug_clk,
-            I => i_DEBUG_clk);
+     port map (
+      O => debug_clk,
+      I => i_DEBUG_clk);
 
   gt0_ref_clk_bufds : IBUFDS_GTE2
     port map (
