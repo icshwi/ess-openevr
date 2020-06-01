@@ -143,9 +143,9 @@ architecture rtl of ess_evr_top is
 
   --------------- Resets ------------------
   -- Record for the reset signals going to the EVR GT
-  signal gt0_resets          : gt_resets;
+  signal gt0_resets, gt0_resets_t : gt_resets;
   -- Global reset driven from SW - sys_clk domain
-  signal gbl_reset           : std_logic;
+  signal gbl_reset, gbl_reset_t   : std_logic := '0';
 
   ----------- Module parameters -----------
   --! Delay Compensation Enable
@@ -197,12 +197,16 @@ architecture rtl of ess_evr_top is
   signal debug_out           : std_logic_vector(g_DEBUG_WIDTH-1 downto 0) := (others => '0');
 
   signal transfer_shadow_group_t : transfer_shadow_group_t;
-  -- CTRL register map
-  -- *      0x00  ->  EVR GT global reset
-  -- *      0x04  ->  EVR GT Tx path reset
-  -- *      0x08  ->  EVR GT Rx path reset
+  -- CTRL register map - (32-bit reg @ 0x43c00000)
+  --         bit
+  -- *        0  ->  Global reset
+  -- *        1  ->  EVR GT global reset
+  -- *        2  ->  EVR GT Tx path reset
+  -- *        3  ->  EVR GT Rx path reset
   signal logic_read_data_t       : logic_read_data_t;
+  signal logic_return_t_0        : logic_return_t;
   signal logic_return_t          : logic_return_t;
+
 
   signal gt0_ctrl_flags      : gt_ctrl_flags;
 
@@ -355,15 +359,25 @@ begin
 
   -- Get the reset signals into sys_clk time domain
   -- These are sw resets so it is assumed the pulse width will be long enough.
-  process(sys_clk)
+  -- All signals are double-flopped
+  reset_reg : process(sys_clk)
   begin
     if rising_edge(sys_clk) then
-      gbl_reset <= logic_read_data_t.master_reset(0);
-      gt0_resets.gbl_async <= logic_read_data_t.master_reset(1) or logic_read_data_t.master_reset(0);
-      gt0_resets.tx_async  <= logic_read_data_t.master_reset(2);
-      gt0_resets.rx_async  <= logic_read_data_t.master_reset(3);
+      -- reset register write (from processor to FPGA)
+      gbl_reset   <= gbl_reset_t;
+      gbl_reset_t <= logic_read_data_t.master_reset(0);
+      gt0_resets.gbl_async   <= gt0_resets_t.gbl_async;
+      gt0_resets_t.gbl_async <= logic_read_data_t.master_reset(1) or logic_read_data_t.master_reset(0);
+      gt0_resets.tx_async    <= gt0_resets_t.tx_async;
+      gt0_resets_t.tx_async  <= logic_read_data_t.master_reset(2);
+      gt0_resets.rx_async    <= gt0_resets_t.rx_async;
+      gt0_resets_t.rx_async  <= logic_read_data_t.master_reset(3);
+
+      -- reset register read (from FPGA to processor)
+      logic_return_t <= logic_return_t_0;
+      logic_return_t_0.master_reset <= logic_read_data_t.master_reset;
     end if;
-  end process;
+  end process reset_reg;
 
   dbus_txd <= X"00";
   databuf_txd <= X"00";
