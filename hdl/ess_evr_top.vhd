@@ -196,15 +196,13 @@ architecture rtl of ess_evr_top is
 
   signal transfer_shadow_group_t : transfer_shadow_group_t;
   -- CTRL register map
-  -- *      0x01  ->  Global reset
-  -- *      0x02  ->  EVR GT global reset
+  -- *      0x00  ->  EVR GT global reset
   -- *      0x04  ->  EVR GT Tx path reset
   -- *      0x08  ->  EVR GT Rx path reset
   signal logic_read_data_t       : logic_read_data_t;
   signal logic_return_t          : logic_return_t;
 
   signal gt0_ctrl_flags      : gt_ctrl_flags;
-  signal gt0_resets          : gt_resets;
 
 begin
 
@@ -232,7 +230,7 @@ begin
     port map (
       O     => gt0_refclk0,
       ODIV2 => open,
-		  CEB   => gnd,
+	  CEB   => gnd,
       I     => i_ZYNQ_CLKREF0_P,
       IB    => i_ZYNQ_CLKREF0_N);
 
@@ -245,7 +243,7 @@ begin
       TX_POLARITY => '0',
       refclksel => '1')
     port map (
-      sys_clk => sys_clk,
+      i_sys_clk => sys_clk,
       refclk_out => refclk,
       event_clk_out => event_clk,
 
@@ -273,7 +271,7 @@ begin
       databuf_tx_ena => databuf_tx_ena,
       databuf_tx_mode => databuf_tx_mode,
 
-      reset => gt0_resets.gbl_async,
+      i_reset => gt0_resets.gbl_async,
 
       delay_comp_update => delay_comp_update,
       delay_comp_value => delay_comp_value,

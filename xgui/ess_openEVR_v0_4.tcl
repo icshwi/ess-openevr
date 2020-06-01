@@ -1,20 +1,20 @@
 # Definitional proc to organize widgets for parameters.
 proc init_gui { IPINST } {
   ipgui::add_param $IPINST -name "Component_Name"
+  #Adding Page
+  set Page_0 [ipgui::add_page $IPINST -name "Page 0"]
   #Adding Group
-  set AXI-Lite_Interface_Parameters [ipgui::add_group $IPINST -name "AXI-Lite Interface Parameters"]
-  set_property tooltip {AXI-Lite Interface Parameters} ${AXI-Lite_Interface_Parameters}
-  ipgui::add_param $IPINST -name "REGISTER_WIDTH" -parent ${AXI-Lite_Interface_Parameters}
-  ipgui::add_param $IPINST -name "REG_ADDR_WIDTH" -parent ${AXI-Lite_Interface_Parameters}
-  ipgui::add_param $IPINST -name "AXI_DATA_WIDTH" -parent ${AXI-Lite_Interface_Parameters}
-  ipgui::add_param $IPINST -name "AXI_ADDR_WIDTH" -parent ${AXI-Lite_Interface_Parameters}
-  ipgui::add_param $IPINST -name "AXI_WSTRB_WIDTH" -parent ${AXI-Lite_Interface_Parameters}
+  set AXI-Lite_Parameters [ipgui::add_group $IPINST -name "AXI-Lite Parameters" -parent ${Page_0}]
+  ipgui::add_param $IPINST -name "AXI_ADDR_WIDTH" -parent ${AXI-Lite_Parameters}
+  ipgui::add_param $IPINST -name "AXI_WSTRB_WIDTH" -parent ${AXI-Lite_Parameters}
+  ipgui::add_param $IPINST -name "REGISTER_WIDTH" -parent ${AXI-Lite_Parameters}
+  ipgui::add_param $IPINST -name "AXI_DATA_WIDTH" -parent ${AXI-Lite_Parameters}
+  ipgui::add_param $IPINST -name "REG_ADDR_WIDTH" -parent ${AXI-Lite_Parameters}
 
   #Adding Group
-  set Debug_Port_Parameters [ipgui::add_group $IPINST -name "Debug Port Parameters"]
-  set_property tooltip {Debug Port Parameters} ${Debug_Port_Parameters}
-  set g_DEBUG_WIDTH [ipgui::add_param $IPINST -name "g_DEBUG_WIDTH" -parent ${Debug_Port_Parameters}]
-  set_property tooltip {Width of the debug port} ${g_DEBUG_WIDTH}
+  set Debug_Parameters [ipgui::add_group $IPINST -name "Debug Parameters" -parent ${Page_0}]
+  ipgui::add_param $IPINST -name "g_DEBUG_WIDTH" -parent ${Debug_Parameters}
+
 
 
 }
