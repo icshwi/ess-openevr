@@ -87,6 +87,8 @@ end transceiver_dc_k7;
 
 architecture structure of transceiver_dc_k7 is
 
+  attribute mark_debug : string;
+
   signal vcc     : std_logic;
   signal gnd     : std_logic;
   signal gnd_vec : std_logic_vector(31 downto 0);
@@ -261,6 +263,32 @@ architecture structure of transceiver_dc_k7 is
 --      probe0 : IN STD_LOGIC_VECTOR(255 DOWNTO 0)
 --      );
 --  END COMPONENT;
+
+  attribute mark_debug of rx_data : signal is "true";
+  attribute mark_debug of rx_charisk : signal is "true";
+  attribute mark_debug of rx_disperr : signal is "true";
+  attribute mark_debug of rx_notintable : signal is "true";
+  attribute mark_debug of link_ok : signal is "true";
+  attribute mark_debug of CPLLRESET_in : signal is "true";
+  attribute mark_debug of GTTXRESET_in : signal is "true";
+  attribute mark_debug of TXUSERRDY_in : signal is "true";
+  attribute mark_debug of GTRXRESET_in : signal is "true";
+  attribute mark_debug of RXUSERRDY_in : signal is "true";
+  attribute mark_debug of tx_data : signal is "true";
+  attribute mark_debug of tx_charisk : signal is "true";
+  attribute mark_debug of rx_error : signal is "true";
+  attribute mark_debug of rxcdrreset : signal is "true";
+  attribute mark_debug of align_error : signal is "true";
+  attribute mark_debug of databuf_rxd_i : signal is "true";
+  attribute mark_debug of databuf_rx_k_i : signal is "true";
+  attribute mark_debug of RXCDRLOCK_out : signal is "true";
+  attribute mark_debug of RXPCSRESET_in : signal is "true";
+  attribute mark_debug of RXPMARESET_in : signal is "true";
+  attribute mark_debug of RXRESETDONE_out : signal is "true";
+  attribute mark_debug of databuf_tx_mode : signal is "true";
+  attribute mark_debug of databuf_tx_k : signal is "true";
+  attribute mark_debug of databuf_txd : signal is "true";
+  attribute mark_debug of tx_event_ena_i : signal is "true";
 
 begin
 

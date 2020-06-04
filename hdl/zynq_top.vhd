@@ -186,6 +186,22 @@ architecture structure of zynq_top is
 
   signal topology_addr       : std_logic_vector(31 downto 0);
 
+  attribute mark_debug of local_event_rxd : signal is "true";
+  attribute mark_debug of dbus_rxd : signal is "true";
+  attribute mark_debug of databuf_rxd : signal is "true";
+  attribute mark_debug of databuf_rx_k : signal is "true";
+  attribute mark_debug of databuf_rx_ena : signal is "true";
+  attribute mark_debug of databuf_rx_mode : signal is "true";
+  attribute mark_debug of rx_link_ok : signal is "true";
+  attribute mark_debug of rx_violation : signal is "true";
+  attribute mark_debug of rx_clear_viol : signal is "true";
+  attribute mark_debug of delay_comp_locked : signal is "true";
+  attribute mark_debug of delay_comp_update : signal is "true";
+  attribute mark_debug of delay_comp_value : signal is "true";
+  attribute mark_debug of delay_comp_target : signal is "true";
+  attribute mark_debug of dc_status : signal is "true";
+  attribute mark_debug of delay_comp_rx_status : signal is "true";
+
 begin
 
   -- ILA debug core
@@ -281,9 +297,9 @@ begin
 
   databuf_rx_mode <= '1';
   databuf_tx_mode <= '1';
-  dc_mode <= '1';
+  dc_mode <= '0';
 
-  delay_comp_target <= X"02100000";
+  delay_comp_target <= X"00050000"; --originally 02100000
 
   dbus_txd <= X"00";
   databuf_txd <= X"00";

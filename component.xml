@@ -52,7 +52,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>6a00f348</spirit:value>
+            <spirit:value>5fe9c427</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -68,7 +68,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>6a00f348</spirit:value>
+            <spirit:value>5fe9c427</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -82,7 +82,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>289093bc</spirit:value>
+            <spirit:value>d584aac5</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -383,8 +383,8 @@
       <xilinx:displayName>ess_openEVR_v0_1</xilinx:displayName>
       <xilinx:definitionSource>package_project</xilinx:definitionSource>
       <xilinx:vendorDisplayName>European Spallation Source</xilinx:vendorDisplayName>
-      <xilinx:coreRevision>6</xilinx:coreRevision>
-      <xilinx:coreCreationDateTime>2020-05-18T12:32:57Z</xilinx:coreCreationDateTime>
+      <xilinx:coreRevision>7</xilinx:coreRevision>
+      <xilinx:coreCreationDateTime>2020-06-04T14:03:10Z</xilinx:coreCreationDateTime>
       <xilinx:tags>
         <xilinx:tag xilinx:name="ui.data.coregen.dd@2440bbe3_ARCHIVE_LOCATION">/home/felipe/workspace/ess-openevr_ip</xilinx:tag>
         <xilinx:tag xilinx:name="ui.data.coregen.dd@64b86440_ARCHIVE_LOCATION">/home/felipe/workspace/ess-openevr_ip</xilinx:tag>
@@ -432,12 +432,17 @@
         <xilinx:tag xilinx:name="ui.data.coregen.dd@6ff85665_ARCHIVE_LOCATION">/home/felipe/workspace/ess-openevr_ip</xilinx:tag>
         <xilinx:tag xilinx:name="ui.data.coregen.dd@54f4c08b_ARCHIVE_LOCATION">/home/felipe/workspace/ess-openevr_ip</xilinx:tag>
         <xilinx:tag xilinx:name="ui.data.coregen.dd@6a320b71_ARCHIVE_LOCATION">/home/felipe/workspace/ess-openevr_ip</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@28533dc5_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_release/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2411e0eb_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_release/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@11c09274_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_release/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@58ea95a3_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_release/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4fa582ac_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_release/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
       </xilinx:tags>
     </xilinx:coreExtensions>
     <xilinx:packagingInfo>
       <xilinx:xilinxVersion>2019.2.1</xilinx:xilinxVersion>
       <xilinx:checksum xilinx:scope="busInterfaces" xilinx:value="c3a46ca8"/>
-      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="d18d5c95"/>
+      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="e270e9f1"/>
       <xilinx:checksum xilinx:scope="ports" xilinx:value="d75f8522"/>
       <xilinx:checksum xilinx:scope="hdlParameters" xilinx:value="17828790"/>
       <xilinx:checksum xilinx:scope="parameters" xilinx:value="83dd8613"/>
