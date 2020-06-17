@@ -289,6 +289,8 @@ architecture structure of transceiver_dc_k7 is
   attribute mark_debug of databuf_tx_k : signal is "true";
   attribute mark_debug of databuf_txd : signal is "true";
   attribute mark_debug of tx_event_ena_i : signal is "true";
+  attribute mark_debug of fifo_di : signal is "true";
+  attribute mark_debug of fifo_do : signal is "true";
 
 begin
 

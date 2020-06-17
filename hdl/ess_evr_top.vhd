@@ -152,7 +152,10 @@ architecture rtl of ess_evr_top is
   signal databuf_irq_dc      : std_logic;
 
   signal debug_out           : std_logic_vector(g_DEBUG_WIDTH-1 downto 0) := (others => '0');
-
+  
+  attribute mark_debug : string;  
+  attribute mark_debug of event_rxd : signal is "true";
+  
 begin
 
   clk_sys_bufds : IBUFDS
@@ -304,6 +307,17 @@ begin
     end if;
   end process gtx_reset;
 
+   -- Instantiate timestamp component
+   event_timestamp : timestamp
+    port map (
+      event_clk    => event_clk,
+      event_code   => event_rxd,
+      reset        => transceiver_reset,
+      MAP14        => '0',
+      buffer_pop   => '1', 
+      buffer_data  => open,
+      buffer_valid => open
+    );
 
   -- Process to send out event 0x01 periodically
   process (refclk)
