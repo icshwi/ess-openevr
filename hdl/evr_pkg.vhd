@@ -111,11 +111,14 @@ package evr_pkg is
 
 component timestamp is
   Port (
-    event_clk    : in std_logic;
-    event_code   : in std_logic_vector(7 downto 0);
-    reset        : in std_logic;
-    MAP14        : in std_logic;
-    buffer_pop   : in std_logic;
+    event_clk    : in  std_logic;
+    event_code   : in  std_logic_vector(7 downto 0);
+    reset        : in  std_logic;
+    MAP14        : in  std_logic;
+    ts_req       : in  std_logic;
+    ts_data      : out std_logic_vector(63 downto 0);
+    ts_valid     : out std_logic;
+    buffer_pop   : in  std_logic;
     buffer_data  : out std_logic_vector(71 downto 0);
     buffer_valid : out std_logic );
 end component;

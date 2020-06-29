@@ -7,5 +7,9 @@ fpga/output/*
 *.log
 fpga/doc/html/*
 
+# Expanded Xilinx IP files
+ip/*
+!ip/*.xci
+
 # Misc Vivado files
 .Xil/

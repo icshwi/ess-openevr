@@ -27,12 +27,18 @@ library work;
 use work.evr_pkg.ALL;
 
 entity timestamp is  
-  Port ( 
-    event_clk    : in std_logic;
-    event_code   : in std_logic_vector(7 downto 0);
-    reset        : in std_logic;
-    MAP14        : in std_logic;
-    buffer_pop   : in std_logic;
+  Port (
+    -- Event clock and codes from RX transceiver
+    event_clk    : in  std_logic;
+    event_code   : in  std_logic_vector(7 downto 0);
+    reset        : in  std_logic;
+    MAP14        : in  std_logic;
+    -- External timestamp request mechanism
+    ts_req       : in  std_logic;
+    ts_data      : out std_logic_vector(63 downto 0);
+    ts_valid     : out std_logic;
+    -- 512-sample Timestamp event FIFO buffer interface
+    buffer_pop   : in  std_logic;
     buffer_data  : out std_logic_vector(71 downto 0);
     buffer_valid : out std_logic );
 end timestamp;
@@ -40,23 +46,34 @@ end timestamp;
 architecture Behavioral of timestamp is
 
     -- Signals
+    -- Timestamping counter and registers
     signal seconds_shift_reg         : std_logic_vector(31 downto 0) := (others => '0');
     signal seconds_reg               : std_logic_vector(31 downto 0) := (others => '0');
     signal seconds_latch             : std_logic_vector(31 downto 0) := (others => '0');
     signal ts_event_count            : std_logic_vector(31 downto 0) := (others => '0');
     signal ts_latch                  : std_logic_vector(31 downto 0) := (others => '0');
     
-    signal fifo_empty                : std_logic;
-    signal fifo_full                 : std_logic;
-    signal fifo_almost_empty         : std_logic;
-    signal fifo_almost_full          : std_logic;
-    signal fifo_wr_en                : std_logic;
-    signal fifo_rd_en                : std_logic;
-    signal fifo_buffer_valid         : std_logic;
+    -- Event buffer FIFO 
+    signal fifo_empty                : std_logic := '0';
+    signal fifo_full                 : std_logic := '0';
+    signal fifo_almost_empty         : std_logic := '0';
+    signal fifo_almost_full          : std_logic := '0';
+    signal fifo_wr_en                : std_logic := '0';
+    signal fifo_rd_en                : std_logic := '0';
+    signal fifo_buffer_valid         : std_logic := '0';
     signal fifo_count                : std_logic_vector(8 downto 0)  := (others => '0');
     signal fifo_event_data_in        : std_logic_vector(71 downto 0) := (others => '0');
     signal fifo_event_data_out       : std_logic_vector(71 downto 0) := (others => '0');
-
+    
+    -- External trigger timestamp
+    signal ext_trig_ts_data          : std_logic_vector(63 downto 0) := (others => '0');
+    signal ext_trig_ts_valid         : std_logic := '0';
+    signal ext_trig_pulse            : std_logic := '0';
+    signal ext_reg_t                 : std_logic := '0';
+    -- 2-tap TDL of 64-bit values
+    type   ts_delay_line is array (0 to 1) of std_logic_vector(63 downto 0);
+    signal ext_trig_ts_tdl           : ts_delay_line;
+    
     -- Enable debug
     attribute mark_debug : string;
     attribute mark_debug of seconds_shift_reg : signal is "true";
@@ -67,8 +84,6 @@ architecture Behavioral of timestamp is
     
     attribute mark_debug of fifo_empty : signal is "true";
     attribute mark_debug of fifo_full : signal is "true";
-    attribute mark_debug of fifo_almost_empty : signal is "true";
-    attribute mark_debug of fifo_almost_full : signal is "true";
     attribute mark_debug of fifo_wr_en : signal is "true";
     attribute mark_debug of fifo_rd_en : signal is "true";
     attribute mark_debug of fifo_buffer_valid : signal is "true";
@@ -76,9 +91,10 @@ architecture Behavioral of timestamp is
     attribute mark_debug of fifo_event_data_in : signal is "true";
     attribute mark_debug of fifo_event_data_out : signal is "true";
     
-    signal local_event : std_logic_vector(7 downto 0) := (others => '0');
-    attribute mark_debug of local_event : signal is "true";
-    
+    attribute mark_debug of ext_trig_ts_data : signal is "true";
+    attribute mark_debug of ext_trig_ts_valid : signal is "true";
+    attribute mark_debug of ext_trig_ts_tdl : signal is "true";
+
     component fifo_generator_0 IS
       PORT (
         clk : IN STD_LOGIC;
@@ -158,19 +174,7 @@ begin
       end if;
     end if;
   end process MAP14_latch;
-  
-  -- Store event_code in local register
-  loc_event : process(event_clk, reset)
-  begin
-    if reset = '1' then
-      local_event <= (others => '0');
-    else
-      if rising_edge(event_clk) then
-        local_event <= event_code;
-      end if;
-    end if;  
-  end process loc_event;
-  
+      
   -- Generate write control signals for FIFO
   fifo_wr_ctrl : process(event_clk, reset)
   begin
@@ -200,7 +204,7 @@ begin
   -- Don't pop empty FIFO
   fifo_rd_en <= not(fifo_empty) AND buffer_pop; 
   
-  -- It takes on clock cycle for a valid sample to 
+  -- It takes one clock cycle for a valid sample to 
   -- propagate to FIFO dout after rd_en goes high.
   buffer_valid_reg : process(event_clk)
   begin
@@ -208,6 +212,26 @@ begin
       fifo_buffer_valid <= fifo_rd_en;
     end if;
   end process;
+  
+  -- Handling of external trigger
+  ext_trig : process(event_clk)
+  begin
+    -- External trigger input is double-flopped at the top-level
+    -- boundary. Maintain a 2-tap delay-line to align trigger with
+    -- historical timestamps.
+    if rising_edge(event_clk) then
+      ext_reg_t <= ts_req;
+      ext_trig_ts_tdl(1) <= ext_trig_ts_tdl(0);
+      ext_trig_ts_tdl(0) <= seconds_reg & ts_event_count;
+      if ext_trig_pulse = '1' then
+        ext_trig_ts_data  <= ext_trig_ts_tdl(1);
+      end if;
+      ext_trig_ts_valid <= ext_trig_pulse; 
+    end if;
+  end process ext_trig;
+  
+  -- Rising-edge detector
+  ext_trig_pulse <= ts_req AND not(ext_reg_t);
   
   -- Instantiate event FIFO
   event_fifo : fifo_generator_0
@@ -227,5 +251,7 @@ begin
   -- Assign outputs
   buffer_data  <= fifo_event_data_out;
   buffer_valid <= fifo_buffer_valid;
+  ts_data      <= ext_trig_ts_data;
+  ts_valid     <= ext_trig_ts_valid;
 
 end Behavioral;
