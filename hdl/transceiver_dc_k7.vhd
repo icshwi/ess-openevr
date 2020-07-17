@@ -248,8 +248,8 @@ architecture structure of transceiver_dc_k7 is
   signal phase_acc    : std_logic_vector(6 downto 0);
   signal phase_acc_en : std_logic;
   signal drpclk  : std_logic;
-  signal drpaddr : std_logic_vector(8 downto 0);
-  signal drpdi   : std_logic_vector(15 downto 0);
+  signal drpaddr : std_logic_vector(8 downto 0) := (others => '0');
+  signal drpdi   : std_logic_vector(15 downto 0) := (others => '0');
   signal drpdo   : std_logic_vector(15 downto 0);
   signal drpen   : std_logic;
   signal drpwe   : std_logic;
@@ -336,6 +336,12 @@ begin
         SOFT_RESET          => reset,             --User Reset, can be pulled any time
         COMMON_RESET        => CPLLRESET_in
   );
+
+  GTTXRESET_in <= '0' when CPLLLOCK_out = '1' else '1';
+  TXUSERRDY_in <= '1' when CPLLLOCK_out = '1' else '0';
+
+  RXUSERRDY_in <= not rxpath_common_rst;
+  GTRXRESET_in <= rxpath_common_rst;
 
   gtxe2_X0Y0_i :GTXE2_CHANNEL
     generic map
@@ -647,10 +653,10 @@ begin
       DRPADDR                         =>      drpaddr,
       DRPCLK                          =>      drpclk,
       DRPDI                           =>      drpdi,
-      DRPDO                           =>      drpdo,
-      DRPEN                           =>      drpen,
-      DRPRDY                          =>      drprdy,
-      DRPWE                           =>      drpwe,
+      DRPDO                           =>      open,
+      DRPEN                           =>      '0',
+      DRPRDY                          =>      '0',
+      DRPWE                           =>      '0',
      ------------------------------- Clocking Ports -----------------------------
       GTREFCLKMONITOR                 =>      open,
       QPLLCLK                         =>      gnd,
@@ -1332,110 +1338,6 @@ begin
   rx_data <= rxdata_i(15 downto 0);
   txdata_i <= (tied_to_ground_vec_i(47 downto 0) & tx_data);
 
-  -- Scalers for clocks for debugging purposes to see which clocks
-  -- are running using the ILA core
-
---  process (refclk, reset)
---    variable cnt : std_logic_vector(2 downto 0);
---  begin
---    TRIG0(255) <= cnt(cnt'high);
---    if rising_edge(refclk) then
---      cnt := cnt + 1;
---      if reset = '1' then
---        cnt := (others => '0');
---      end if;
---    end if;
---  end process;
-
---  process (sys_clk, reset)
---    variable cnt : std_logic_vector(2 downto 0);
---  begin
---    TRIG0(254) <= cnt(cnt'high);
---    if rising_edge(sys_clk) then
---      cnt := cnt + 1;
---      if reset = '1' then
---        cnt := (others => '0');
---      end if;
---    end if;
---  end process;
-
---  process (event_clk, reset)
---    variable cnt : std_logic_vector(2 downto 0);
---  begin
---    TRIG0(253) <= cnt(cnt'high);
---    if rising_edge(event_clk) then
---      cnt := cnt + 1;
---      if reset = '1' then
---        cnt := (others => '0');
---      end if;
---    end if;
---  end process;
-
---  process (rxusrclk, reset)
---    variable cnt : std_logic_vector(2 downto 0);
---  begin
---    TRIG0(252) <= cnt(cnt'high);
---    if rising_edge(rxusrclk) then
---      cnt := cnt + 1;
---      if reset = '1' then
---        cnt := (others => '0');
---      end if;
---    end if;
---  end process;
-
---  process (txusrclk, reset)
---    variable cnt : std_logic_vector(2 downto 0);
---  begin
---    TRIG0(251) <= cnt(cnt'high);
---    if rising_edge(txusrclk) then
---      cnt := cnt + 1;
---      if reset = '1' then
---        cnt := (others => '0');
---      end if;
---    end if;
---  end process;
-
-  -- cpll_reset: process (sys_clk, reset)
-  --   variable cnt : std_logic_vector(25 downto 0) := (others => '1');
-  -- begin
-  --   if rising_edge(sys_clk) then
-  --     CPLLRESET_in <= cnt(cnt'high);
-  --     if cnt(cnt'high) = '1' then
-  --       cnt := cnt - 1;
-  --       GTTXRESET_in <= '1';
-  --       TXUSERRDY_in <= '0';
-  --     end if;
-  --     if reset = '1' then
-  --       cnt := (others => '1');
-  --     end if;
-  --     if CPLLLOCK_out = '1' then
-  --       GTTXRESET_in <= '0';
-  --       TXUSERRDY_in <= '1';
-  --     end if;
-  --   end if;
-  -- end process;
-  GTTXRESET_in <= '0' when CPLLLOCK_out = '1' else '1';
-  TXUSERRDY_in <= '1' when CPLLLOCK_out = '1' else '0';
-
-
-  -- Pretty dirty way to produce a long reset signal for the GT Rx path
-  -- @ 11.8 ns, the reset pulse is around 0.4 s
-  -- rx_resetting: process (refclk)
-  --   variable cnt : std_logic_vector(25 downto 0) := (others => '1');
-  -- begin
-  --   if rising_edge(refclk) then
-  --     GTRXRESET_in <= cnt(cnt'high);
-  --     RXUSERRDY_in <= not cnt(cnt'high);
-  --     if cnt(cnt'high) = '1' then
-  --       cnt := cnt - 1;
-  --     end if;
-  --     if rxcdrreset = '1' then
-  --       cnt := (others => '1');
-  --     end if;
-  --   end if;
-  -- end process;
-  RXUSERRDY_in <= not rxpath_common_rst;
-  GTRXRESET_in <= rxpath_common_rst;
 
   transmit_data : process (txusrclk, tx_fifo_do, tx_fifo_empty, dbus_txd,
                            databuf_txd, databuf_tx_k, databuf_tx_mode, dc_mode,
@@ -1591,92 +1493,6 @@ begin
         ph_state := init;
         phase := (others => '0');
         cnt := (others => '0');
-      end if;
-    end if;
-  end process;
-
-  process (drpclk, phase_acc, phase_acc_en, reset)
-    type state is (idle, a64_0, a64_1, a64_2, a9f_0, a9f_1, a9f_2, a9f_3, a9f_4, a9f_5);
-    variable drp_state, next_state : state;
-    variable rdy_wait : std_logic;
-  begin
-    if rising_edge(drpclk) then
-      rdy_wait := '0';
-      case drp_state is
-        when a64_0 =>
-          drpaddr <= '0' & X"64";
-          drpdi <= X"00" & '0' & phase_acc;
-          drpen <= '0';
-          drpwe <= '0';
-          next_state := a64_1;
-        when a64_1 =>
-          drpaddr <= '0' & X"64";
-          drpdi <= X"00" & '0' & phase_acc;
-          drpen <= '1';
-          drpwe <= '1';
-          next_state := a64_2;
-        when a64_2 =>
-          drpaddr <= '0' & X"64";
-          drpdi <= X"00" & '0' & phase_acc;
-          drpen <= '0';
-          drpwe <= '0';
-          next_state := a9f_0;
-          rdy_wait := '1';
-        when a9f_0 =>
-          drpaddr <= '0' & X"9F";
-          drpdi <= X"0035";
-          drpen <= '0';
-          drpwe <= '0';
-          next_state := a9f_1;
-        when a9f_1 =>
-          drpaddr <= '0' & X"9F";
-          drpdi <= X"0035";
-          drpen <= '1';
-          drpwe <= '1';
-          next_state := a9f_2;
-        when a9f_2 =>
-          drpaddr <= '0' & X"9F";
-          drpdi <= X"0035";
-          drpen <= '0';
-          drpwe <= '0';
-          rdy_wait := '1';
-          next_state := a9f_3;
-        when a9f_3 =>
-          drpaddr <= '0' & X"9F";
-          drpdi <= X"0034";
-          drpen <= '0';
-          drpwe <= '0';
-          next_state := a9f_4;
-        when a9f_4 =>
-          drpaddr <= '0' & X"9F";
-          drpdi <= X"0034";
-          drpen <= '1';
-          drpwe <= '1';
-          next_state := a9f_5;
-        when a9f_5 =>
-          drpaddr <= '0' & X"9F";
-          drpdi <= X"0034";
-          drpen <= '0';
-          drpwe <= '0';
-          rdy_wait := '1';
-          next_state := idle;
-        when others =>
-          drpaddr <= '0' & X"64";
-          drpdi <= X"00" & '0' & phase_acc;
-          drpen <= '0';
-          drpwe <= '0';
-          next_state := idle;
-          rdy_wait := '0';
-      end case;
-      if rdy_wait = '0' or drprdy = '1' then
-        if drp_state = idle and phase_acc_en = '1' then
-          next_state := a64_0;
-        end if;
-        drp_state := next_state;
-      end if;
-      if reset = '1' then
-        drp_state := idle;
-        rdy_wait := '0';
       end if;
     end if;
   end process;
