@@ -257,6 +257,11 @@ architecture structure of transceiver_dc_k7 is
 
   signal rxpath_common_rst : std_logic := '0';
 
+  signal link_stat_fcaler : std_logic_vector(14 downto 0);
+  signal link_stat_scaler : std_logic_vector(3 downto 0);
+  signal reset_sync : std_logic_vector(1 downto 0);
+  signal loss_lock : std_logic;
+
   signal TRIG0 : std_logic_vector(255 downto 0);
 
 --  COMPONENT ila_0
@@ -1084,17 +1089,33 @@ begin
   rx_int_beacon_i <= fifo_dop(3);
   fifo_dip(3) <= rx_beacon_i;
 
-  receive_error_detect : process (rxusrclk, rx_data, rx_charisk,
+  rx_error_detect: process (refclk)
+  begin
+    if rising_edge(rxusrclk)
+      if (rx_charisk(0) = '1' and rx_data(7) = '1')
+         or rx_disperr /= "00" or rx_notintable /= "00" then
+        rx_error <= '1';
+      else
+        rx_error <= '0';
+      end if;
+    end if;
+  end process;
+
+  rx_error_clk_cross : process (refclk)
+    variable rx_error_sync_d : std_logic;
+  begin
+    if rising_edge(refclk) then
+      rx_error_i <= rx_error_sync_d;
+      rx_error_sync_d := rx_error;
+    end if;
+  end process;
+
+  beacon_detect : process (rxusrclk, rx_data, rx_charisk,
     rx_disperr, rx_notintable)
     variable beacon_cnt : std_logic_vector(2 downto 0) := "000";
     variable cnt : std_logic_vector(12 downto 0);
   begin
     if rising_edge(rxusrclk) then
-      rx_error <= '0';
-      if (rx_charisk(0) = '1' and rx_data(7) = '1') or
-        rx_disperr /= "00" or rx_notintable /= "00" then
-        rx_error <= '1';
-      end if;
       if beacon_cnt(beacon_cnt'high) = '1' then
         beacon_cnt := beacon_cnt - 1;
       end if;
@@ -1112,6 +1133,7 @@ begin
     end if;
   end process;
 
+  -- TODO: do this properly
   link_ok_detection : process (refclk, link_ok, reset, rx_error_i, rx_link_ok_i)
     variable link_ok_delay : std_logic_vector(19 downto 0) := (others => '0');
   begin
@@ -1127,83 +1149,75 @@ begin
     end if;
   end process;
 
-  link_status_testing : process (refclk, reset, rx_charisk, link_ok,
-                                 rx_disperr, CPLLLOCK_out)
-    variable prescaler : std_logic_vector(14 downto 0);
-    variable count : std_logic_vector(3 downto 0);
-    variable rx_error_sync : std_logic;
-    variable rx_error_sync_1 : std_logic;
-    variable loss_lock : std_logic;
-    variable rx_error_count : std_logic_vector(5 downto 0);
-    variable reset_sync : std_logic_vector(1 downto 0);
+  prescaler_link_status : process (refclk)
   begin
---    TRIG0(58 downto 53) <= rx_error_count;
---    TRIG0(59) <= loss_lock;
---    TRIG0(60) <= rx_error_sync;
---    TRIG0(75 downto 61) <= prescaler;
---    TRIG0(79 downto 76) <= count;
+    if rising_edge(refclk) then
+      if GTRXRESET_in = '0' then
+        if link_stat_fscaler(link_stat_fscaler'high) = '1' then
+          if link_stat_sscaler /= "0000" then
+            link_stat_sscaler <= link_stat_sscaler - 1;
+          end if;
+        end if;
 
+        if link_stat_sscaler = "0000" and loss_lock = '1' then
+            link_stat_sscaler <= "1111";
+        end if;
+
+        if link_stat_fscaler(link_stat_fscaler'high) = '1' then
+          link_stat_fscaler <= "011111111111111";
+        else
+          link_stat_fscaler <= link_stat_fscaler - 1;
+        end if;
+
+        if reset_sync(0) = '1' then
+          link_stat_fscaler <= "1111";
+        end if;
+      end if;
+    end if;
+  end process;
+
+  reset_sync_gen : process (refclk)
+  begin
+    if rising_edge(refclk) then
+      -- Synchronize asynchronous resets
+      reset_sync(0) <= reset_sync(1);
+      reset_sync(1) <= '0';
+      if reset = '1' or CPLLLOCK_out = '0' then
+        reset_sync(1) <= '1';
+      end if;
+    end if;
+  end process;
+
+  link_status_testing : process (refclk)
+    variable rx_error_count : std_logic_vector(5 downto 0);
+  begin
     if rising_edge(refclk) then
       rxcdrreset <= '0';
       if GTRXRESET_in = '0' then
         if prescaler(prescaler'high) = '1' then
-          link_ok <= '0';
-          if count = "0000" then
-            link_ok <= '1';
-          end if;
+          case link_stat_fscaler is
+            when "0000" => link_ok    <= '1';
+            when "1111" => rxcdrreset <= '0';
+            when others => link_ok    <= '0';
+          end case;
 
-          if count = "1111" then
-            rxcdrreset <= '1';
-          end if;
-
-          if count(count'high) = '1' then
+          if link_stat_fscaler(link_stat_fscaler'high) = '1' then
             rx_error_count := "011111";
           end if;
-
-          if count /= "0000" then
-            count := count - 1;
-          end if;
         end if;
 
-        if count = "0000" then
-          if loss_lock = '1' then
-            count := "1111";
-          end if;
-        end if;
+        loss_lock <= rx_error_count(5);
 
-        loss_lock := rx_error_count(5);
-
-        if rx_error_sync = '1' then
+        if rx_error_i = '1' then
           if rx_error_count(5) = '0' then
             rx_error_count := rx_error_count - 1;
           end if;
         else
-          if prescaler(prescaler'high) = '1' and
+          if link_stat_fscaler(link_stat_fscaler'high) = '1' and
             (rx_error_count(5) = '1' or rx_error_count(4) = '0') then
             rx_error_count := rx_error_count + 1;
           end if;
         end if;
-
-        if prescaler(prescaler'high) = '1' then
-          prescaler := "011111111111111";
-        else
-          prescaler := prescaler - 1;
-        end if;
-      end if;
-
-      rx_error_i <= rx_error_sync_1;
-      rx_error_sync := rx_error_sync_1;
-      rx_error_sync_1 := rx_error;
-
-      if reset_sync(0) = '1' then
-        count := "1111";
-      end if;
-
-      -- Synchronize asynchronous resets
-      reset_sync(0) := reset_sync(1);
-      reset_sync(1) := '0';
-      if reset = '1' or CPLLLOCK_out = '0' then
-        reset_sync(1) := '1';
       end if;
     end if;
   end process;
