@@ -255,6 +255,8 @@ architecture structure of transceiver_dc_k7 is
   signal drpwe   : std_logic;
   signal drprdy  : std_logic;
 
+  signal rxpath_common_rst : std_logic := '0';
+
   signal TRIG0 : std_logic_vector(255 downto 0);
 
 --  COMPONENT ila_0
@@ -290,6 +292,19 @@ architecture structure of transceiver_dc_k7 is
   attribute mark_debug of databuf_txd : signal is "true";
   attribute mark_debug of tx_event_ena_i : signal is "true";
 
+  component z7_gtx_evr_common_reset is
+  generic
+  (
+        STABLE_CLOCK_PERIOD      : integer := 8        -- Period of the stable clock driving this state-machine, unit is [ns]
+     );
+  port
+     (
+        STABLE_CLOCK             : in std_logic;             --Stable Clock, either a stable clock from the PCB
+        SOFT_RESET               : in std_logic;               --User Reset, can be pulled any time
+        COMMON_RESET             : out std_logic:= '0'  --Reset QPLL
+     );
+  end component;
+
 begin
 
   -- ILA debug core
@@ -297,6 +312,30 @@ begin
 --    port map (
 --      CLK => txusrclk,
 --      probe0 => TRIG0);
+
+  gtrx_reset_gen : z7_gtx_evr_common_reset
+  generic map
+  (
+        STABLE_CLOCK_PERIOD => 11       -- Period of the stable clock driving this state-machine, unit is [ns]
+  )
+  port map
+  (
+        STABLE_CLOCK        => refclk,           --Stable Clock, either a stable clock from the PCB
+        SOFT_RESET          => rxcdrreset,             --User Reset, can be pulled any time
+        COMMON_RESET        => rxpath_common_rst
+  );
+
+  cpll_reset_gen : z7_gtx_evr_common_reset
+  generic map
+  (
+        STABLE_CLOCK_PERIOD => 11       -- Period of the stable clock driving this state-machine, unit is [ns]
+  )
+  port map
+  (
+        STABLE_CLOCK        => refclk,           --Stable Clock, either a stable clock from the PCB
+        SOFT_RESET          => reset,             --User Reset, can be pulled any time
+        COMMON_RESET        => CPLLRESET_in
+  );
 
   gtxe2_X0Y0_i :GTXE2_CHANNEL
     generic map
@@ -1356,40 +1395,47 @@ begin
 --    end if;
 --  end process;
 
-  cpll_reset: process (sys_clk, reset)
-    variable cnt : std_logic_vector(25 downto 0) := (others => '1');
-  begin
-    if rising_edge(sys_clk) then
-      CPLLRESET_in <= cnt(cnt'high);
-      if cnt(cnt'high) = '1' then
-        cnt := cnt - 1;
-        GTTXRESET_in <= '1';
-        TXUSERRDY_in <= '0';
-      end if;
-      if reset = '1' then
-        cnt := (others => '1');
-      end if;
-      if CPLLLOCK_out = '1' then
-        GTTXRESET_in <= '0';
-        TXUSERRDY_in <= '1';
-      end if;
-    end if;
-  end process;
+  -- cpll_reset: process (sys_clk, reset)
+  --   variable cnt : std_logic_vector(25 downto 0) := (others => '1');
+  -- begin
+  --   if rising_edge(sys_clk) then
+  --     CPLLRESET_in <= cnt(cnt'high);
+  --     if cnt(cnt'high) = '1' then
+  --       cnt := cnt - 1;
+  --       GTTXRESET_in <= '1';
+  --       TXUSERRDY_in <= '0';
+  --     end if;
+  --     if reset = '1' then
+  --       cnt := (others => '1');
+  --     end if;
+  --     if CPLLLOCK_out = '1' then
+  --       GTTXRESET_in <= '0';
+  --       TXUSERRDY_in <= '1';
+  --     end if;
+  --   end if;
+  -- end process;
+  GTTXRESET_in <= '0' when CPLLLOCK_out = '1' else '1';
+  TXUSERRDY_in <= '1' when CPLLLOCK_out = '1' else '0';
 
-  rx_resetting: process (refclk, rxcdrreset)
-    variable cnt : std_logic_vector(25 downto 0) := (others => '1');
-  begin
-    if rising_edge(refclk) then
-      GTRXRESET_in <= cnt(cnt'high);
-      RXUSERRDY_in <= not cnt(cnt'high);
-      if cnt(cnt'high) = '1' then
-        cnt := cnt - 1;
-      end if;
-      if rxcdrreset = '1' then
-        cnt := (others => '1');
-      end if;
-    end if;
-  end process;
+
+  -- Pretty dirty way to produce a long reset signal for the GT Rx path
+  -- @ 11.8 ns, the reset pulse is around 0.4 s
+  -- rx_resetting: process (refclk)
+  --   variable cnt : std_logic_vector(25 downto 0) := (others => '1');
+  -- begin
+  --   if rising_edge(refclk) then
+  --     GTRXRESET_in <= cnt(cnt'high);
+  --     RXUSERRDY_in <= not cnt(cnt'high);
+  --     if cnt(cnt'high) = '1' then
+  --       cnt := cnt - 1;
+  --     end if;
+  --     if rxcdrreset = '1' then
+  --       cnt := (others => '1');
+  --     end if;
+  --   end if;
+  -- end process;
+  RXUSERRDY_in <= not rxpath_common_rst;
+  GTRXRESET_in <= rxpath_common_rst;
 
   transmit_data : process (txusrclk, tx_fifo_do, tx_fifo_empty, dbus_txd,
                            databuf_txd, databuf_tx_k, databuf_tx_mode, dc_mode,
