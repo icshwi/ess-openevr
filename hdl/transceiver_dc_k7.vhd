@@ -1229,39 +1229,45 @@ begin
     end if;
   end process;
 
-  reg_dbus_data : process (event_clk, rx_link_ok_i, rx_data, databuf_rxd_i, databuf_rx_k_i)
-    variable even : std_logic;
+  rx_path_ctrl : process (event_clk)
+  begin
+    if rising_edge(event_clk) then
+      if reset = '1' then
+        databuf_rx_cycle <= '0';
+      else
+        databuf_rx_cycle <= not databuf_rx_cycle;
+      end if;
+    end if;
+  end process;
+
+  reg_dbus_data : process (event_clk)
   begin
     databuf_rxd <= databuf_rxd_i;
     databuf_rx_k <= databuf_rx_k_i;
+
     if rising_edge(event_clk) then
-      if databuf_rx_mode = '0' or even = '0' then
-        dbus_rxd <= fifo_do(7 downto 0);
-      end if;
-
-      if databuf_rx_mode = '1' then
-        if even = '1' then
-          databuf_rxd_i <= fifo_do(7 downto 0);
-          databuf_rx_k_i <= fifo_dop(0);
-        end if;
-      else
-        databuf_rxd_i <= (others => '0');
-        databuf_rx_k_i <= '0';
-      end if;
-
-      databuf_rx_ena <= even;
-
-      if rx_link_ok_i = '0' then
+      if reset = '1' or rx_link_ok = '0' or fifo_dop(1) = '1' then
         databuf_rxd_i <= (others => '0');
         databuf_rx_k_i <= '0';
         dbus_rxd <= (others => '0');
-      end if;
-
-      even := not even;
-      event_rxd <= fifo_do(15 downto 8);
-      if rx_link_ok_i = '0' or fifo_dop(1) = '1' or reset = '1' then
         event_rxd <= (others => '0');
-        even := '0';
+      else
+        if databuf_rx_cycle = '0' then
+          dbus_rxd <= fifo_do(7 downto 0);
+        end if;
+
+        case databuf_rx_mode is
+          when '0' =>
+            dbus_rxd <= fifo_do(7 downto 0);
+            databuf_rxd_i <= (others => '0');
+            databuf_rx_k_i <= '0';
+          when '1' and databuf_rx_cycle = '1' =>
+            databuf_rxd_i <= fifo_do(7 downto 0);
+            databuf_rx_k_i <= fifo_dop(0);
+          when others =>
+            databuf_rxd_i <= (others => '0');
+            databuf_rx_k_i <= '0';
+        end case;
       end if;
     end if;
   end process;
@@ -1364,7 +1370,10 @@ begin
     variable control_event_gen : std_logic_vector(1 downto 0) := "00";
   begin
     if rising_edge(txusrclk) then
-      if beacon_cnt(1 downto 0) = "10" and dc_mode = '1' then
+      if reset = '1' then
+        tx_path_state <= s_EVENT_EMPTY;
+        control_event_gen <= '0';
+      elsif beacon_cnt(1 downto 0) = "10" and dc_mode = '1' then
         tx_path_state <= s_EVENT_BEACON;
       elsif tx_fifo_rderr = '0' then
         tx_path_state <= s_EVENT_USER;
@@ -1381,40 +1390,45 @@ begin
     end if;
   end process;
 
+  transmit_data_comb : process (beacon_cnt, dc_mode, tx_path_state)
+    variable cur_state : timing_event;
+  begin
+    if beacon_cnt(1 downto 0) = "10" and dc_mode = '1' then
+      if tx_fifo_empty = '0' then
+        tx_fifo_rden <= '0';
+      else
+        tx_fifo_rden <= '1';
+      end if;
+    else
+      tx_fifo_rden <= '1';
+    end if;
 
-  transmit_data : process (txusrclk,tx_fifo_empty,databuf_tx_k, dc_mode,reset)
+    cur_state := tx_path_state;
+
+    case cur_state is
+      when s_EVENT_BEACON =>
+        tx_data(15 downto 8) <= C_EVENT_BEACON; -- 7E
+      when s_EVENT_CONTROL =>
+        tx_charisk <= "10";
+        tx_data(15 downto 8) <= X"BC"; -- K28.5 character
+      when s_EVENT_USER =>
+        tx_data(15 downto 8) <= tx_fifo_do(7 downto 0);
+        fifo_pend := '0';
+      when s_EVENT_EMPTY =>
+        tx_charisk <= "00";
+        tx_data(15 downto 8) <= (others => '0');
+        tx_beacon <= beacon_cnt(1);
+      when others =>
+        tx_charisk <= "00";
+        tx_data(15 downto 8) <= (others => '0');
+    end case;
+  end process;
+
+  transmit_data : process (txusrclk)
     variable beacon_cnt : std_logic_vector(3 downto 0) := "0000";
     variable fifo_pend  : std_logic;
   begin
-    tx_event_ena <= tx_event_ena_i;
-    tx_event_ena_i <= '1';
-    tx_fifo_rden <= '1';
-    if beacon_cnt(1 downto 0) = "10" and dc_mode = '1' then
-      tx_event_ena_i <= '0';
-      if tx_fifo_empty = '0' then
-        tx_fifo_rden <= '0';
-      end if;
-    end if;
-
     if rising_edge(txusrclk) then
-      case tx_path_state is
-        when s_EVENT_BEACON =>
-          tx_data(15 downto 8) <= C_EVENT_BEACON; -- 7E
-        when s_EVENT_CONTROL =>
-          tx_charisk <= "10";
-          tx_data(15 downto 8) <= X"BC"; -- K28.5 character
-        when s_EVENT_USER =>
-          tx_data(15 downto 8) <= tx_fifo_do(7 downto 0);
-          fifo_pend := '0';
-        when s_EVENT_EMPTY =>
-          tx_charisk <= "00";
-          tx_data(15 downto 8) <= (others => '0');
-          tx_beacon <= beacon_cnt(1);
-        when others =>
-          tx_charisk <= "00";
-          tx_data(15 downto 8) <= (others => '0');
-      end case;
-
       if tx_fifo_empty = '0' then
         fifo_pend := '1';
       end if;
