@@ -1096,7 +1096,7 @@ begin
   rx_int_beacon_i <= fifo_dop(3);
   fifo_dip(3) <= rx_beacon_i;
 
-  rx_error_detect: process (refclk)
+  rx_error_detect: process (rxusrclk)
   begin
     if rising_edge(rxusrclk)
       if (rx_charisk(0) = '1' and rx_data(7) = '1')
