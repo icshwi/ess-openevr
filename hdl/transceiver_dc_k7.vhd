@@ -230,6 +230,13 @@ architecture structure of transceiver_dc_k7 is
   signal txdata0_i                        :   std_logic_vector(31 downto 0);
   signal txkerr0_float_i                  :   std_logic_vector(1 downto 0);
   signal txrundisp0_float_i               :   std_logic_vector(1 downto 0);
+  -- States for the Tx path state machine:
+  type timing_event is (s_EVENT_BEACON,   -- Send a beacon event for DC mode
+                        s_EVENT_USER,     -- Send a regular user event
+                        s_EVENT_CONTROL,  -- Send the K28.5 control character
+                        s_EVENT_EMPTY);   -- Send empty data
+  signal tx_path_state : timing_event;
+  signal tx_beacon_gen : std_logic := '0'; -- A Tx beacon is generated every 2 K28.5
 
 
   -- RX Datapath signals
@@ -1352,11 +1359,30 @@ begin
   rx_data <= rxdata_i(15 downto 0);
   txdata_i <= (tied_to_ground_vec_i(47 downto 0) & tx_data);
 
+  -- Priority encoder for the Tx path FSM state transition
+  tx_path_fsm_ctrl : process (txusrclk)
+    variable control_event_gen : std_logic_vector(1 downto 0) := "00";
+  begin
+    if rising_edge(txusrclk) then
+      if beacon_cnt(1 downto 0) = "10" and dc_mode = '1' then
+        tx_path_state <= s_EVENT_BEACON;
+      elsif tx_fifo_rderr = '0' then
+        tx_path_state <= s_EVENT_USER;
+      elsif control_event_gen = "00" then
+        tx_path_state <= s_EVENT_CONTROL;
+        tx_beacon_gen <= not tx_beacon_gen;
+      elsif tx_beacon_gen = '1' then
+        tx_path_state <= s_EVENT_EMPTY_EVEN;
+      else
+        tx_path_state <= s_EVENT_EMPTY;
+      end if;
 
-  transmit_data : process (txusrclk, tx_fifo_do, tx_fifo_empty, dbus_txd,
-                           databuf_txd, databuf_tx_k, databuf_tx_mode, dc_mode,
-                           reset)
-    variable even       : std_logic_vector(1 downto 0) := "00";
+      control_event_gen <= control_event_gen + 1;
+    end if;
+  end process;
+
+
+  transmit_data : process (txusrclk,tx_fifo_empty,databuf_tx_k, dc_mode,reset)
     variable beacon_cnt : std_logic_vector(3 downto 0) := "0000";
     variable fifo_pend  : std_logic;
   begin
@@ -1369,32 +1395,36 @@ begin
         tx_fifo_rden <= '0';
       end if;
     end if;
+
     if rising_edge(txusrclk) then
-      tx_charisk <= "00";
-      tx_data(15 downto 8) <= (others => '0');
-      tx_beacon <= beacon_cnt(1);
-      if beacon_cnt(1 downto 0) = "10" and dc_mode = '1' then
-        tx_data(15 downto 8) <= C_EVENT_BEACON; -- Beacon event
-      elsif tx_fifo_rderr = '0' then
-        tx_data(15 downto 8) <= tx_fifo_do(7 downto 0);
-        fifo_pend := '0';
-      elsif even = "00" then
-        tx_charisk <= "10";
-        tx_data(15 downto 8) <= X"BC"; -- K28.5 character
-      end if;
+      case tx_path_state is
+        when s_EVENT_BEACON =>
+          tx_data(15 downto 8) <= C_EVENT_BEACON; -- 7E
+        when s_EVENT_CONTROL =>
+          tx_charisk <= "10";
+          tx_data(15 downto 8) <= X"BC"; -- K28.5 character
+        when s_EVENT_USER =>
+          tx_data(15 downto 8) <= tx_fifo_do(7 downto 0);
+          fifo_pend := '0';
+        when s_EVENT_EMPTY =>
+          tx_charisk <= "00";
+          tx_data(15 downto 8) <= (others => '0');
+          tx_beacon <= beacon_cnt(1);
+        when others =>
+          tx_charisk <= "00";
+          tx_data(15 downto 8) <= (others => '0');
+      end case;
 
       if tx_fifo_empty = '0' then
         fifo_pend := '1';
       end if;
 
       tx_data(7 downto 0) <= dbus_txd;
-      if even(0) = '0' and databuf_tx_mode = '1' then
+      if tx_beacon_gen = '0' and databuf_tx_mode = '1' then
         tx_data(7 downto 0) <= databuf_txd;
         tx_charisk(0) <= databuf_tx_k;
       end if;
-      databuf_tx_ena <= even(0);
---      TRIG0(118) <= even(0);
-      even := even + 1;
+      databuf_tx_ena <= tx_beacon_gen;
       beacon_cnt := rx_beacon_i & beacon_cnt(beacon_cnt'high downto 1);
       if reset = '1' then
         fifo_pend := '0';
