@@ -221,7 +221,6 @@ architecture structure of transceiver_dc_k7 is
   signal rxdisperr0_float_i               :   std_logic_vector(1 downto 0);
   signal rxnotintable0_float_i            :   std_logic_vector(1 downto 0);
   signal rxrundisp0_float_i               :   std_logic_vector(1 downto 0);
-  signal databuf_rx_cycle                 :   std_logic := '0';
 
   -- TX Datapath signals
   signal txdata0_i                        :   std_logic_vector(31 downto 0);
@@ -264,11 +263,6 @@ architecture structure of transceiver_dc_k7 is
   signal drprdy  : std_logic;
 
   signal rxpath_common_rst : std_logic := '0';
-
-  signal link_stat_fscaler : std_logic_vector(14 downto 0);
-  signal link_stat_sscaler : std_logic_vector(3 downto 0);
-  signal reset_sync : std_logic_vector(1 downto 0);
-  signal loss_lock : std_logic;
 
   attribute mark_debug of rx_data : signal is "true";
   attribute mark_debug of rx_charisk : signal is "true";
@@ -1127,120 +1121,114 @@ begin
     end if;
   end process;
 
-  prescaler_link_status : process (refclk)
-  begin
-    if rising_edge(refclk) then
-      if GTRXRESET_in = '0' then
-        if link_stat_fscaler(link_stat_fscaler'high) = '1' then
-          if link_stat_sscaler /= "0000" then
-            link_stat_sscaler <= link_stat_sscaler - 1;
-          end if;
-        end if;
-
-        if link_stat_sscaler = "0000" and loss_lock = '1' then
-            link_stat_sscaler <= "1111";
-        end if;
-
-        if link_stat_fscaler(link_stat_fscaler'high) = '1' then
-          link_stat_fscaler <= "011111111111111";
-        else
-          link_stat_fscaler <= link_stat_fscaler - 1;
-        end if;
-
-        if reset_sync(0) = '1' then
-          link_stat_sscaler <= "1111";
-        end if;
-      end if;
-    end if;
-  end process;
-
-  reset_sync_gen : process (refclk)
-  begin
-    if rising_edge(refclk) then
-      -- Synchronize asynchronous resets
-      reset_sync(0) <= reset_sync(1);
-      reset_sync(1) <= '0';
-      if reset = '1' or CPLLLOCK_out = '0' then
-        reset_sync(1) <= '1';
-      end if;
-    end if;
-  end process;
-
-  link_status_testing : process (refclk)
+  link_status_testing : process (refclk, reset, rx_charisk, link_ok,
+                                 rx_disperr, CPLLLOCK_out)
+    variable prescaler : std_logic_vector(14 downto 0);
+    variable count : std_logic_vector(3 downto 0);
+    variable rx_error_sync : std_logic;
+    variable rx_error_sync_1 : std_logic;
+    variable loss_lock : std_logic;
     variable rx_error_count : std_logic_vector(5 downto 0);
+    variable reset_sync : std_logic_vector(1 downto 0);
   begin
     if rising_edge(refclk) then
       rxcdrreset <= '0';
       if GTRXRESET_in = '0' then
-        if link_stat_fscaler(link_stat_fscaler'high) = '1' then
-          case link_stat_sscaler is
-            when "0000" => link_ok    <= '1';
-            when "1111" => rxcdrreset <= '0';
-            when others => link_ok    <= '0';
-          end case;
+        if prescaler(prescaler'high) = '1' then
+          link_ok <= '0';
+          if count = "0000" then
+            link_ok <= '1';
+          end if;
 
-          if link_stat_fscaler(link_stat_fscaler'high) = '1' then
+          if count = "1111" then
+            rxcdrreset <= '1';
+          end if;
+
+          if count(count'high) = '1' then
             rx_error_count := "011111";
+          end if;
+
+          if count /= "0000" then
+            count := count - 1;
           end if;
         end if;
 
-        loss_lock <= rx_error_count(5);
+        if count = "0000" then
+          if loss_lock = '1' then
+            count := "1111";
+          end if;
+        end if;
 
-        if rx_error_i = '1' then
+        loss_lock := rx_error_count(5);
+
+        if rx_error_sync = '1' then
           if rx_error_count(5) = '0' then
             rx_error_count := rx_error_count - 1;
           end if;
         else
-          if link_stat_fscaler(link_stat_fscaler'high) = '1' and
+          if prescaler(prescaler'high) = '1' and
             (rx_error_count(5) = '1' or rx_error_count(4) = '0') then
             rx_error_count := rx_error_count + 1;
           end if;
         end if;
+
+        if prescaler(prescaler'high) = '1' then
+          prescaler := "011111111111111";
+        else
+          prescaler := prescaler - 1;
+        end if;
+      end if;
+
+      rx_error_i <= rx_error_sync_1;
+      rx_error_sync := rx_error_sync_1;
+      rx_error_sync_1 := rx_error;
+
+      if reset_sync(0) = '1' then
+        count := "1111";
+      end if;
+
+      -- Synchronize asynchronous resets
+      reset_sync(0) := reset_sync(1);
+      reset_sync(1) := '0';
+      if reset = '1' or CPLLLOCK_out = '0' then
+        reset_sync(1) := '1';
       end if;
     end if;
   end process;
 
-  rx_path_ctrl : process (event_clk)
-  begin
-    if rising_edge(event_clk) then
-      if reset = '1' then
-        databuf_rx_cycle <= '0';
-      else
-        databuf_rx_cycle <= not databuf_rx_cycle;
-      end if;
-    end if;
-  end process;
-
-  reg_dbus_data : process (event_clk)
+  reg_dbus_data : process (event_clk, rx_link_ok_i, rx_data, databuf_rxd_i, databuf_rx_k_i)
+    variable even : std_logic;
   begin
     databuf_rxd <= databuf_rxd_i;
     databuf_rx_k <= databuf_rx_k_i;
-
     if rising_edge(event_clk) then
-      if reset = '1' or rx_link_ok_i = '0' or fifo_dop(1) = '1' then
+      if databuf_rx_mode = '0' or even = '0' then
+        dbus_rxd <= fifo_do(7 downto 0);
+      end if;
+
+      if databuf_rx_mode = '1' then
+        if even = '1' then
+          databuf_rxd_i <= fifo_do(7 downto 0);
+          databuf_rx_k_i <= fifo_dop(0);
+        end if;
+      else
+        databuf_rxd_i <= (others => '0');
+        databuf_rx_k_i <= '0';
+      end if;
+
+      databuf_rx_ena <= even;
+
+      if rx_link_ok_i = '0' then
         databuf_rxd_i <= (others => '0');
         databuf_rx_k_i <= '0';
         dbus_rxd <= (others => '0');
-        event_rxd <= (others => '0');
-      else
-        if databuf_rx_cycle = '0' then
-          dbus_rxd <= fifo_do(7 downto 0);
-        end if;
+      end if;
 
-        case databuf_rx_mode is
-          when '0' =>
-            dbus_rxd <= fifo_do(7 downto 0);
-            databuf_rxd_i <= (others => '0');
-            databuf_rx_k_i <= '0';
-          when '1' =>
-            if databuf_rx_cycle = '1' then
-              databuf_rxd_i <= fifo_do(7 downto 0);
-              databuf_rx_k_i <= fifo_dop(0);
-            end if;
-          when others =>
-            databuf_rxd_i <= (others => '0');
-            databuf_rx_k_i <= '0';
-        end case;
+      even := not even;
+      event_rxd <= fifo_do(15 downto 8);
+      if rx_link_ok_i = '0' or fifo_dop(1) = '1' or reset = '1' then
+        event_rxd <= (others => '0');
+        even := '0';
       end if;
     end if;
   end process;
