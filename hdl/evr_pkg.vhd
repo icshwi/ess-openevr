@@ -126,6 +126,20 @@ package evr_pkg is
     );
   end component;
 
+component timestamp is
+  Port (
+    event_clk    : in  std_logic;
+    event_code   : in  std_logic_vector(7 downto 0);
+    reset        : in  std_logic;
+    MAP14        : in  std_logic;
+    ts_req       : in  std_logic;
+    ts_data      : out std_logic_vector(63 downto 0);
+    ts_valid     : out std_logic;
+    buffer_pop   : in  std_logic;
+    buffer_data  : out std_logic_vector(71 downto 0);
+    buffer_valid : out std_logic );
+end component;
+
   type integer_array is array (integer range <>) of integer;
   constant EVENT_RATE          : integer := 125000000;
   constant MGT_RX_PRESCALER    : integer := 1024;
@@ -145,6 +159,10 @@ package evr_pkg is
   constant C_EVENT_CODE_BITS    : integer := 8;
   constant C_EVENT_HEARTBEAT    : std_logic_vector(7 downto 0) := X"7A";
   constant C_EVENT_BEACON       : std_logic_vector(7 downto 0) := X"7E";
+  -- Timestamp related event codes
+  constant C_EVENT_SECONDS_0      : std_logic_vector(C_EVENT_CODE_BITS-1 downto 0) := x"70";
+  constant C_EVENT_SECONDS_1      : std_logic_vector(C_EVENT_CODE_BITS-1 downto 0) := x"71";
+  constant C_EVENT_TS_COUNT_RESET : std_logic_vector(C_EVENT_CODE_BITS-1 downto 0) := x"7D";
   constant C_EVR_DBUS_BITS      : integer := 8;
   constant C_EVR_MAX_PULSE_GENS : integer := 32;
   constant C_EVR_PULSE_GATES    : integer := 4;

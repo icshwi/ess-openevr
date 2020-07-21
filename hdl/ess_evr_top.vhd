@@ -65,7 +65,12 @@ entity ess_evr_top is
     o_EVR_TX_N     : out std_logic;
     i_EVR_RX_P     : in std_logic;
     i_EVR_RX_N     : in std_logic;
-
+    
+    --! External timestamp request 
+    i_TS_req   : in  std_logic;
+    o_TS_data  : out std_logic_vector(63 downto 0);
+    o_TS_valid : out std_logic;
+    
     --! SFP Link LED
     o_EVR_LINK_LED : out std_logic;
     --! SFP Event LED
@@ -136,7 +141,6 @@ architecture rtl of ess_evr_top is
   signal delay_comp_update  : std_logic;
   signal delay_comp_value   : std_logic_vector(31 downto 0);
 
-
   signal dc_status             : std_logic_vector(31 downto 0);
   signal delay_comp_rx_status : std_logic_vector(31 downto 0);
 
@@ -149,8 +153,19 @@ architecture rtl of ess_evr_top is
   signal databuf_ov_flag     : std_logic_vector(0 to 127);
   signal databuf_clear_flag  : std_logic_vector(0 to 127);
   signal databuf_irq_dc      : std_logic;
-
+  
+  -- Timestamp external trigger
+  signal ext_ts_trig : std_logic;
+  signal ext_ts_trig_t : std_logic;
+  
+  -- Debug
   signal debug_out           : std_logic_vector(g_DEBUG_WIDTH-1 downto 0) := (others => '0');
+  
+  attribute mark_debug : string;  
+  attribute mark_debug of event_rxd : signal is "true";
+  attribute mark_debug of ext_ts_trig : signal is "true";
+  attribute mark_debug of ext_ts_trig_t : signal is "true";
+  attribute mark_debug of debug_out : signal is "true";
 
 begin
 
@@ -303,6 +318,20 @@ begin
     end if;
   end process gtx_reset;
 
+   -- Instantiate timestamp component
+   event_timestamp : timestamp
+    port map (
+      event_clk    => event_clk,
+      event_code   => event_rxd,
+      reset        => transceiver_reset,
+      ts_req       => ext_ts_trig,
+      ts_data      => o_TS_data,
+      ts_valid     => o_TS_valid,
+      MAP14        => '0',
+      buffer_pop   => '1', 
+      buffer_data  => open,
+      buffer_valid => open
+    );
 
   -- Process to send out event 0x01 periodically
   process (refclk)
@@ -315,6 +344,16 @@ begin
         count := X"FFFFFFFF";
       end if;
       count := count - 1;
+    end if;
+  end process;
+  
+  -- Bring external trigger pulse signal into event_clk time-domain
+  process(event_clk)
+  begin
+    -- Double flip-flop the incoming signals
+    if rising_edge(event_clk) then
+      ext_ts_trig_t <= i_TS_req;
+      ext_ts_trig   <= ext_ts_trig_t;
     end if;
   end process;
 

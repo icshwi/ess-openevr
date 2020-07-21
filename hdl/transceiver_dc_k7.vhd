@@ -114,6 +114,8 @@ architecture structure of transceiver_dc_k7 is
   signal txusrclk      : std_logic;
   signal rxcdrreset    : std_logic;
 
+  signal RXEQMIX       : std_logic_vector(1 downto 0);
+
   signal link_ok         : std_logic;
   signal align_error     : std_logic;
   signal rx_error        : std_logic;
@@ -149,6 +151,8 @@ architecture structure of transceiver_dc_k7 is
   signal tx_fifo_wren  : std_logic;
   signal tx_fifo_di    : std_logic_vector(31 downto 0);
   signal tx_fifo_dip   : std_logic_vector(3 downto 0);
+
+  signal tx_event_ena_i : std_logic;
 
   -- RX Datapath signals
   signal rxdata_i                         :   std_logic_vector(63 downto 0);
@@ -288,6 +292,9 @@ architecture structure of transceiver_dc_k7 is
   attribute mark_debug of databuf_tx_mode : signal is "true";
   attribute mark_debug of databuf_tx_k : signal is "true";
   attribute mark_debug of databuf_txd : signal is "true";
+  attribute mark_debug of tx_event_ena_i : signal is "true";
+  attribute mark_debug of fifo_di : signal is "true";
+  attribute mark_debug of fifo_do : signal is "true";
 
 begin
 
@@ -1013,6 +1020,7 @@ begin
 
   EVENT_CLK_o <= REFCLK1; -- Assign output of clock buf back to top
 
+  RXEQMIX <= "01";
   RXDFELPMRESET_in <= reset;
   RXDLYEN_in <= '0';
   RXDLYSRESET_in <= reset;
@@ -1105,7 +1113,6 @@ begin
     end if;
   end process;
 
-  -- TODO: do this properly
   link_ok_detection : process (refclk, link_ok, reset, rx_error_i, rx_link_ok_i)
     variable link_ok_delay : std_logic_vector(19 downto 0) := (others => '0');
   begin
