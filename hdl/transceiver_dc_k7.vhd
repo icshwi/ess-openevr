@@ -235,6 +235,9 @@ architecture structure of transceiver_dc_k7 is
   signal tx_path_state                    : timing_event;
   -- A Tx beacon is generated every 2 K28.5
   signal tx_beacon_gen                    : std_logic := '0';
+  signal beacon_cnt : std_logic_vector(3 downto 0) := "0000";
+  signal fifo_pend  : std_logic := '0';
+
 
 
   -- RX Datapath signals
@@ -262,8 +265,8 @@ architecture structure of transceiver_dc_k7 is
 
   signal rxpath_common_rst : std_logic := '0';
 
-  signal link_stat_fcaler : std_logic_vector(14 downto 0);
-  signal link_stat_scaler : std_logic_vector(3 downto 0);
+  signal link_stat_fscaler : std_logic_vector(14 downto 0);
+  signal link_stat_sscaler : std_logic_vector(3 downto 0);
   signal reset_sync : std_logic_vector(1 downto 0);
   signal loss_lock : std_logic;
 
@@ -636,7 +639,7 @@ begin
     DRPDI                           =>      drpdi,
     DRPDO                           =>      open,
     DRPEN                           =>      '0',
-    DRPRDY                          =>      '0',
+    DRPRDY                          =>      drprdy,
     DRPWE                           =>      '0',
    ------------------------------- Clocking Ports -----------------------------
     GTREFCLKMONITOR                 =>      open,
@@ -1066,7 +1069,7 @@ begin
 
   rx_error_detect: process (rxusrclk)
   begin
-    if rising_edge(rxusrclk)
+    if rising_edge(rxusrclk) then
       if (rx_charisk(0) = '1' and rx_data(7) = '1')
          or rx_disperr /= "00" or rx_notintable /= "00" then
         rx_error <= '1';
@@ -1145,7 +1148,7 @@ begin
         end if;
 
         if reset_sync(0) = '1' then
-          link_stat_fscaler <= "1111";
+          link_stat_sscaler <= "1111";
         end if;
       end if;
     end if;
@@ -1169,8 +1172,8 @@ begin
     if rising_edge(refclk) then
       rxcdrreset <= '0';
       if GTRXRESET_in = '0' then
-        if prescaler(prescaler'high) = '1' then
-          case link_stat_fscaler is
+        if link_stat_fscaler(link_stat_fscaler'high) = '1' then
+          case link_stat_sscaler is
             when "0000" => link_ok    <= '1';
             when "1111" => rxcdrreset <= '0';
             when others => link_ok    <= '0';
@@ -1214,7 +1217,7 @@ begin
     databuf_rx_k <= databuf_rx_k_i;
 
     if rising_edge(event_clk) then
-      if reset = '1' or rx_link_ok = '0' or fifo_dop(1) = '1' then
+      if reset = '1' or rx_link_ok_i = '0' or fifo_dop(1) = '1' then
         databuf_rxd_i <= (others => '0');
         databuf_rx_k_i <= '0';
         dbus_rxd <= (others => '0');
@@ -1229,9 +1232,11 @@ begin
             dbus_rxd <= fifo_do(7 downto 0);
             databuf_rxd_i <= (others => '0');
             databuf_rx_k_i <= '0';
-          when '1' and databuf_rx_cycle = '1' =>
-            databuf_rxd_i <= fifo_do(7 downto 0);
-            databuf_rx_k_i <= fifo_dop(0);
+          when '1' =>
+            if databuf_rx_cycle = '1' then
+              databuf_rxd_i <= fifo_do(7 downto 0);
+              databuf_rx_k_i <= fifo_dop(0);
+            end if;
           when others =>
             databuf_rxd_i <= (others => '0');
             databuf_rx_k_i <= '0';
@@ -1292,7 +1297,7 @@ begin
     if rising_edge(txusrclk) then
       if reset = '1' then
         tx_path_state <= s_EVENT_EMPTY;
-        control_event_gen <= '0';
+        control_event_gen := "00";
       elsif beacon_cnt(1 downto 0) = "10" and dc_mode = '1' then
         tx_path_state <= s_EVENT_BEACON;
       elsif tx_fifo_rderr = '0' then
@@ -1301,16 +1306,16 @@ begin
         tx_path_state <= s_EVENT_CONTROL;
         tx_beacon_gen <= not tx_beacon_gen;
       elsif tx_beacon_gen = '1' then
-        tx_path_state <= s_EVENT_EMPTY_EVEN;
+        tx_path_state <= s_EVENT_EMPTY;
       else
         tx_path_state <= s_EVENT_EMPTY;
       end if;
 
-      control_event_gen <= control_event_gen + 1;
+      control_event_gen := control_event_gen + 1;
     end if;
   end process;
 
-  transmit_data_comb : process (beacon_cnt, dc_mode, tx_path_state)
+  transmit_data : process (txusrclk,beacon_cnt,dc_mode,tx_path_state)
     variable cur_state : timing_event;
   begin
     if beacon_cnt(1 downto 0) = "10" and dc_mode = '1' then
@@ -1333,7 +1338,7 @@ begin
         tx_data(15 downto 8) <= X"BC"; -- K28.5 character
       when s_EVENT_USER =>
         tx_data(15 downto 8) <= tx_fifo_do(7 downto 0);
-        fifo_pend := '0';
+        fifo_pend <= '0';
       when s_EVENT_EMPTY =>
         tx_charisk <= "00";
         tx_data(15 downto 8) <= (others => '0');
@@ -1342,15 +1347,10 @@ begin
         tx_charisk <= "00";
         tx_data(15 downto 8) <= (others => '0');
     end case;
-  end process;
 
-  transmit_data : process (txusrclk)
-    variable beacon_cnt : std_logic_vector(3 downto 0) := "0000";
-    variable fifo_pend  : std_logic;
-  begin
     if rising_edge(txusrclk) then
       if tx_fifo_empty = '0' then
-        fifo_pend := '1';
+        fifo_pend <= '1';
       end if;
 
       tx_data(7 downto 0) <= dbus_txd;
@@ -1359,9 +1359,9 @@ begin
         tx_charisk(0) <= databuf_tx_k;
       end if;
       databuf_tx_ena <= tx_beacon_gen;
-      beacon_cnt := rx_beacon_i & beacon_cnt(beacon_cnt'high downto 1);
+      beacon_cnt <= rx_beacon_i & beacon_cnt(beacon_cnt'high downto 1);
       if reset = '1' then
-        fifo_pend := '0';
+        fifo_pend <= '0';
       end if;
     end if;
   end process;

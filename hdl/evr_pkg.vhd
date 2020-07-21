@@ -16,6 +16,23 @@ use ieee.std_logic_arith.all;
 use ieee.numeric_std.all;
 
 package evr_pkg is
+  component z7_gtx_evr_common_reset is
+  generic
+  (
+    -- Period of the stable clock driving this state-machine, unit is [ns]
+    STABLE_CLOCK_PERIOD  : integer := 8
+  );
+  port
+  (
+    --Stable Clock, either a stable clock from the PCB
+    STABLE_CLOCK         : in std_logic;
+    --User Reset, can be pulled any time
+    SOFT_RESET           : in std_logic;
+    --Reset QPLL
+    COMMON_RESET         : out std_logic:= '0'
+  );
+  end component;
+  
   component evr_dc is
       generic (
     -- MGT RX&TX signal pair polarity
