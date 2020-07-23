@@ -247,6 +247,22 @@
         </spirit:portMap>
       </spirit:portMaps>
     </spirit:busInterface>
+    <spirit:busInterface>
+      <spirit:name>i_DEBUG_clk</spirit:name>
+      <spirit:busType spirit:vendor="xilinx.com" spirit:library="signal" spirit:name="clock" spirit:version="1.0"/>
+      <spirit:abstractionType spirit:vendor="xilinx.com" spirit:library="signal" spirit:name="clock_rtl" spirit:version="1.0"/>
+      <spirit:slave/>
+      <spirit:portMaps>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>CLK</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>i_DEBUG_clk</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+      </spirit:portMaps>
+    </spirit:busInterface>
   </spirit:busInterfaces>
   <spirit:memoryMaps>
     <spirit:memoryMap>
@@ -280,7 +296,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>148f425b</spirit:value>
+            <spirit:value>1405efdc</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -302,7 +318,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>148f425b</spirit:value>
+            <spirit:value>1405efdc</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -316,7 +332,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>d584aac5</spirit:value>
+            <spirit:value>f338d6c5</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -332,6 +348,20 @@
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
             <spirit:value>65314d45</spirit:value>
+          </spirit:parameter>
+        </spirit:parameters>
+      </spirit:view>
+      <spirit:view>
+        <spirit:name>xilinx_utilityxitfiles</spirit:name>
+        <spirit:displayName>Utility XIT/TTCL</spirit:displayName>
+        <spirit:envIdentifier>:vivado.xilinx.com:xit.util</spirit:envIdentifier>
+        <spirit:fileSetRef>
+          <spirit:localName>xilinx_utilityxitfiles_view_fileset</spirit:localName>
+        </spirit:fileSetRef>
+        <spirit:parameters>
+          <spirit:parameter>
+            <spirit:name>viewChecksum</spirit:name>
+            <spirit:value>eb307523</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -895,6 +925,29 @@
           </spirit:wireTypeDefs>
         </spirit:wire>
       </spirit:port>
+      <spirit:port>
+        <spirit:name>i_DEBUG_clk</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>std_logic</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+          <spirit:driver>
+            <spirit:defaultValue spirit:format="long">0</spirit:defaultValue>
+          </spirit:driver>
+        </spirit:wire>
+        <spirit:vendorExtensions>
+          <xilinx:portInfo>
+            <xilinx:enablement>
+              <xilinx:isEnabled xilinx:resolve="dependent" xilinx:id="PORT_ENABLEMENT.i_DEBUG_clk" xilinx:dependency="spirit:decode(id(&apos;MODELPARAM_VALUE.g_HAS_DEBUG_CLK&apos;)) = true">false</xilinx:isEnabled>
+            </xilinx:enablement>
+          </xilinx:portInfo>
+        </spirit:vendorExtensions>
+      </spirit:port>
     </spirit:ports>
     <spirit:modelParameters>
       <spirit:modelParameter xsi:type="spirit:nameValueTypeType" spirit:dataType="integer">
@@ -926,6 +979,18 @@
         <spirit:name>AXI_DATA_WIDTH</spirit:name>
         <spirit:displayName>Axi Data Width</spirit:displayName>
         <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.AXI_DATA_WIDTH">32</spirit:value>
+      </spirit:modelParameter>
+      <spirit:modelParameter spirit:dataType="boolean">
+        <spirit:name>g_HAS_DEBUG_CLK</spirit:name>
+        <spirit:displayName>G Has Debug Clk</spirit:displayName>
+        <spirit:value spirit:format="bool" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.g_HAS_DEBUG_CLK">false</spirit:value>
+        <spirit:vendorExtensions>
+          <xilinx:parameterInfo>
+            <xilinx:enablement>
+              <xilinx:isEnabled xilinx:id="MODELPARAM_ENABLEMENT.g_HAS_DEBUG_CLK">false</xilinx:isEnabled>
+            </xilinx:enablement>
+          </xilinx:parameterInfo>
+        </spirit:vendorExtensions>
       </spirit:modelParameter>
     </spirit:modelParameters>
   </spirit:model>
@@ -1050,7 +1115,7 @@
       <spirit:file>
         <spirit:name>hdl/ess_evr_top.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:userFileType>CHECKSUM_81a58302</spirit:userFileType>
+        <spirit:userFileType>CHECKSUM_8ee86b98</spirit:userFileType>
       </spirit:file>
     </spirit:fileSet>
     <spirit:fileSet>
@@ -1213,7 +1278,7 @@
       <spirit:file>
         <spirit:name>xgui/ess_openEVR_v0_1.tcl</spirit:name>
         <spirit:fileType>tclSource</spirit:fileType>
-        <spirit:userFileType>CHECKSUM_0ee8dca8</spirit:userFileType>
+        <spirit:userFileType>CHECKSUM_f338d6c5</spirit:userFileType>
         <spirit:userFileType>XGUI_VERSION_2</spirit:userFileType>
       </spirit:file>
     </spirit:fileSet>
@@ -1224,6 +1289,13 @@
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:userFileType>USED_IN_simulation</spirit:userFileType>
         <spirit:userFileType>USED_IN_testbench</spirit:userFileType>
+      </spirit:file>
+    </spirit:fileSet>
+    <spirit:fileSet>
+      <spirit:name>xilinx_utilityxitfiles_view_fileset</spirit:name>
+      <spirit:file>
+        <spirit:name>gui/ess_openEVR_v0_1.gtcl</spirit:name>
+        <spirit:userFileType>GTCL</spirit:userFileType>
       </spirit:file>
     </spirit:fileSet>
   </spirit:fileSets>
@@ -1263,6 +1335,18 @@
       <spirit:displayName>Axi Data Width</spirit:displayName>
       <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.AXI_DATA_WIDTH">32</spirit:value>
     </spirit:parameter>
+    <spirit:parameter>
+      <spirit:name>g_HAS_DEBUG_CLK</spirit:name>
+      <spirit:displayName>Enable input debug clock</spirit:displayName>
+      <spirit:value spirit:format="bool" spirit:resolve="user" spirit:id="PARAM_VALUE.g_HAS_DEBUG_CLK">false</spirit:value>
+      <spirit:vendorExtensions>
+        <xilinx:parameterInfo>
+          <xilinx:enablement>
+            <xilinx:isEnabled xilinx:resolve="generated" xilinx:id="PARAM_ENABLEMENT.g_HAS_DEBUG_CLK">true</xilinx:isEnabled>
+          </xilinx:enablement>
+        </xilinx:parameterInfo>
+      </spirit:vendorExtensions>
+    </spirit:parameter>
   </spirit:parameters>
   <spirit:vendorExtensions>
     <xilinx:coreExtensions>
@@ -1275,8 +1359,8 @@
       <xilinx:displayName>ess_openEVR_v0_1</xilinx:displayName>
       <xilinx:definitionSource>package_project</xilinx:definitionSource>
       <xilinx:vendorDisplayName>European Spallation Source</xilinx:vendorDisplayName>
-      <xilinx:coreRevision>8</xilinx:coreRevision>
-      <xilinx:coreCreationDateTime>2020-05-19T09:18:51Z</xilinx:coreCreationDateTime>
+      <xilinx:coreRevision>15</xilinx:coreRevision>
+      <xilinx:coreCreationDateTime>2020-07-23T13:17:33Z</xilinx:coreCreationDateTime>
       <xilinx:tags>
         <xilinx:tag xilinx:name="ui.data.coregen.dd@2440bbe3_ARCHIVE_LOCATION">/home/felipe/workspace/ess-openevr_ip</xilinx:tag>
         <xilinx:tag xilinx:name="ui.data.coregen.dd@64b86440_ARCHIVE_LOCATION">/home/felipe/workspace/ess-openevr_ip</xilinx:tag>
@@ -1353,14 +1437,121 @@
         <xilinx:tag xilinx:name="ui.data.coregen.dd@105b2809_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
         <xilinx:tag xilinx:name="ui.data.coregen.dd@18885b38_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
         <xilinx:tag xilinx:name="ui.data.coregen.dd@93b88cc_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@762ca8c6_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2b8a90f9_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@12b6982b_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@277f48ec_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@72af60f6_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3c14724d_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3ffa8ef1_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@43b834af_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6b596c6c_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@c58139_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@777cb64c_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@227e7428_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3be6309f_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@35cda0dc_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@77bd53ee_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@56699bc3_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@624533e8_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3cacf8a5_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@e4fff2a_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@70bf82b4_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2488d58e_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@1576e3c7_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@70b1511d_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@16415bf8_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4162158f_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@1b0c9d5f_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@405f6069_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@40b66479_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4c72159a_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@d7b747_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3a5dc943_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@69d4dfa9_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@398d5f8a_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7eb9e8dd_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@107d48f7_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@156702b5_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3bd099a2_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2730ad86_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2e12e64d_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4b9d9069_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@57e4e008_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2736231c_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3e699ec3_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@170812a5_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4867a2c7_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@22bb5bfb_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@134a1918_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@776c9fa2_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@55009f6f_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@305eae00_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@1759db46_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@50a3a347_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@8384dd8_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@77b88108_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@51309063_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@29c78b25_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6a44e6ff_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6b89e233_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@120cbbb_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@41085b97_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@52b4746f_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@1a9c594a_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@696dad40_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@62d0ef6c_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@188fa9f2_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7fcceba5_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6ef8814a_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@67acb85c_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@ae2501a_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5203250f_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3e4e9d8d_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@50cecd7d_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@308fb4e3_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@28453976_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@56812d2b_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7579bed8_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@1ec7bd6f_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5ac69ccf_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@79503eb4_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@516148f6_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@32a2d99d_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5ee67993_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@253a92a1_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7b5c6614_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@1f8d6986_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7705e6db_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@d7b6320_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@48edbf30_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2e5aee9f_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6af6bf3e_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2eb93a5c_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@734b3f78_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7693169e_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6904497e_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@278d78e8_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@183c371c_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@104e7605_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@70b4aab_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@469eabeb_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6691cb49_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5fcbe1f2_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@29c9e1cb_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@346dc63e_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3c442cf5_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@23626207_ARCHIVE_LOCATION">/home/felipe/workspace/picoevr_clean/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
       </xilinx:tags>
     </xilinx:coreExtensions>
     <xilinx:packagingInfo>
-      <xilinx:xilinxVersion>2019.2</xilinx:xilinxVersion>
-      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="a06227ee"/>
-      <xilinx:checksum xilinx:scope="ports" xilinx:value="d75f8522"/>
-      <xilinx:checksum xilinx:scope="hdlParameters" xilinx:value="17828790"/>
-      <xilinx:checksum xilinx:scope="parameters" xilinx:value="83dd8613"/>
+      <xilinx:xilinxVersion>2019.2.1</xilinx:xilinxVersion>
+      <xilinx:checksum xilinx:scope="busInterfaces" xilinx:value="3b74becc"/>
+      <xilinx:checksum xilinx:scope="memoryMaps" xilinx:value="1db6f0d6"/>
+      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="9eadd2fc"/>
+      <xilinx:checksum xilinx:scope="ports" xilinx:value="1a0f70ea"/>
+      <xilinx:checksum xilinx:scope="hdlParameters" xilinx:value="129e198c"/>
+      <xilinx:checksum xilinx:scope="parameters" xilinx:value="ee569ced"/>
     </xilinx:packagingInfo>
   </spirit:vendorExtensions>
 </spirit:component>
