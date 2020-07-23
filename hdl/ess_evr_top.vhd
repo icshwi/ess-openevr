@@ -86,7 +86,7 @@ entity ess_evr_top is
       s_axi_rresp             : out std_logic_vector(AXI4_RESP_WIDTH-1 downto 0);
       s_axi_rvalid            : out std_logic;
       s_axi_rready            : in  std_logic;
-  
+
     --! Global logic clock, differential input from Si5346 Out2
     i_ZYNQ_MRCC_LVDS_P : in std_logic;
     i_ZYNQ_MRCC_LVDS_N : in std_logic;
@@ -100,12 +100,12 @@ entity ess_evr_top is
     o_EVR_TX_N     : out std_logic;
     i_EVR_RX_P     : in std_logic;
     i_EVR_RX_N     : in std_logic;
-    
-    --! External timestamp request 
+
+    --! External timestamp request
     i_TS_req   : in  std_logic;
     o_TS_data  : out std_logic_vector(63 downto 0);
     o_TS_valid : out std_logic;
-    
+
     --! SFP Link LED
     o_EVR_LINK_LED : out std_logic;
     --! SFP Event LED
@@ -193,15 +193,12 @@ architecture rtl of ess_evr_top is
   signal databuf_irq_dc      : std_logic;
 
   signal debug_out           : std_logic_vector(g_DEBUG_WIDTH-1 downto 0) := (others => '0');
-  
+
   -- Timestamp external trigger
   signal ext_ts_trig : std_logic;
   signal ext_ts_trig_t : std_logic;
-  
-  -- Debug
-  signal debug_out           : std_logic_vector(g_DEBUG_WIDTH-1 downto 0) := (others => '0');
-  
-  attribute mark_debug : string;  
+
+  attribute mark_debug : string;
   attribute mark_debug of event_rxd : signal is "true";
   attribute mark_debug of ext_ts_trig : signal is "true";
   attribute mark_debug of ext_ts_trig_t : signal is "true";
@@ -277,8 +274,8 @@ begin
       delay_comp_target => delay_comp_target,
       delay_comp_locked_out => delay_comp_locked,
 
-      i_mgt_ref0clk  => gt0_refclk0,
-      i_mgt_ref1clk  => gnd,
+      i_mgt_ref0clk  => '0',
+      i_mgt_ref1clk  => gt0_refclk0,
 
       MGTRX2_N => i_EVR_RX_N,
       MGTRX2_P => i_EVR_RX_P,
@@ -318,6 +315,41 @@ begin
   dbus_txd <= X"00";
   databuf_txd <= X"00";
   databuf_tx_k <= '0';
+
+  axi_reg_bank : register_bank_axi
+    generic map (
+      AXI_ADDR_WIDTH => ADDRESS_WIDTH+2,
+      REG_ADDR_WIDTH	=> ADDRESS_WIDTH,    --! Width of the address signals
+      AXI_WSTRB_WIDTH => 4,                  --! Width of the AXI wstrb signal, may be determined by ADDRESS_WIDTH
+      REGISTER_WIDTH  => REGISTER_WIDTH,     --! Width of the registers
+      AXI_DATA_WIDTH  => AXI4L_DATA_WIDTH)   --! Width of the AXI data signals
+    port map (
+      --! AXI4-Lite Register interface
+      s_axi_aclk     => s_axi_aclk,
+      s_axi_aresetn  => s_axi_aresetn,
+      s_axi_awaddr   => s_axi_awaddr,
+      s_axi_awprot   => s_axi_awprot,
+      s_axi_awvalid  => s_axi_awvalid,
+      s_axi_awready  => s_axi_awready,
+      s_axi_wdata    => s_axi_wdata,
+      s_axi_wstrb    => s_axi_wstrb,
+      s_axi_wvalid   => s_axi_wvalid,
+      s_axi_wready   => s_axi_wready,
+      s_axi_bresp    => s_axi_bresp,
+      s_axi_bvalid   => s_axi_bvalid,
+      s_axi_bready   => s_axi_bready,
+      s_axi_araddr   => s_axi_araddr,
+      s_axi_arprot   => s_axi_arprot,
+      s_axi_arvalid  => s_axi_arvalid,
+      s_axi_arready  => s_axi_arready,
+      s_axi_rdata    => s_axi_rdata,
+      s_axi_rresp    => s_axi_rresp,
+      s_axi_rvalid   => s_axi_rvalid,
+      s_axi_rready   => s_axi_rready,
+
+      transfer_shadow_group_i => transfer_shadow_group_t,
+      register_data_o         => logic_read_data_t,
+      register_return_i       => logic_return_t);
 
   -- Reset signal for the Transceiver ---------------
 
@@ -374,7 +406,7 @@ begin
       ts_data      => o_TS_data,
       ts_valid     => o_TS_valid,
       MAP14        => '0',
-      buffer_pop   => '1', 
+      buffer_pop   => '1',
       buffer_data  => open,
       buffer_valid => open
     );
@@ -393,7 +425,7 @@ begin
       count := count - 1;
     end if;
   end process;
-  
+
   -- Bring external trigger pulse signal into event_clk time-domain
   process(event_clk)
   begin

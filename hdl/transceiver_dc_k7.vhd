@@ -21,21 +21,18 @@ library UNISIM;
 use UNISIM.VCOMPONENTS.ALL;
 
 entity transceiver_dc_k7 is
-  generic
-    (
-      RX_DFE_KL_CFG2_IN            : bit_vector :=  X"3010D90C";
-      PMA_RSV_IN                   : bit_vector :=  x"00018480";
-      PCS_RSVD_ATTR_IN             : bit_vector :=  X"000000000002";
-      RX_POLARITY                  : std_logic := '0';
-      TX_POLARITY                  : std_logic := '0';
-      REFCLKSEL                    : std_logic := '0' -- 0 - REFCLK0, 1 - REFCLK1
-      );
+  generic (
+    RX_DFE_KL_CFG2_IN            : bit_vector :=  X"3010D90C";
+    PMA_RSV_IN                   : bit_vector :=  x"00018480";
+    PCS_RSVD_ATTR_IN             : bit_vector :=  X"000000000002";
+    RX_POLARITY                  : std_logic := '0';
+    TX_POLARITY                  : std_logic := '0';
+    REFCLKSEL                    : std_logic := '0' -- 0 - REFCLK0, 1 - REFCLK1
+    );
   port (
     sys_clk         : in std_logic;   -- system bus clock
-    REFCLK0P        : in std_logic;   -- MGTREFCLK0_P
-    REFCLK0N        : in std_logic;   -- MGTREFCLK0_N
-    REFCLK1P        : in std_logic;   -- MGTREFCLK1_P
-    REFCLK1N        : in std_logic;   -- MGTREFCLK1N
+    i_REFCLK0       : in std_logic;   -- MGTREFCLK0
+    i_REFCLK1       : in std_logic;   -- MGTREFCLK1
     REFCLK_OUT      : out std_logic;  -- reference clock output
     recclk_out      : out std_logic;  -- Recovered clock, locked to EVG
     event_clk       : in std_logic;   -- event clock input (phase shifted by DCM)
@@ -915,27 +912,13 @@ begin
   refclk_select_1:
   if REFCLKSEL = '1' generate
     REFCLK0 <= '0';
-    refclk1_ibufds_i : IBUFDS_GTE2
-      port map
-      (
-        I     => REFCLK1P,
-        IB    => REFCLK1N,
-        CEB   => gnd,
-        O     => REFCLK1,
-        ODIV2 => open);
+    REFCLK1 <= i_REFCLK1;
     CPLLREFCLKSEL_in <= "010"; -- MGTREFCLK1
   end generate;
 
   refclk_select_0:
   if REFCLKSEL = '0' generate
-    refclk0_ibufds_i : IBUFDS_GTE2
-      port map
-      (
-        I	=> REFCLK0P,
-        IB      => REFCLK0N,
-        CEB     => gnd,
-        O	=> REFCLK0,
-        ODIV2   => open);
+    REFCLK0 <= i_REFCLK0;
     REFCLK1 <= '0';
     CPLLREFCLKSEL_in <= "001"; -- MGTREFCLK0
   end generate;

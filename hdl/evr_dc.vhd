@@ -5,6 +5,9 @@ use ieee.std_logic_unsigned.all;
 library UNISIM;
 use UNISIM.Vcomponents.ALL;
 
+library work;
+use work.evr_pkg.ALL;
+
 entity evr_dc is
   generic (
     -- MGT RX&TX signal pair polarity
@@ -52,11 +55,8 @@ entity evr_dc is
     delay_comp_locked_out : out std_logic;
 
     -- MGT physical pins
-
-    MGTREFCLK0_P : in std_logic;
-    MGTREFCLK0_N : in std_logic;
-    MGTREFCLK1_P : in std_logic;   -- JX3 pin 2,   Zynq U5
-    MGTREFCLK1_N : in std_logic;   -- JX3 pin 3,   Zynq V5
+    i_mgt_ref0clk : in std_logic;
+    i_mgt_ref1clk : in std_logic;
 
     MGTTX2_P     : out std_logic;  -- JX3 pin 25,  Zynq AA5
     MGTTX2_N     : out std_logic;  -- JX3 pin 27,  Zynq AB5
@@ -68,121 +68,6 @@ entity evr_dc is
 end evr_dc;
 
 architecture structure of evr_dc is
-
-  component transceiver_dc_k7 is
-    generic
-      (
-        RX_DFE_KL_CFG2_IN            : bit_vector :=  X"3010D90C";
-        PMA_RSV_IN                   : bit_vector :=  x"00018480";
-        PCS_RSVD_ATTR_IN             : bit_vector :=  X"000000000002";
-        RX_POLARITY                  : std_logic := '0';
-        TX_POLARITY                  : std_logic := '0';
-        REFCLKSEL                    : std_logic := '0' -- 0 - REFCLK0, 1 - REFCLK1
-        );
-    port (
-      sys_clk         : in std_logic;
-      REFCLK0P        : in std_logic;
-      REFCLK0N        : in std_logic;
-      REFCLK1P        : in std_logic;
-      REFCLK1N        : in std_logic;
-      REFCLK_OUT      : out std_logic;
-      recclk_out      : out std_logic;
-      event_clk       : in std_logic;
-
-      -- Receiver side connections
-      event_rxd       : out std_logic_vector(7 downto 0);
-      dbus_rxd        : out std_logic_vector(7 downto 0);
-      databuf_rxd     : out std_logic_vector(7 downto 0);
-      databuf_rx_k    : out std_logic;
-      databuf_rx_ena  : out std_logic;
-      databuf_rx_mode : in std_logic;
-      dc_mode         : in std_logic;
-
-      rx_link_ok      : out   std_logic;
-      rx_violation    : out   std_logic;
-      rx_clear_viol   : in    std_logic;
-      rx_beacon       : out   std_logic;
-      tx_beacon       : out   std_logic;
-      rx_int_beacon   : out   std_logic;
-
-      delay_inc       : in    std_logic;
-      delay_dec       : in    std_logic;
-
-      reset           : in    std_logic;
-
-      -- Transmitter side connections
-      event_txd       : in  std_logic_vector(7 downto 0);
-      dbus_txd        : in  std_logic_vector(7 downto 0);
-      databuf_txd     : in  std_logic_vector(7 downto 0);
-      databuf_tx_k    : in  std_logic;
-      databuf_tx_ena  : out std_logic;
-      databuf_tx_mode : in  std_logic;
-
-      RXN             : in    std_logic;
-      RXP             : in    std_logic;
-
-      TXN             : out   std_logic;
-      TXP             : out   std_logic;
-
-      EVENT_CLK_o     : out   std_logic
-      );
-  end component;
-
-  component delay_measure is
-    generic (
-      MAX_DELAY_BITS         : integer := 16;
-      FRAC_DELAY_BITS        : integer := 16;
-      CYCLE_CNT_BITS_0       : integer := 10;
-      CYCLE_CNT_BITS_1       : integer := 16;
-      CYCLE_CNT_BITS_2       : integer := 20);
-    port (
-      clk              : in std_logic;
-      beacon_0         : in std_logic;
-      beacon_1         : in std_logic;
-
-      fast_adjust      : in std_logic;
-      slow_adjust      : in std_logic;
-      reset            : in std_logic;
-
-      delay_out        : out std_logic_vector(31 downto 0);
-      slow_delay_out   : out std_logic_vector(31 downto 0);
-      delay_update_out : out std_logic;
-      init_done        : out std_logic);
-  end component;
-
-  component delay_adjust is
-    port (
-      clk        : in std_logic;
-
-      psclk      : in  std_logic;
-      psen       : out std_logic;
-      psincdec   : out std_logic;
-      psdone     : in  std_logic;
-
-      link_ok    : in  std_logic;
-      delay_inc  : out std_logic;
-      delay_dec  : out std_logic;
-      int_clk_mode : in std_logic;
-
-      adjust_locked     : out std_logic;
-
-      feedback   : in  std_logic_vector(1 downto 0);
-      pwm_param  : in  std_logic_vector(1 downto 0);
-      disable           : in  std_logic;
-      dc_mode           : in  std_logic;
-
-      override_mode     : in  std_logic;
-      override_update   : in  std_logic;
-      override_adjust   : in  std_logic_vector(31 downto 0);
-      dc_status         : out std_logic_vector(31 downto 0);
-
-      delay_comp_update : in std_logic;
-      delay_comp_value  : in std_logic_vector(31 downto 0);
-      delay_comp_target : in std_logic_vector(31 downto 0);
-      int_delay_value   : in std_logic_vector(31 downto 0);
-      int_delay_update  : in std_logic;
-      int_delay_init    : in std_logic);
-  end component;
 
   signal gnd     : std_logic;
   signal vcc     : std_logic;
@@ -263,10 +148,8 @@ begin
       refclksel => '1')
     port map (
       sys_clk => sys_clk,
-      REFCLK0P => gnd,
-      REFCLK0N => gnd,
-      REFCLK1P => MGTREFCLK1_P,
-      REFCLK1N => MGTREFCLK1_N,
+      i_REFCLK0 => i_mgt_ref0clk,
+      i_REFCLK1 => i_mgt_ref1clk,
       REFCLK_OUT => refclk,
       recclk_out => up_event_clk,
       event_clk => event_clk,

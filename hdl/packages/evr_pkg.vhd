@@ -17,81 +17,77 @@ use ieee.numeric_std.all;
 
 package evr_pkg is
   component z7_gtx_evr_common_reset is
-  generic
-  (
-    -- Period of the stable clock driving this state-machine, unit is [ns]
-    STABLE_CLOCK_PERIOD  : integer := 8
-  );
-  port
-  (
-    --Stable Clock, either a stable clock from the PCB
-    STABLE_CLOCK         : in std_logic;
-    --User Reset, can be pulled any time
-    SOFT_RESET           : in std_logic;
-    --Reset QPLL
-    COMMON_RESET         : out std_logic:= '0'
-  );
+    generic (
+      -- Period of the stable clock driving this state-machine, unit is [ns]
+      STABLE_CLOCK_PERIOD  : integer := 8
+      );
+    port (
+      --Stable Clock, either a stable clock from the PCB
+      STABLE_CLOCK         : in std_logic;
+      --User Reset, can be pulled any time
+      SOFT_RESET           : in std_logic;
+      --Reset QPLL
+      COMMON_RESET         : out std_logic:= '0'
+      );
   end component;
-  
+
   component evr_dc is
-      generic (
-    -- MGT RX&TX signal pair polarity
-    RX_POLARITY                  : std_logic := '0'; -- '1' for inverted polarity
-    TX_POLARITY                  : std_logic := '0'; -- '1' for inverted polarity
-    -- MGT reference clock selection
-    REFCLKSEL                    : std_logic := '0' -- 0 - REFCLK0, 1 - REFCLK1
+    generic (
+      -- MGT RX&TX signal pair polarity
+      RX_POLARITY                  : std_logic := '0'; -- '1' for inverted polarity
+      TX_POLARITY                  : std_logic := '0'; -- '1' for inverted polarity
+      -- MGT reference clock selection
+      REFCLKSEL                    : std_logic := '0' -- 0 - REFCLK0, 1 - REFCLK1
+      );
+    port (
+      -- System bus clock
+      sys_clk         : in std_logic;
+      refclk_out      : out std_logic; -- Reference clock output
+      event_clk_out   : out std_logic; -- Event clock output, delay compensated
+                                       -- and locked to EVG
+
+      -- Receiver side connections
+      event_rxd       : out std_logic_vector(7 downto 0);  -- Received event code
+      dbus_rxd        : out std_logic_vector(7 downto 0);  -- Distributed bus data
+      databuf_rxd     : out std_logic_vector(7 downto 0);  -- Databuffer data
+      databuf_rx_k    : out std_logic; -- Databuffer K-character
+      databuf_rx_ena  : out std_logic; -- Databuf data enable
+      databuf_rx_mode : in std_logic;  -- Databuf receive mode, '1' enabled, '0'
+                                       -- disabled (only for non-DC)
+      dc_mode         : in std_logic;  -- Delay compensation mode enable
+
+      rx_link_ok      : out   std_logic; -- Received link ok
+      rx_violation    : out   std_logic; -- Receiver violation detected
+      rx_clear_viol   : in    std_logic; -- Clear receiver violatio flag
+
+      -- Transmitter side connections
+      event_txd       : in  std_logic_vector(7 downto 0); -- TX event code
+      dbus_txd        : in  std_logic_vector(7 downto 0); -- TX distributed bus data
+      databuf_txd     : in  std_logic_vector(7 downto 0); -- TX databuffer data
+      databuf_tx_k    : in  std_logic; -- TX databuffer K-character
+      databuf_tx_ena  : out std_logic; -- TX databuffer data enable
+      databuf_tx_mode : in  std_logic; -- TX databuffer transmit mode, '1'
+                                       -- enabled, '0' disabled
+
+      reset           : in  std_logic; -- Transmitter reset
+
+      -- Delay compensation signals
+      delay_comp_update : in std_logic;
+      delay_comp_value  : in std_logic_vector(31 downto 0);
+      delay_comp_target : in std_logic_vector(31 downto 0);
+      delay_comp_locked_out : out std_logic;
+
+      -- MGT physical pins
+      i_mgt_ref0clk : in std_logic;
+      i_mgt_ref1clk : in std_logic;
+
+      MGTTX2_P     : out std_logic;  -- JX3 pin 25,  Zynq AA5
+      MGTTX2_N     : out std_logic;  -- JX3 pin 27,  Zynq AB5
+      MGTRX2_P     : in std_logic;   -- JX3 pin 20,  Zynq AA9
+      MGTRX2_N     : in std_logic;    -- JX3 pin 22,  Zynq AB9
+
+      EVENT_CLK_o  : out std_logic -- EVR event single-ended clock output - 88.0525 MHz
     );
-  port (
-    -- System bus clock
-    sys_clk         : in std_logic;
-    refclk_out      : out std_logic; -- Reference clock output
-    event_clk_out   : out std_logic; -- Event clock output, delay compensated
-                                     -- and locked to EVG
-
-    -- Receiver side connections
-    event_rxd       : out std_logic_vector(7 downto 0);  -- Received event code
-    dbus_rxd        : out std_logic_vector(7 downto 0);  -- Distributed bus data
-    databuf_rxd     : out std_logic_vector(7 downto 0);  -- Databuffer data
-    databuf_rx_k    : out std_logic; -- Databuffer K-character
-    databuf_rx_ena  : out std_logic; -- Databuf data enable
-    databuf_rx_mode : in std_logic;  -- Databuf receive mode, '1' enabled, '0'
-                                     -- disabled (only for non-DC)
-    dc_mode         : in std_logic;  -- Delay compensation mode enable
-
-    rx_link_ok      : out   std_logic; -- Received link ok
-    rx_violation    : out   std_logic; -- Receiver violation detected
-    rx_clear_viol   : in    std_logic; -- Clear receiver violatio flag
-
-    -- Transmitter side connections
-    event_txd       : in  std_logic_vector(7 downto 0); -- TX event code
-    dbus_txd        : in  std_logic_vector(7 downto 0); -- TX distributed bus data
-    databuf_txd     : in  std_logic_vector(7 downto 0); -- TX databuffer data
-    databuf_tx_k    : in  std_logic; -- TX databuffer K-character
-    databuf_tx_ena  : out std_logic; -- TX databuffer data enable
-    databuf_tx_mode : in  std_logic; -- TX databuffer transmit mode, '1'
-                                     -- enabled, '0' disabled
-
-    reset           : in  std_logic; -- Transmitter reset
-
-    -- Delay compensation signals
-    delay_comp_update : in std_logic;
-    delay_comp_value  : in std_logic_vector(31 downto 0);
-    delay_comp_target : in std_logic_vector(31 downto 0);
-    delay_comp_locked_out : out std_logic;
-
-    -- MGT physical pins
-    MGTREFCLK0_P : in std_logic;
-    MGTREFCLK0_N : in std_logic;
-    MGTREFCLK1_P : in std_logic;   -- JX3 pin 2,   Zynq U5
-    MGTREFCLK1_N : in std_logic;   -- JX3 pin 3,   Zynq V5
-
-    MGTTX2_P     : out std_logic;  -- JX3 pin 25,  Zynq AA5
-    MGTTX2_N     : out std_logic;  -- JX3 pin 27,  Zynq AB5
-    MGTRX2_P     : in std_logic;   -- JX3 pin 20,  Zynq AA9
-    MGTRX2_N     : in std_logic;    -- JX3 pin 22,  Zynq AB9
-
-    EVENT_CLK_o  : out std_logic -- EVR event single-ended clock output - 88.0525 MHz
-  );
   end component;
 
   component databuf_rx_dc is
@@ -126,19 +122,141 @@ package evr_pkg is
     );
   end component;
 
-component timestamp is
-  Port (
-    event_clk    : in  std_logic;
-    event_code   : in  std_logic_vector(7 downto 0);
-    reset        : in  std_logic;
-    MAP14        : in  std_logic;
-    ts_req       : in  std_logic;
-    ts_data      : out std_logic_vector(63 downto 0);
-    ts_valid     : out std_logic;
-    buffer_pop   : in  std_logic;
-    buffer_data  : out std_logic_vector(71 downto 0);
-    buffer_valid : out std_logic );
-end component;
+  component timestamp is
+    Port (
+      event_clk    : in  std_logic;
+      event_code   : in  std_logic_vector(7 downto 0);
+      reset        : in  std_logic;
+      MAP14        : in  std_logic;
+      ts_req       : in  std_logic;
+      ts_data      : out std_logic_vector(63 downto 0);
+      ts_valid     : out std_logic;
+      buffer_pop   : in  std_logic;
+      buffer_data  : out std_logic_vector(71 downto 0);
+      buffer_valid : out std_logic );
+  end component;
+
+  component transceiver_dc_k7 is
+    generic (
+      RX_DFE_KL_CFG2_IN            : bit_vector :=  X"3010D90C";
+      PMA_RSV_IN                   : bit_vector :=  x"00018480";
+      PCS_RSVD_ATTR_IN             : bit_vector :=  X"000000000002";
+      RX_POLARITY                  : std_logic := '0';
+      TX_POLARITY                  : std_logic := '0';
+      REFCLKSEL                    : std_logic := '0' -- 0 - REFCLK0, 1 - REFCLK1
+      );
+    port (
+      sys_clk         : in std_logic;   -- system bus clock
+      i_REFCLK0       : in std_logic;   -- MGTREFCLK0
+      i_REFCLK1       : in std_logic;   -- MGTREFCLK1
+      REFCLK_OUT      : out std_logic;  -- reference clock output
+      recclk_out      : out std_logic;  -- Recovered clock, locked to EVG
+      event_clk       : in std_logic;   -- event clock input (phase shifted by DCM)
+
+      -- Receiver side connections
+      event_rxd       : out std_logic_vector(7 downto 0); -- RX event code output
+      dbus_rxd        : out std_logic_vector(7 downto 0); -- RX distributed bus bits
+      databuf_rxd     : out std_logic_vector(7 downto 0); -- RX data buffer data
+      databuf_rx_k    : out std_logic; -- RX data buffer K-character
+      databuf_rx_ena  : out std_logic; -- RX data buffer data enable
+      databuf_rx_mode : in std_logic;  -- RX data buffer mode, must be '1'
+                                       -- enabled for delay compensation mode
+      dc_mode         : in std_logic;  -- delay compensation mode enable when '1'
+
+      rx_link_ok      : out   std_logic; -- RX link OK
+      rx_violation    : out   std_logic; -- RX violation detected
+      rx_clear_viol   : in    std_logic; -- Clear RX violation
+      rx_beacon       : out   std_logic; -- Received DC beacon
+      tx_beacon       : out   std_logic; -- Transmitted DC beacon
+      rx_int_beacon   : out   std_logic; -- Received DC beacon after DC FIFO
+
+      delay_inc       : in    std_logic; -- Insert extra event in FIFO
+      delay_dec       : in    std_logic; -- Drop event from FIFO
+                                         -- These two control signals are used
+                                         -- only during the initial phase of
+                                         -- delay compensation adjustment
+
+      reset           : in    std_logic; -- Transceiver reset
+
+      -- Transmitter side connections
+      event_txd       : in  std_logic_vector(7 downto 0); -- TX event code
+      tx_event_ena    : out std_logic; -- 1 when event is sent out
+                                       -- With backward events the beacon event
+                                       -- has highest priority
+      dbus_txd        : in  std_logic_vector(7 downto 0); -- TX distributed bus data
+      databuf_txd     : in  std_logic_vector(7 downto 0); -- TX data buffer data
+      databuf_tx_k    : in  std_logic; -- TX data buffer K-character
+      databuf_tx_ena  : out std_logic; -- TX data buffer data enable
+      databuf_tx_mode : in  std_logic; -- TX data buffer mode enabled when '1'
+
+      RXN             : in    std_logic;
+      RXP             : in    std_logic;
+
+      TXN             : out   std_logic;
+      TXP             : out   std_logic;
+      EVENT_CLK_o     : out   std_logic
+      );
+  end component;
+
+  component delay_measure is
+    generic (
+      MAX_DELAY_BITS         : integer := 16;
+      FRAC_DELAY_BITS        : integer := 16;
+      CYCLE_CNT_BITS_0       : integer := 10;
+      CYCLE_CNT_BITS_1       : integer := 16;
+      CYCLE_CNT_BITS_2       : integer := 20);
+    port (
+      clk              : in std_logic;
+      beacon_0         : in std_logic;
+      beacon_1         : in std_logic;
+
+      fast_adjust      : in std_logic;
+      slow_adjust      : in std_logic;
+      reset            : in std_logic;
+
+      delay_out        : out std_logic_vector(31 downto 0);
+      slow_delay_out   : out std_logic_vector(31 downto 0);
+      delay_update_out : out std_logic;
+      init_done        : out std_logic;
+
+      debug_out        : out std_logic_vector(31 downto 0)
+      );
+  end component;
+
+  component delay_adjust is
+    port (
+      clk        : in std_logic;
+
+      psclk      : in  std_logic;
+      psen       : out std_logic;
+      psincdec   : out std_logic;
+      psdone     : in  std_logic;
+
+      link_ok      : in  std_logic;
+      delay_inc    : out std_logic;
+      delay_dec    : out std_logic;
+      int_clk_mode : in std_logic;
+
+      adjust_locked     : out std_logic;
+
+      feedback   : in  std_logic_vector(1 downto 0);
+      pwm_param  : in  std_logic_vector(1 downto 0);
+      disable    : in  std_logic;
+      dc_mode    : in  std_logic;
+
+      override_mode     : in  std_logic;
+      override_update   : in  std_logic;
+      override_adjust   : in  std_logic_vector(31 downto 0);
+      dc_status         : out std_logic_vector(31 downto 0);
+
+      delay_comp_update : in std_logic;
+      delay_comp_value  : in std_logic_vector(31 downto 0);
+      delay_comp_target : in std_logic_vector(31 downto 0);
+      int_delay_value   : in std_logic_vector(31 downto 0);
+      int_delay_update  : in std_logic;
+      int_delay_init    : in std_logic
+      );
+  end component;
 
   type integer_array is array (integer range <>) of integer;
   constant EVENT_RATE          : integer := 125000000;
