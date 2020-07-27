@@ -21,7 +21,11 @@ entity evr_dc is
     sys_clk         : in std_logic;
     refclk_out      : out std_logic; -- Reference clock output
     event_clk_out   : out std_logic; -- Event clock output, delay compensated
-       -- and locked to EVG
+                                     -- and locked to EVG
+
+    i_gt0_resets    : in gt_resets; -- Transceiver resets
+    -- Control and status flags
+    o_gt0_status    : out gt_ctrl_flags; -- Transceiver flags
 
     -- Receiver side connections
     event_rxd       : out std_logic_vector(7 downto 0);  -- Received event code
@@ -44,9 +48,7 @@ entity evr_dc is
     databuf_tx_k    : in  std_logic; -- TX databuffer K-character
     databuf_tx_ena  : out std_logic; -- TX databuffer data enable
     databuf_tx_mode : in  std_logic; -- TX databuffer transmit mode, '1'
-       -- enabled, '0' disabled
-
-    reset           : in  std_logic; -- Transceiver reset
+                                     -- enabled, '0' disabled
 
     -- Delay compensation signals
     delay_comp_update : in std_logic;
@@ -154,6 +156,9 @@ begin
       recclk_out => up_event_clk,
       event_clk => event_clk,
 
+      i_gt_resets => i_gt0_resets,
+      o_gt_status => o_gt0_status,
+
       -- Receiver side connections
       event_rxd => up_event_rxd,
       dbus_rxd => up_dbus_rxd,
@@ -172,8 +177,6 @@ begin
 
       delay_inc => up_delay_inc,
       delay_dec => up_delay_dec,
-
-      reset => reset,
 
       -- Transmitter side connections
       event_txd => event_txd,

@@ -16,6 +16,33 @@ use ieee.std_logic_arith.all;
 use ieee.numeric_std.all;
 
 package evr_pkg is
+
+  -- Records
+
+  --!@name gt_ctrl_flags
+  --!@brief Record to group all the control flags for the EVR GTX wrapper
+  --!@{
+  type gt_ctrl_flags is record
+    tx_fsm_done   : std_logic; --! Completed full reset for the Tx path
+    rx_fsm_done   : std_logic; --! Completed full reset for the Rx path
+    pll_locked    : std_logic; --! Internal PLL locked to the external freq.
+    fbclk_lost    : std_logic; --! Feedback freq. lost - Don't really know what's this...
+    rx_data_valid : std_logic; --! Read data valid flag
+    link_up       : std_logic; --! Link-up flag
+    event_rcv     : std_logic; --! Event received
+  end record gt_ctrl_flags;
+  --!@}
+
+  --!@name gt_resets
+  --!@brief Record to group all the reset signals for the EVR GTX wrapper
+  --!@{
+  type gt_resets is record
+    tx_async  : std_logic; --! Reset the Tx path - Sync to sys_clk
+    rx_async  : std_logic; --! Reset the Rx path - Synt to sys_clk
+    gbl_async : std_logic; --! Global reset for Tx&Rx paths
+  end record gt_resets;
+  --!@}
+
   component z7_gtx_evr_common_reset is
     generic (
       -- Period of the stable clock driving this state-machine, unit is [ns]
@@ -46,6 +73,9 @@ package evr_pkg is
       event_clk_out   : out std_logic; -- Event clock output, delay compensated
                                        -- and locked to EVG
 
+      i_gt0_resets    : in gt_resets; -- Transceiver resets
+      o_gt0_status    : out gt_ctrl_flags; -- Transceiver status flags
+
       -- Receiver side connections
       event_rxd       : out std_logic_vector(7 downto 0);  -- Received event code
       dbus_rxd        : out std_logic_vector(7 downto 0);  -- Distributed bus data
@@ -68,8 +98,6 @@ package evr_pkg is
       databuf_tx_ena  : out std_logic; -- TX databuffer data enable
       databuf_tx_mode : in  std_logic; -- TX databuffer transmit mode, '1'
                                        -- enabled, '0' disabled
-
-      reset           : in  std_logic; -- Transmitter reset
 
       -- Delay compensation signals
       delay_comp_update : in std_logic;
@@ -153,6 +181,9 @@ package evr_pkg is
       recclk_out      : out std_logic;  -- Recovered clock, locked to EVG
       event_clk       : in std_logic;   -- event clock input (phase shifted by DCM)
 
+      i_gt_resets     : in gt_resets; -- Transceiver resets
+      o_gt_status     : out gt_ctrl_flags; -- Transceiver flags
+
       -- Receiver side connections
       event_rxd       : out std_logic_vector(7 downto 0); -- RX event code output
       dbus_rxd        : out std_logic_vector(7 downto 0); -- RX distributed bus bits
@@ -175,8 +206,6 @@ package evr_pkg is
                                          -- These two control signals are used
                                          -- only during the initial phase of
                                          -- delay compensation adjustment
-
-      reset           : in    std_logic; -- Transceiver reset
 
       -- Transmitter side connections
       event_txd       : in  std_logic_vector(7 downto 0); -- TX event code
@@ -257,6 +286,14 @@ package evr_pkg is
       int_delay_init    : in std_logic
       );
   end component;
+
+  --!@name Global definitions
+  --!@{
+
+  --! System clock period (ns)
+  constant g_SYS_CLK_PERIOD    : integer := 10;
+
+  --!@}
 
   type integer_array is array (integer range <>) of integer;
   constant EVENT_RATE          : integer := 125000000;
