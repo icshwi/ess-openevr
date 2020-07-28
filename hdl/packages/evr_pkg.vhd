@@ -165,18 +165,10 @@ package evr_pkg is
   end component;
 
   component transceiver_dc_z7 is
-    generic (
-      RX_DFE_KL_CFG2_IN            : bit_vector :=  X"3010D90C";
-      PMA_RSV_IN                   : bit_vector :=  x"00018480";
-      PCS_RSVD_ATTR_IN             : bit_vector :=  X"000000000002";
-      RX_POLARITY                  : std_logic := '0';
-      TX_POLARITY                  : std_logic := '0';
-      REFCLKSEL                    : std_logic := '0' -- 0 - REFCLK0, 1 - REFCLK1
-      );
     port (
-      sys_clk         : in std_logic;   -- system bus clock
-      i_REFCLK0       : in std_logic;   -- MGTREFCLK0
-      i_REFCLK1       : in std_logic;   -- MGTREFCLK1
+      i_sys_clk       : in std_logic;   -- system bus clock
+      i_gtref0_clk    : in std_logic;   -- MGTREFCLK0
+      i_gtref1_clk    : in std_logic;   -- MGTREFCLK1
       REFCLK_OUT      : out std_logic;  -- reference clock output
       recclk_out      : out std_logic;  -- Recovered clock, locked to EVG
       event_clk       : in std_logic;   -- event clock input (phase shifted by DCM)
