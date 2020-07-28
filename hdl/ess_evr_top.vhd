@@ -269,7 +269,7 @@ begin
     generic map (
       RX_POLARITY => '0',
       TX_POLARITY => '0',
-      refclksel => '1')
+      refclksel => '0')
     port map (
       sys_clk => sys_clk,
       refclk_out => refclk,
@@ -304,8 +304,8 @@ begin
       delay_comp_target => delay_comp_target,
       delay_comp_locked_out => delay_comp_locked,
 
-      i_mgt_ref0clk  => '0',
-      i_mgt_ref1clk  => gt0_refclk0,
+      i_mgt_ref0clk  => gt0_refclk0,
+      i_mgt_ref1clk  => '0',
 
       MGTRX2_N => i_EVR_RX_N,
       MGTRX2_P => i_EVR_RX_P,

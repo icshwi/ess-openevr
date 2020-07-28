@@ -143,11 +143,11 @@ architecture structure of evr_dc is
 
 begin
 
-  i_upstream : transceiver_dc_k7
+  i_upstream : transceiver_dc_z7
     generic map (
       RX_POLARITY => '0',
       TX_POLARITY => '0',
-      refclksel => '1')
+      refclksel => '0')
     port map (
       sys_clk => sys_clk,
       i_REFCLK0 => i_mgt_ref0clk,
