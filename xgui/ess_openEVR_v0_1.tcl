@@ -1,3 +1,7 @@
+
+# Loading additional proc with user specified bodies to compute parameter values.
+source [file join [file dirname [file dirname [info script]]] gui/ess_openEVR_v0_1.gtcl]
+
 # Definitional proc to organize widgets for parameters.
 proc init_gui { IPINST } {
   ipgui::add_param $IPINST -name "Component_Name"
@@ -5,7 +9,27 @@ proc init_gui { IPINST } {
   set_property tooltip {Width of the debug port} ${g_DEBUG_WIDTH}
   set g_HAS_DEBUG_CLK [ipgui::add_param $IPINST -name "g_HAS_DEBUG_CLK"]
   set_property tooltip {Useful to drive ILAs and debug logic} ${g_HAS_DEBUG_CLK}
+  set g_CARRIER_VER [ipgui::add_param $IPINST -name "g_CARRIER_VER" -widget comboBox]
+  set_property tooltip {revE or revD (old)} ${g_CARRIER_VER}
 
+}
+
+proc update_PARAM_VALUE.g_HAS_DEBUG_CLK { PARAM_VALUE.g_HAS_DEBUG_CLK PARAM_VALUE.g_HAS_DEBUG_CLK } {
+	# Procedure called to update g_HAS_DEBUG_CLK when any of the dependent parameters in the arguments change
+	
+	set g_HAS_DEBUG_CLK ${PARAM_VALUE.g_HAS_DEBUG_CLK}
+	set values(g_HAS_DEBUG_CLK) [get_property value $g_HAS_DEBUG_CLK]
+	if { [gen_USERPARAMETER_g_HAS_DEBUG_CLK_ENABLEMENT $values(g_HAS_DEBUG_CLK)] } {
+		set_property enabled true $g_HAS_DEBUG_CLK
+	} else {
+		set_property enabled false $g_HAS_DEBUG_CLK
+		set_property value [gen_USERPARAMETER_g_HAS_DEBUG_CLK_VALUE $values(g_HAS_DEBUG_CLK)] $g_HAS_DEBUG_CLK
+	}
+}
+
+proc validate_PARAM_VALUE.g_HAS_DEBUG_CLK { PARAM_VALUE.g_HAS_DEBUG_CLK } {
+	# Procedure called to validate g_HAS_DEBUG_CLK
+	return true
 }
 
 proc update_PARAM_VALUE.AXI_ADDR_WIDTH { PARAM_VALUE.AXI_ADDR_WIDTH } {
@@ -53,21 +77,21 @@ proc validate_PARAM_VALUE.REG_ADDR_WIDTH { PARAM_VALUE.REG_ADDR_WIDTH } {
 	return true
 }
 
+proc update_PARAM_VALUE.g_CARRIER_VER { PARAM_VALUE.g_CARRIER_VER } {
+	# Procedure called to update g_CARRIER_VER when any of the dependent parameters in the arguments change
+}
+
+proc validate_PARAM_VALUE.g_CARRIER_VER { PARAM_VALUE.g_CARRIER_VER } {
+	# Procedure called to validate g_CARRIER_VER
+	return true
+}
+
 proc update_PARAM_VALUE.g_DEBUG_WIDTH { PARAM_VALUE.g_DEBUG_WIDTH } {
 	# Procedure called to update g_DEBUG_WIDTH when any of the dependent parameters in the arguments change
 }
 
 proc validate_PARAM_VALUE.g_DEBUG_WIDTH { PARAM_VALUE.g_DEBUG_WIDTH } {
 	# Procedure called to validate g_DEBUG_WIDTH
-	return true
-}
-
-proc update_PARAM_VALUE.g_HAS_DEBUG_CLK { PARAM_VALUE.g_HAS_DEBUG_CLK } {
-	# Procedure called to update g_HAS_DEBUG_CLK when any of the dependent parameters in the arguments change
-}
-
-proc validate_PARAM_VALUE.g_HAS_DEBUG_CLK { PARAM_VALUE.g_HAS_DEBUG_CLK } {
-	# Procedure called to validate g_HAS_DEBUG_CLK
 	return true
 }
 
@@ -105,5 +129,10 @@ proc update_MODELPARAM_VALUE.AXI_DATA_WIDTH { MODELPARAM_VALUE.AXI_DATA_WIDTH PA
 proc update_MODELPARAM_VALUE.g_HAS_DEBUG_CLK { MODELPARAM_VALUE.g_HAS_DEBUG_CLK PARAM_VALUE.g_HAS_DEBUG_CLK } {
 	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
 	set_property value [get_property value ${PARAM_VALUE.g_HAS_DEBUG_CLK}] ${MODELPARAM_VALUE.g_HAS_DEBUG_CLK}
+}
+
+proc update_MODELPARAM_VALUE.g_CARRIER_VER { MODELPARAM_VALUE.g_CARRIER_VER PARAM_VALUE.g_CARRIER_VER } {
+	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
+	set_property value [get_property value ${PARAM_VALUE.g_CARRIER_VER}] ${MODELPARAM_VALUE.g_CARRIER_VER}
 }
 

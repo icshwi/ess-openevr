@@ -55,9 +55,9 @@ use reg_bank.register_bank_components.all;
 --!  @brief ess_evr_top: Top entity for the ESS openEVR
 entity ess_evr_top is
   Generic (
-    --! width of debug port
-    g_DEBUG_WIDTH   : integer := 5;
-    g_HAS_DEBUG_CLK : boolean := true;
+    g_CARRIER_VER   : string  := "revE";           --! Target carrier board hw revision: revE or revD
+    g_DEBUG_WIDTH   : integer := 5;                --! Width of debug port
+    g_HAS_DEBUG_CLK : boolean := true;             --! Enable an input for a free running clock to drive ILA cores
     AXI_ADDR_WIDTH  : integer := ADDRESS_WIDTH+2;
     REG_ADDR_WIDTH  : integer := ADDRESS_WIDTH;    --! Width of the address signals
     AXI_WSTRB_WIDTH : integer := 4;                --! Width of the AXI wstrb signal, may be determined by ADDRESS_WIDTH
@@ -91,6 +91,9 @@ entity ess_evr_top is
     --! Global logic clock, differential input from Si5346 Out2
     i_ZYNQ_MRCC_LVDS_P : in std_logic;
     i_ZYNQ_MRCC_LVDS_N : in std_logic;
+    
+    --! Global logic clock, LVCMOS input from Si5332 Out2
+    i_ZYNQ_MRCC1 : in std_logic;
 
     --! MGT reference clock 0, differential input from Si5346 Out0
     i_ZYNQ_CLKREF0_P : in std_logic;
@@ -229,17 +232,25 @@ architecture rtl of ess_evr_top is
   attribute mark_debug of gt0_resets : signal is "true";
   attribute mark_debug of gt0_status : signal is "true";
 
-begin
+begin 
 
-  sys_clk_bufds : IBUFDS
-    generic map (
-      DIFF_TERM => FALSE,
-      IBUF_LOW_PWR => FALSE,
-      IOSTANDARD => "LVDS_25")
-    port map (
-      O   => sys_clk_buf,
-      I   => i_ZYNQ_MRCC_LVDS_P,
-      IB  => i_ZYNQ_MRCC_LVDS_N);
+  sys_clk_difbuf_gen:
+  if g_CARRIER_VER = "revD" generate
+    sys_clk_bufds : IBUFDS
+      generic map (
+        DIFF_TERM => FALSE,
+        IBUF_LOW_PWR => FALSE,
+        IOSTANDARD => "LVDS_25")
+      port map (
+        O   => sys_clk_buf,
+        I   => i_ZYNQ_MRCC_LVDS_P,
+        IB  => i_ZYNQ_MRCC_LVDS_N);
+  end generate;
+  
+  sys_clk_buf_gen:
+  if g_CARRIER_VER = "revE" generate
+    sys_clk_buf <= i_ZYNQ_MRCC1;
+  end generate;
 
   sys_clk_buffer : BUFG
     port map (

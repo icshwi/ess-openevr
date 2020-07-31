@@ -720,7 +720,17 @@
               <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
             </spirit:wireTypeDef>
           </spirit:wireTypeDefs>
+          <spirit:driver>
+            <spirit:defaultValue spirit:format="long">0</spirit:defaultValue>
+          </spirit:driver>
         </spirit:wire>
+        <spirit:vendorExtensions>
+          <xilinx:portInfo>
+            <xilinx:enablement>
+              <xilinx:isEnabled xilinx:resolve="dependent" xilinx:id="PORT_ENABLEMENT.i_ZYNQ_MRCC_LVDS_P" xilinx:dependency="$g_CARRIER_VER = &quot;revD&quot;">false</xilinx:isEnabled>
+            </xilinx:enablement>
+          </xilinx:portInfo>
+        </spirit:vendorExtensions>
       </spirit:port>
       <spirit:port>
         <spirit:name>i_ZYNQ_MRCC_LVDS_N</spirit:name>
@@ -733,7 +743,40 @@
               <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
             </spirit:wireTypeDef>
           </spirit:wireTypeDefs>
+          <spirit:driver>
+            <spirit:defaultValue spirit:format="long">0</spirit:defaultValue>
+          </spirit:driver>
         </spirit:wire>
+        <spirit:vendorExtensions>
+          <xilinx:portInfo>
+            <xilinx:enablement>
+              <xilinx:isEnabled xilinx:resolve="dependent" xilinx:id="PORT_ENABLEMENT.i_ZYNQ_MRCC_LVDS_N" xilinx:dependency="$g_CARRIER_VER = &quot;revD&quot;">false</xilinx:isEnabled>
+            </xilinx:enablement>
+          </xilinx:portInfo>
+        </spirit:vendorExtensions>
+      </spirit:port>
+      <spirit:port>
+        <spirit:name>i_ZYNQ_MRCC1</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>std_logic</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+          <spirit:driver>
+            <spirit:defaultValue spirit:format="long">0</spirit:defaultValue>
+          </spirit:driver>
+        </spirit:wire>
+        <spirit:vendorExtensions>
+          <xilinx:portInfo>
+            <xilinx:enablement>
+              <xilinx:isEnabled xilinx:resolve="dependent" xilinx:id="PORT_ENABLEMENT.i_ZYNQ_MRCC1" xilinx:dependency="$g_CARRIER_VER = &quot;revE&quot;">true</xilinx:isEnabled>
+            </xilinx:enablement>
+          </xilinx:portInfo>
+        </spirit:vendorExtensions>
       </spirit:port>
       <spirit:port>
         <spirit:name>i_ZYNQ_CLKREF0_P</spirit:name>
@@ -943,7 +986,7 @@
         <spirit:vendorExtensions>
           <xilinx:portInfo>
             <xilinx:enablement>
-              <xilinx:isEnabled xilinx:resolve="dependent" xilinx:id="PORT_ENABLEMENT.i_DEBUG_clk" xilinx:dependency="spirit:decode(id(&apos;MODELPARAM_VALUE.g_HAS_DEBUG_CLK&apos;)) = true">false</xilinx:isEnabled>
+              <xilinx:isEnabled xilinx:resolve="dependent" xilinx:id="PORT_ENABLEMENT.i_DEBUG_clk" xilinx:dependency="spirit:decode(id(&apos;MODELPARAM_VALUE.g_HAS_DEBUG_CLK&apos;)) = true">true</xilinx:isEnabled>
             </xilinx:enablement>
           </xilinx:portInfo>
         </spirit:vendorExtensions>
@@ -983,14 +1026,12 @@
       <spirit:modelParameter spirit:dataType="boolean">
         <spirit:name>g_HAS_DEBUG_CLK</spirit:name>
         <spirit:displayName>G Has Debug Clk</spirit:displayName>
-        <spirit:value spirit:format="bool" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.g_HAS_DEBUG_CLK">false</spirit:value>
-        <spirit:vendorExtensions>
-          <xilinx:parameterInfo>
-            <xilinx:enablement>
-              <xilinx:isEnabled xilinx:id="MODELPARAM_ENABLEMENT.g_HAS_DEBUG_CLK">false</xilinx:isEnabled>
-            </xilinx:enablement>
-          </xilinx:parameterInfo>
-        </spirit:vendorExtensions>
+        <spirit:value spirit:format="bool" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.g_HAS_DEBUG_CLK">true</spirit:value>
+      </spirit:modelParameter>
+      <spirit:modelParameter spirit:dataType="string">
+        <spirit:name>g_CARRIER_VER</spirit:name>
+        <spirit:displayName>G Carrier Ver</spirit:displayName>
+        <spirit:value spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.g_CARRIER_VER">revE</spirit:value>
       </spirit:modelParameter>
     </spirit:modelParameters>
   </spirit:model>
@@ -999,6 +1040,11 @@
       <spirit:name>choice_list_9d8b0d81</spirit:name>
       <spirit:enumeration>ACTIVE_HIGH</spirit:enumeration>
       <spirit:enumeration>ACTIVE_LOW</spirit:enumeration>
+    </spirit:choice>
+    <spirit:choice>
+      <spirit:name>choice_list_f9d857e8</spirit:name>
+      <spirit:enumeration>revE</spirit:enumeration>
+      <spirit:enumeration>revD</spirit:enumeration>
     </spirit:choice>
   </spirit:choices>
   <spirit:fileSets>
@@ -1354,6 +1400,11 @@
           </xilinx:enablement>
         </xilinx:parameterInfo>
       </spirit:vendorExtensions>
+    </spirit:parameter>
+    <spirit:parameter>
+      <spirit:name>g_CARRIER_VER</spirit:name>
+      <spirit:displayName>HW revision of the carrier board</spirit:displayName>
+      <spirit:value spirit:resolve="user" spirit:id="PARAM_VALUE.g_CARRIER_VER" spirit:choiceRef="choice_list_f9d857e8">revE</spirit:value>
     </spirit:parameter>
   </spirit:parameters>
   <spirit:vendorExtensions>
