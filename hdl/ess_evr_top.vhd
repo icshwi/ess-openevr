@@ -42,15 +42,17 @@ use IEEE.NUMERIC_STD.ALL;
 Library UNISIM;
 use UNISIM.vcomponents.all;
 
+hdl/ess_evr_top.vhd b/hdl/ess_evr_top.vhd
 library work;
 use work.evr_pkg.ALL;
 
 library essffw;
 use essffw.axi4.all;
 
-library reg_bank;
-use reg_bank.register_bank_config.all;
-use reg_bank.register_bank_components.all;
+library ESS_openEVR_RegMap;
+use ESS_openEVR_RegMap.register_bank_config.all;
+use ESS_openEVR_RegMap.register_bank_components.all;
+use ESS_openEVR_RegMap.register_bank_functions.all;
 
 --!  @brief ess_evr_top: Top entity for the ESS openEVR
 entity ess_evr_top is
@@ -91,7 +93,7 @@ entity ess_evr_top is
     --! Global logic clock, differential input from Si5346 Out2
     i_ZYNQ_MRCC_LVDS_P : in std_logic;
     i_ZYNQ_MRCC_LVDS_N : in std_logic;
-    
+
     --! Global logic clock, LVCMOS input from Si5332 Out2
     i_ZYNQ_MRCC1 : in std_logic;
 
@@ -104,6 +106,9 @@ entity ess_evr_top is
     o_EVR_TX_N     : out std_logic;
     i_EVR_RX_P     : in std_logic;
     i_EVR_RX_N     : in std_logic;
+
+    --! SFP MOD 0 line (module detected, active-low)
+    i_EVR_MOD_0    : in std_logic;
 
     --! External timestamp request
     i_TS_req   : in  std_logic;
@@ -187,7 +192,6 @@ architecture rtl of ess_evr_top is
   signal delay_comp_update  : std_logic;
   signal delay_comp_value   : std_logic_vector(31 downto 0);
 
-
   signal dc_status             : std_logic_vector(31 downto 0);
   signal delay_comp_rx_status : std_logic_vector(31 downto 0);
 
@@ -232,7 +236,7 @@ architecture rtl of ess_evr_top is
   attribute mark_debug of gt0_resets : signal is "true";
   attribute mark_debug of gt0_status : signal is "true";
 
-begin 
+begin
 
   sys_clk_difbuf_gen:
   if g_CARRIER_VER = "revD" generate
@@ -246,7 +250,7 @@ begin
         I   => i_ZYNQ_MRCC_LVDS_P,
         IB  => i_ZYNQ_MRCC_LVDS_N);
   end generate;
-  
+
   sys_clk_buf_gen:
   if g_CARRIER_VER = "revE" generate
     sys_clk_buf <= i_ZYNQ_MRCC1;
@@ -408,19 +412,36 @@ begin
         gt0_resets.rx_async    <= gt0_resets_t.rx_async;
         gt0_resets_t.rx_async  <= logic_read_data_t.master_reset(3);
 
-        -- reset register read (from FPGA to processor)
-        logic_return_t <= logic_return_t_0;
-        logic_return_t_0.master_reset(3 downto 0) <= logic_read_data_t.master_reset(3 downto 0);
-        logic_return_t_0.master_reset(4) <= gt0_status.tx_fsm_done;
-        logic_return_t_0.master_reset(5) <= gt0_status.rx_fsm_done;
-        logic_return_t_0.master_reset(6) <= gt0_status.fbclk_lost;
-        logic_return_t_0.master_reset(7) <= gt0_status.pll_locked;
-        logic_return_t_0.master_reset(8) <= gt0_status.link_up;
-        logic_return_t_0.master_reset(9) <= gt0_status.event_rcv;
-        logic_return_t_0.master_reset(REGISTER_WIDTH-1 downto 10) <= (others => '0');
       end if;
     end process reset_reg;
 
+   -- Synchronously assign relevant signals to the appropriate registers
+   reg_assign : process(sys_clk)
+     begin
+       if rising_edge(sys_clk) then
+         -- Copy all stored values
+         --copy_readback_value(logic_read_data_t, logic_return_t_0);
+
+         -- register read (from FPGA to processor)
+         logic_return_t <= logic_return_t_0;
+
+         -- Reset signals
+         logic_return_t_0.master_reset(3 downto 0) <= logic_read_data_t.master_reset(3 downto 0);
+         logic_return_t_0.master_reset(4) <= gt0_status.tx_fsm_done;
+         logic_return_t_0.master_reset(5) <= gt0_status.rx_fsm_done;
+         logic_return_t_0.master_reset(6) <= gt0_status.fbclk_lost;
+         logic_return_t_0.master_reset(7) <= gt0_status.pll_locked;
+         logic_return_t_0.master_reset(8) <= gt0_status.link_up;
+         logic_return_t_0.master_reset(9) <= gt0_status.event_rcv;
+         logic_return_t_0.master_reset(REGISTER_WIDTH-1 downto 10) <= (others => '0');
+
+         -- Status reg
+         logic_return_t_0.Status(5 downto 0) <= "101101";  -- test (0x2D)
+         logic_return_t_0.Status(6) <= gt0_status.link_up;  -- LINK
+         logic_return_t_0.Status(7) <= i_EVR_MOD_0;         -- SFPMOD
+         logic_return_t_0.Status(31 downto 24) <= dbus_rxd; -- DBUS7-DBUS0
+       end if;
+     end process reg_assign;
 
    -- Instantiate timestamp component
    event_timestamp : timestamp

@@ -84,7 +84,7 @@ architecture rtl of axi_write_ctrl is
 
 begin
 
-  reg_address_in <= s_axi_awaddr(AXI_ADDR_WIDTH-1 downto (AXI_ADDR_WIDTH-REG_ADDR_WIDTH));
+  reg_address_in <= s_axi_awaddr(REG_ADDR_WIDTH-1 downto 0);
 
   -- Write data control FSM
   axi_write_fsm_reg : process(all)

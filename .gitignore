@@ -12,3 +12,9 @@ ip/*
 
 # Misc Vivado files
 .Xil/
+
+# Generated output of register map
+output/ESS_openEVR_regMap_hdl/
+
+# VIM swap files
+**/*.swp

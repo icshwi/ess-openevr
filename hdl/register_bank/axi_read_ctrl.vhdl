@@ -80,7 +80,7 @@ begin
   s_axi_arready <= arready;
   s_axi_rvalid  <= rvalid;
 
-  reg_address <= s_axi_araddr(AXI_ADDR_WIDTH-1 downto (AXI_ADDR_WIDTH-REG_ADDR_WIDTH));
+  reg_address <= s_axi_araddr(REG_ADDR_WIDTH-1 downto 0);
 
   -- Read address control
   axi_read_addr_ctrl : process(all)

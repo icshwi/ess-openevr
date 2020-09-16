@@ -26,9 +26,9 @@ use ieee.numeric_std.all;
 library essffw;
 use essffw.axi4.all;
 
-library reg_bank;
-use reg_bank.register_bank_config.all;
-use reg_bank.register_bank_components.all;
+library ESS_openEVR_RegMap;
+use ESS_openEVR_RegMap.register_bank_config.all;
+use ESS_openEVR_RegMap.register_bank_components.all;
 
 --------------------------------------------------------------------------------
 --!
@@ -92,6 +92,16 @@ architecture struct of register_bank_axi is
   signal bus_read_data  : std_logic_vector(REGISTER_WIDTH-1 downto 0);
   signal write_error    : std_logic;
   signal read_error     : std_logic;
+
+  attribute mark_debug: string;
+  attribute mark_debug of write_en : signal is "true";
+  attribute mark_debug of read_en : signal is "true";
+  attribute mark_debug of bus_write_data : signal is "true";
+  attribute mark_debug of bus_read_data : signal is "true";
+  attribute mark_debug of write_address : signal is "true";
+  attribute mark_debug of read_address : signal is "true";
+  attribute mark_debug of write_error : signal is "true";
+  attribute mark_debug of read_error : signal is "true";
 
 begin
 

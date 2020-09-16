@@ -25,8 +25,8 @@ use ieee.std_logic_1164.all;
 library essffw;
 use essffw.axi4.all;
 
-library reg_bank;
-use reg_bank.register_bank_config.all;
+library ESS_openEVR_RegMap;
+use ESS_openEVR_RegMap.register_bank_config.all;
 
 package register_bank_components is
 
