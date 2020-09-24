@@ -19,6 +19,44 @@ package evr_pkg is
 
   -- Records
 
+  --!@name ts_regs
+  --!@brief Record to group all the timestamp register signals for the EVR
+  --!@{
+  type ts_regs is record
+    sec_shift_reg     : std_logic_vector(31 downto 0); --! Seconds shift register
+    sec_counter       : std_logic_vector(31 downto 0); --! Timestamp seconds counter
+    event_counter     : std_logic_vector(31 downto 0); --! Timestamp event counter
+    sec_latch         : std_logic_vector(31 downto 0); --! Timestamp seconds counter latch
+    event_count_latch : std_logic_vector(31 downto 0); --! Timestamp event counter latch
+    event_fifo_sec    : std_logic_vector(31 downto 0); --! Event FIFO seconds register
+    event_fifo_cnt    : std_logic_vector(31 downto 0); --! Event FIFO event count register
+    event_fifo_code   : std_logic_vector(15 downto 0); --! Event FIFO event code register
+  end record gt_resets;
+  --!@}
+
+  --!@name evr_ctrl_reg
+  --!@brief Record to group all the control register bits for the EVR
+  --!@{
+  type evr_ctrl_reg is record
+    evr_en      : std_logic; --! Event receiver master enable
+    event_fwd   : std_logic; --! Event forwarding enable
+    tx_loopback : std_logic; --! Transmitter loopback
+    rx_loopback : std_logic; --! Receiver loopback
+    output_en   : std_logic; --! Output enable
+    soft_reset  : std_logic; --! Soft reset IP
+    dc_enable   : std_logic; --! Delay compensation mode enable
+    ts_dbus     : std_logic; --! Use timestamp counter clock on DBUS4
+    rst_ts      : std_logic; --! Reset timestamp
+    latch_ts    : std_logic; --! Latch timestamp
+    map_en      : std_logic; --! Event mapping RAM enable
+    map_rs      : std_logic; --! Mapping RAM select bit for event decoding
+    log_rst     : std_logic; --! Reset event log
+    log_en      : std_logic; --! Enable event log
+    log_dis     : std_logic; --! Disable event log
+    log_se      : std_logic; --! Log stop event enable
+    rs_fifo     : std_logic; --! Reset Event FIFO
+  end record gt_ctrl_flags;
+
   --!@name gt_ctrl_flags
   --!@brief Record to group all the control flags for the EVR GTX wrapper
   --!@{
@@ -104,6 +142,7 @@ package evr_pkg is
       delay_comp_value  : in std_logic_vector(31 downto 0);
       delay_comp_target : in std_logic_vector(31 downto 0);
       delay_comp_locked_out : out std_logic;
+      int_delay_value   : out std_logic_vector(31 downto 0);
 
       -- MGT physical pins
       i_mgt_ref0clk : in std_logic;
@@ -159,6 +198,8 @@ package evr_pkg is
       ts_req       : in  std_logic;
       ts_data      : out std_logic_vector(63 downto 0);
       ts_valid     : out std_logic;
+      evr_ctrl     : in evr_ctrl_reg;
+      ts_regs      : out ts_regs;
       buffer_pop   : in  std_logic;
       buffer_data  : out std_logic_vector(71 downto 0);
       buffer_valid : out std_logic );

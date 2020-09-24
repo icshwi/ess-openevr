@@ -42,7 +42,6 @@ use IEEE.NUMERIC_STD.ALL;
 Library UNISIM;
 use UNISIM.vcomponents.all;
 
-hdl/ess_evr_top.vhd b/hdl/ess_evr_top.vhd
 library work;
 use work.evr_pkg.ALL;
 
@@ -169,6 +168,8 @@ architecture rtl of ess_evr_top is
 
   signal event_link_ok : std_logic;
   signal gt0_status : gt_ctrl_flags;
+  signal evr_ctrl : evr_ctrl_reg;
+  signal ts_regs  : ts_regs;
 
   signal event_rxd       : std_logic_vector(7 downto 0);
   signal dbus_rxd        : std_logic_vector(7 downto 0);
@@ -191,8 +192,8 @@ architecture rtl of ess_evr_top is
   signal delay_comp_locked  : std_logic;
   signal delay_comp_update  : std_logic;
   signal delay_comp_value   : std_logic_vector(31 downto 0);
+  signal int_delay_value    : std_logic_vector(31 downto 0);
 
-  signal dc_status             : std_logic_vector(31 downto 0);
   signal delay_comp_rx_status : std_logic_vector(31 downto 0);
 
   signal databuf_dc_addr     : std_logic_vector(10 downto 2);
@@ -318,6 +319,7 @@ begin
       delay_comp_value => delay_comp_value,
       delay_comp_target => delay_comp_target,
       delay_comp_locked_out => delay_comp_locked,
+      int_delay_value => int_delay_value,
 
       i_mgt_ref0clk  => gt0_refclk0,
       i_mgt_ref1clk  => '0',
@@ -415,17 +417,18 @@ begin
       end if;
     end process reset_reg;
 
+
+
+
    -- Synchronously assign relevant signals to the appropriate registers
    reg_assign : process(sys_clk)
      begin
        if rising_edge(sys_clk) then
-         -- Copy all stored values
-         --copy_readback_value(logic_read_data_t, logic_return_t_0);
-
          -- register read (from FPGA to processor)
          logic_return_t <= logic_return_t_0;
 
          -- Reset signals
+         -- Read back from FPGA
          logic_return_t_0.master_reset(3 downto 0) <= logic_read_data_t.master_reset(3 downto 0);
          logic_return_t_0.master_reset(4) <= gt0_status.tx_fsm_done;
          logic_return_t_0.master_reset(5) <= gt0_status.rx_fsm_done;
@@ -435,11 +438,57 @@ begin
          logic_return_t_0.master_reset(9) <= gt0_status.event_rcv;
          logic_return_t_0.master_reset(REGISTER_WIDTH-1 downto 10) <= (others => '0');
 
+
          -- Status reg
-         logic_return_t_0.Status(5 downto 0) <= "101101";  -- test (0x2D)
+         logic_return_t_0.Status(5 downto 0) <= "101101";   -- test (0x2D)
          logic_return_t_0.Status(6) <= gt0_status.link_up;  -- LINK
          logic_return_t_0.Status(7) <= i_EVR_MOD_0;         -- SFPMOD
          logic_return_t_0.Status(31 downto 24) <= dbus_rxd; -- DBUS7-DBUS0
+
+         -- Control reg
+         -- Assign from processor
+         evr_ctrl.evr_en      <= logic_read_data_t.Control(31);
+         evr_ctrl.event_fwd   <= logic_read_data_t.Control(30);
+         evr_ctrl.tx_loopback <= logic_read_data_t.Control(29);
+         evr_ctrl.rx_loopback <= logic_read_data_t.Control(28);
+         evr_ctrl.output_en   <= logic_read_data_t.Control(27);
+         evr_ctrl.soft_reset  <= logic_read_data_t.Control(26);
+         evr_ctrl.dc_enable   <= logic_read_data_t.Control(22);
+         evr_ctrl.ts_dbus     <= logic_read_data_t.Control(14);
+         evr_ctrl.rst_ts      <= logic_read_data_t.Control(13);
+         evr_ctrl.latch_ts    <= logic_read_data_t.Control(10);
+         evr_ctrl.map_en      <= logic_read_data_t.Control(9);
+         evr_ctrl.map_rs      <= logic_read_data_t.Control(8);
+         evr_ctrl.log_rst     <= logic_read_data_t.Control(7);
+         evr_ctrl.log_en      <= logic_read_data_t.Control(6);
+         evr_ctrl.log_dis     <= logic_read_data_t.Control(5);
+         evr_ctrl.log_se      <= logic_read_data_t.Control(4);
+         evr_ctrl.rs_fifo     <= logic_read_data_t.Control(3);
+         -- Read back
+         logic_return_t_0.Control <= logic_read_data_t.Control;
+
+         -- DC registers
+         -- From processor
+         delay_comp_target <= logic_read_data_t.DCTarget;
+         dc_mode           <= evr_ctrl.dc_enable;
+         -- From FPGA
+         logic_return_t_0.DCTarget   <= delay_comp_target;
+         logic_return_t_0.TopologyID <= topology_addr;
+         logic_return_t_0.DCStatus   <= delay_comp_rx_status;
+         logic_return_t_0.DCRxValue  <= delay_comp_value;
+         logic_return_t_0.DCIntValue <= int_delay_value;
+
+         -- Timestamp registers
+         -- From FPGA
+         logic_return_t_0.SecSR        <= ts_regs.sec_shift_reg;
+         logic_return_t_0.SecCounter   <= ts_regs.sec_counter;
+         logic_return_t_0.EventCounter <= ts_regs.event_counter;
+         logic_return_t_0.SecLatch     <= ts_regs.sec_latch;
+         logic_return_t_0.EvCntLatch   <= ts_regs.event_count_latch;
+         logic_return_t_0.EvFIFOSec    <= ts_regs.event_fifo_sec;
+         logic_return_t_0.EvFIFOEvCnt  <= ts_regs.event_fifo_cnt;
+         logic_return_t_0.EvFIFOCode   <= x"0000" & ts_regs.event_fifo_code;
+
        end if;
      end process reg_assign;
 
@@ -452,6 +501,8 @@ begin
       ts_req       => ext_ts_trig,
       ts_data      => o_TS_data,
       ts_valid     => o_TS_valid,
+      evr_ctrl     => evr_ctrl,
+      ts_regs      => ts_regs,
       MAP14        => '0',
       buffer_pop   => '1',
       buffer_data  => open,

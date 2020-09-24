@@ -79,7 +79,7 @@ bank.add_register("GPIODir",       address=0x090,    modes="RW") # Front Panel U
 bank.add_register("GPIOIn",        address=0x094,    modes="RW") # Front Panel UnivIO GPIO input register
 bank.add_register("GPIOOut",       address=0x098,    modes="RW") # Front Panel UnivIO GPIO output register
 
-bank.add_register("DCTarget",      address=0x0B0,    modes="RW") # Delay compensation target value
+bank.add_register("DCTarget",      address=0x0B0,    modes="RW",  reset_value=0x02100000) # Delay compensation target value
 bank.add_register("DCRxValue",     address=0x0B4,    modes="RW") # Delay compensation transmission path delay value 
 
 bank.add_register("DCIntValue",    address=0x0B8,    modes="RW") # Delay Compensation Internal Delay Value

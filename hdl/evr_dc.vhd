@@ -55,6 +55,7 @@ entity evr_dc is
     delay_comp_value  : in std_logic_vector(31 downto 0);
     delay_comp_target : in std_logic_vector(31 downto 0);
     delay_comp_locked_out : out std_logic;
+    int_delay_value   : out std_logic_vector(31 downto 0);
 
     -- MGT physical pins
     i_mgt_ref0clk : in std_logic;
@@ -130,7 +131,7 @@ architecture structure of evr_dc is
   signal psinc          : std_logic;
   signal psdec          : std_logic;
 
-  signal int_delay_value      : std_logic_vector(31 downto 0);
+  signal int_delay_value_t    : std_logic_vector(31 downto 0);
   signal int_slow_delay_value : std_logic_vector(31 downto 0);
   signal int_delay_update     : std_logic;
   signal int_delay_init       : std_logic;
@@ -139,7 +140,7 @@ architecture structure of evr_dc is
   signal dc_fast_adjust       : std_logic;
   signal dc_slow_adjust       : std_logic;
 
-  signal dc_status        : std_logic_vector(31 downto 0);
+  signal dc_status      : std_logic_vector(31 downto 0);
 
 begin
 
@@ -198,7 +199,7 @@ begin
       fast_adjust => dc_fast_adjust,
       slow_adjust => dc_slow_adjust,
       reset => int_delay_reset,
-      delay_out => int_delay_value,
+      delay_out => int_delay_value_t,
       slow_delay_out => int_slow_delay_value,
       delay_update_out => int_delay_update,
       init_done => int_delay_init);
@@ -231,7 +232,7 @@ begin
       delay_comp_update => delay_comp_update,
       delay_comp_value  => delay_comp_value,
       delay_comp_target => delay_comp_target,
-      int_delay_value   => int_delay_value,
+      int_delay_value   => int_delay_value_t,
       int_delay_update  => int_delay_update,
       int_delay_init    => int_delay_init);
 
@@ -348,6 +349,7 @@ begin
   run_on_refclk <= '0';
   test_mode <= '0';
   int_delay_reset <= not up_rx_link_ok;
+  int_delay_value <= int_delay_value_t;
 
   mmcm_clkinsel <= not run_on_refclk; -- high: select CLKIN1
   mmcm_reset <= not up_rx_link_ok;

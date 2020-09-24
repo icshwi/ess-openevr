@@ -33,6 +33,9 @@ entity timestamp is
     event_code   : in  std_logic_vector(7 downto 0);
     reset        : in  std_logic;
     MAP14        : in  std_logic;
+    -- Registers
+    evr_ctrl     : in evr_ctrl_reg;
+    ts_regs      : out ts_regs;
     -- External timestamp request mechanism
     ts_req       : in  std_logic;
     ts_data      : out std_logic_vector(63 downto 0);
@@ -150,7 +153,7 @@ begin
       ts_event_count <= (others => '0');
     else
       if rising_edge(event_clk) then
-        if event_code = C_EVENT_TS_COUNT_RESET then
+        if (event_code = C_EVENT_TS_COUNT_RESET) OR (evr_ctrl.rst_ts = '1') then
           ts_event_count <= (others => '0');   
         else
           ts_event_count <= std_logic_vector(unsigned(ts_event_count) + 1);
@@ -159,21 +162,35 @@ begin
     end if;  
   end process ts_event_counter;
   
-  -- Process to latch second and timestamp values wheh MAP14 asserted
-  MAP14_latch : process(event_clk, reset)
+  -- Process to latch timestamp values
+  ts_latch_proc : process(event_clk, reset)
   begin
     if reset = '1' then
-      seconds_latch <= (others => '0');
       ts_latch      <= (others => '0');
     else
       if rising_edge(event_clk) then
-        if MAP14 = '1' then
-          seconds_latch <= seconds_reg;
-          ts_latch      <= ts_event_count;
+        if evr_ctrl.rst_ts = '1' then
+          ts_latch <= (others => '0');  
+        elsif (MAP14 = '1') OR (evr_ctrl.latch_ts = '1') then
+          ts_latch <= ts_event_count;
         end if;
       end if;
     end if;
-  end process MAP14_latch;
+  end process ts_latch_proc;
+  
+  -- Process to latch seconds values
+  sec_latch : process(event_clk, reset)
+  begin
+    if reset = '1' then
+      seconds_latch <= (others => '0');
+    else
+      if rising_edge(event_clk) then
+        if MAP14 = '1'  then
+          seconds_latch <= seconds_reg;
+        end if;
+      end if;
+    end if;
+  end process sec_latch;
       
   -- Generate write control signals for FIFO
   fifo_wr_ctrl : process(event_clk, reset)
@@ -253,5 +270,15 @@ begin
   buffer_valid <= fifo_buffer_valid;
   ts_data      <= ext_trig_ts_data;
   ts_valid     <= ext_trig_ts_valid;
+  
+  -- Populate registers
+  ts_regs.sec_shift_reg     <= seconds_shift_reg;
+  ts_regs.sec_counter       <= seconds_reg;
+  ts_regs.event_counter     <= ts_event_count;
+  ts_regs.sec_latch         <= seconds_latch;
+  ts_regs.event_count_latch <= ts_latch;
+  ts_regs.event_fifo_sec    <= fifo_event_data_out(71 downto 40);
+  ts_regs.event_fifo_cnt    <= fifo_event_data_out(39 downto 8);
+  ts_regs.event_fifo_code   <= x"00" & fifo_event_data_out(7 downto 0);
 
 end Behavioral;

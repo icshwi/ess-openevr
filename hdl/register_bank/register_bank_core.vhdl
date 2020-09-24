@@ -485,7 +485,7 @@ begin
     -- Register: DCTarget
     field_DCTarget : field_core
     generic map (
-      RESET_VALUE => std_logic_vector(to_unsigned(16#0#, 32)),
+      RESET_VALUE => std_logic_vector(to_unsigned(16#02100000#, 32)),
       WIDTH => 32
     )
     port map (
