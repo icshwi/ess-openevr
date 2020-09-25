@@ -443,12 +443,8 @@ begin
             register_write_en_o.Pulse31Delay         <= '1';
           when 16#3FC# =>
             register_write_en_o.Pulse31Width         <= '1';
-          when 16#FFF0# =>
-            register_write_en_o.master_reset         <= '1';
           when 16#FFF4# =>
-            register_write_en_o.rxpath_reset         <= '1';
-          when 16#FFFC# =>
-            register_write_en_o.txpath_reset         <= '1';
+            register_write_en_o.ESSControl           <= '1';
 
 
           when others =>

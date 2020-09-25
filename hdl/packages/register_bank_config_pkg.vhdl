@@ -217,9 +217,7 @@ package register_bank_config is
      Pulse31Presc         : std_logic;
      Pulse31Delay         : std_logic;
      Pulse31Width         : std_logic;
-     master_reset         : std_logic;
-     rxpath_reset         : std_logic;
-     txpath_reset         : std_logic;
+     ESSControl           : std_logic;
   end record;
 
   -- field_write_en_t
@@ -411,9 +409,7 @@ package register_bank_config is
      Pulse31Presc         : std_logic;
      Pulse31Delay         : std_logic;
      Pulse31Width         : std_logic;
-     master_reset         : std_logic;
-     rxpath_reset         : std_logic;
-     txpath_reset         : std_logic;
+     ESSControl           : std_logic;
   end record;
 
   -- field_data_t
@@ -609,9 +605,8 @@ package register_bank_config is
      Pulse31Presc         : std_logic_vector(31 downto 0);
      Pulse31Delay         : std_logic_vector(31 downto 0);
      Pulse31Width         : std_logic_vector(31 downto 0);
-     master_reset         : std_logic_vector(31 downto 0);
-     rxpath_reset         : std_logic_vector(31 downto 0);
-     txpath_reset         : std_logic_vector(31 downto 0);
+     ESSStatus            : std_logic_vector(31 downto 0);
+     ESSControl           : std_logic_vector(31 downto 0);
   end record;
 
   -- register_bus_read_t
@@ -807,9 +802,8 @@ package register_bank_config is
      Pulse31Presc         : std_logic_vector(REGISTER_WIDTH-1 downto 0);
      Pulse31Delay         : std_logic_vector(REGISTER_WIDTH-1 downto 0);
      Pulse31Width         : std_logic_vector(REGISTER_WIDTH-1 downto 0);
-     master_reset         : std_logic_vector(REGISTER_WIDTH-1 downto 0);
-     rxpath_reset         : std_logic_vector(REGISTER_WIDTH-1 downto 0);
-     txpath_reset         : std_logic_vector(REGISTER_WIDTH-1 downto 0);
+     ESSStatus            : std_logic_vector(REGISTER_WIDTH-1 downto 0);
+     ESSControl           : std_logic_vector(REGISTER_WIDTH-1 downto 0);
   end record;
 
   -- logic_read_data_t
@@ -1001,9 +995,7 @@ package register_bank_config is
      Pulse31Presc         : std_logic_vector(31 downto 0);
      Pulse31Delay         : std_logic_vector(31 downto 0);
      Pulse31Width         : std_logic_vector(31 downto 0);
-     master_reset         : std_logic_vector(31 downto 0);
-     rxpath_reset         : std_logic_vector(31 downto 0);
-     txpath_reset         : std_logic_vector(31 downto 0);
+     ESSControl           : std_logic_vector(31 downto 0);
   end record;
 
   -- logic_return_t
@@ -1199,9 +1191,8 @@ package register_bank_config is
      Pulse31Presc         : std_logic_vector(31 downto 0);
      Pulse31Delay         : std_logic_vector(31 downto 0);
      Pulse31Width         : std_logic_vector(31 downto 0);
-     master_reset         : std_logic_vector(31 downto 0);
-     rxpath_reset         : std_logic_vector(31 downto 0);
-     txpath_reset         : std_logic_vector(31 downto 0);
+     ESSStatus            : std_logic_vector(31 downto 0);
+     ESSControl           : std_logic_vector(31 downto 0);
   end record;
 
   type transfer_shadow_group_t is record

@@ -485,7 +485,7 @@ begin
     -- Register: DCTarget
     field_DCTarget : field_core
     generic map (
-      RESET_VALUE => std_logic_vector(to_unsigned(16#02100000#, 32)),
+      RESET_VALUE => std_logic_vector(to_unsigned(16#37084FC#, 32)),
       WIDTH => 32
     )
     port map (
@@ -3304,8 +3304,8 @@ begin
       logic_return_i   => logic_return_i.Pulse31Width
     );
 
-    -- Register: master_reset
-    field_master_reset : field_core
+    -- Register: ESSStatus
+    field_ESSStatus : field_core
     generic map (
       RESET_VALUE => std_logic_vector(to_unsigned(16#0#, 32)),
       WIDTH => 32
@@ -3313,16 +3313,16 @@ begin
     port map (
       clock_i          => clock_i,
       reset_n_i        => reset_n_i,
-      write_en_i       => write_en_i.master_reset,
-      bus_write_data_i => bus_write_data_i.master_reset,
-      field_value_o    => current_data_o.master_reset,
-      logic_to_bus_o   => logic_to_bus_o.master_reset,
-      logic_data_o     => logic_data_o.master_reset,
-      logic_return_i   => logic_return_i.master_reset
+      write_en_i       => '0',
+      bus_write_data_i => bus_write_data_i.ESSStatus,
+      field_value_o    => current_data_o.ESSStatus,
+      logic_to_bus_o   => logic_to_bus_o.ESSStatus,
+      logic_data_o     => open,
+      logic_return_i   => logic_return_i.ESSStatus
     );
 
-    -- Register: rxpath_reset
-    field_rxpath_reset : field_core
+    -- Register: ESSControl
+    field_ESSControl : field_core
     generic map (
       RESET_VALUE => std_logic_vector(to_unsigned(16#0#, 32)),
       WIDTH => 32
@@ -3330,29 +3330,12 @@ begin
     port map (
       clock_i          => clock_i,
       reset_n_i        => reset_n_i,
-      write_en_i       => write_en_i.rxpath_reset,
-      bus_write_data_i => bus_write_data_i.rxpath_reset,
-      field_value_o    => current_data_o.rxpath_reset,
-      logic_to_bus_o   => logic_to_bus_o.rxpath_reset,
-      logic_data_o     => logic_data_o.rxpath_reset,
-      logic_return_i   => logic_return_i.rxpath_reset
-    );
-
-    -- Register: txpath_reset
-    field_txpath_reset : field_core
-    generic map (
-      RESET_VALUE => std_logic_vector(to_unsigned(16#0#, 32)),
-      WIDTH => 32
-    )
-    port map (
-      clock_i          => clock_i,
-      reset_n_i        => reset_n_i,
-      write_en_i       => write_en_i.txpath_reset,
-      bus_write_data_i => bus_write_data_i.txpath_reset,
-      field_value_o    => current_data_o.txpath_reset,
-      logic_to_bus_o   => logic_to_bus_o.txpath_reset,
-      logic_data_o     => logic_data_o.txpath_reset,
-      logic_return_i   => logic_return_i.txpath_reset
+      write_en_i       => write_en_i.ESSControl,
+      bus_write_data_i => bus_write_data_i.ESSControl,
+      field_value_o    => current_data_o.ESSControl,
+      logic_to_bus_o   => logic_to_bus_o.ESSControl,
+      logic_data_o     => logic_data_o.ESSControl,
+      logic_return_i   => logic_return_i.ESSControl
     );
 
 

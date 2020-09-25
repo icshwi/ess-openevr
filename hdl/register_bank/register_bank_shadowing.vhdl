@@ -237,9 +237,7 @@ begin
   logic_data_o.Pulse31Presc <= logic_data_i.Pulse31Presc;
   logic_data_o.Pulse31Delay <= logic_data_i.Pulse31Delay;
   logic_data_o.Pulse31Width <= logic_data_i.Pulse31Width;
-  logic_data_o.master_reset <= logic_data_i.master_reset;
-  logic_data_o.rxpath_reset <= logic_data_i.rxpath_reset;
-  logic_data_o.txpath_reset <= logic_data_i.txpath_reset;
+  logic_data_o.ESSControl <= logic_data_i.ESSControl;
 
 
 end architecture rtl;

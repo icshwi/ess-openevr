@@ -258,9 +258,8 @@ bank.add_register("Pulse31Delay",  address=0x3F8,    modes="RW") # Pulse 31 Dela
 bank.add_register("Pulse31Width",  address=0x3FC,    modes="RW") # Pulse 31 Width Register
 
 # ESS OpenEVR specific registers 
-bank.add_register("master_reset", address=0xFFF0, reset_value=0x0, modes="RW")
-bank.add_register("rxpath_reset", address=0xFFF4, reset_value=0x0, modes="RW")
-bank.add_register("txpath_reset", address=0xFFFC, reset_value=0x0, modes="RW")
+bank.add_register("ESSStatus", address=0xFFF0, reset_value=0x0, modes="R")
+bank.add_register("ESSControl", address=0xFFF4, reset_value=0x0, modes="RW")
 
 print()
 print(str(bank))

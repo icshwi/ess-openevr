@@ -242,9 +242,8 @@ begin
     read_interface_logic(32, 0, field_value_i.Pulse31Presc, logic_value_i.Pulse31Presc, register_data_o.Pulse31Presc);
     read_interface_logic(32, 0, field_value_i.Pulse31Delay, logic_value_i.Pulse31Delay, register_data_o.Pulse31Delay);
     read_interface_logic(32, 0, field_value_i.Pulse31Width, logic_value_i.Pulse31Width, register_data_o.Pulse31Width);
-    read_interface_logic(32, 0, field_value_i.master_reset, logic_value_i.master_reset, register_data_o.master_reset);
-    read_interface_logic(32, 0, field_value_i.rxpath_reset, logic_value_i.rxpath_reset, register_data_o.rxpath_reset);
-    read_interface_logic(32, 0, field_value_i.txpath_reset, logic_value_i.txpath_reset, register_data_o.txpath_reset);
+    read_interface_logic(32, 0, field_value_i.ESSStatus, logic_value_i.ESSStatus, register_data_o.ESSStatus);
+    read_interface_logic(32, 0, field_value_i.ESSControl, logic_value_i.ESSControl, register_data_o.ESSControl);
 
 
   end process read_interface_cores;

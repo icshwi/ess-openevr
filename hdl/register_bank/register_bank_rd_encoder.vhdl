@@ -447,11 +447,9 @@ begin
             when 16#3FC# =>
               bus_data_o <= register_data_i.Pulse31Width;
             when 16#FFF0# =>
-              bus_data_o <= register_data_i.master_reset;
+              bus_data_o <= register_data_i.ESSStatus;
             when 16#FFF4# =>
-              bus_data_o <= register_data_i.rxpath_reset;
-            when 16#FFFC# =>
-              bus_data_o <= register_data_i.txpath_reset;
+              bus_data_o <= register_data_i.ESSControl;
 
 
             when others =>

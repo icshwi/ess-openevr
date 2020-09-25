@@ -406,13 +406,13 @@ begin
       if rising_edge(sys_clk) then
         -- reset register write (from processor to FPGA)
         gbl_reset   <= gbl_reset_t;
-        gbl_reset_t <= logic_read_data_t.master_reset(0);
+        gbl_reset_t <= logic_read_data_t.ESSControl(0);
         gt0_resets.gbl_async   <= gt0_resets_t.gbl_async;
-        gt0_resets_t.gbl_async <= logic_read_data_t.master_reset(1) or logic_read_data_t.master_reset(0);
+        gt0_resets_t.gbl_async <= logic_read_data_t.ESSControl(1) or logic_read_data_t.ESSControl(0);
         gt0_resets.tx_async    <= gt0_resets_t.tx_async;
-        gt0_resets_t.tx_async  <= logic_read_data_t.master_reset(2);
+        gt0_resets_t.tx_async  <= logic_read_data_t.ESSControl(2);
         gt0_resets.rx_async    <= gt0_resets_t.rx_async;
-        gt0_resets_t.rx_async  <= logic_read_data_t.master_reset(3);
+        gt0_resets_t.rx_async  <= logic_read_data_t.ESSControl(3);
 
       end if;
     end process reset_reg;
@@ -429,18 +429,18 @@ begin
 
          -- Reset signals
          -- Read back from FPGA
-         logic_return_t_0.master_reset(3 downto 0) <= logic_read_data_t.master_reset(3 downto 0);
-         logic_return_t_0.master_reset(4) <= gt0_status.tx_fsm_done;
-         logic_return_t_0.master_reset(5) <= gt0_status.rx_fsm_done;
-         logic_return_t_0.master_reset(6) <= gt0_status.fbclk_lost;
-         logic_return_t_0.master_reset(7) <= gt0_status.pll_locked;
-         logic_return_t_0.master_reset(8) <= gt0_status.link_up;
-         logic_return_t_0.master_reset(9) <= gt0_status.event_rcv;
-         logic_return_t_0.master_reset(REGISTER_WIDTH-1 downto 10) <= (others => '0');
+         logic_return_t_0.ESSControl(3 downto 0) <= logic_read_data_t.ESSControl(3 downto 0);
+         logic_return_t_0.ESSControl(4) <= gt0_status.tx_fsm_done;
+         logic_return_t_0.ESSControl(5) <= gt0_status.rx_fsm_done;
+         logic_return_t_0.ESSControl(6) <= gt0_status.fbclk_lost;
+         logic_return_t_0.ESSControl(7) <= gt0_status.pll_locked;
+         logic_return_t_0.ESSControl(8) <= gt0_status.link_up;
+         logic_return_t_0.ESSControl(9) <= gt0_status.event_rcv;
+         logic_return_t_0.ESSControl(REGISTER_WIDTH-1 downto 10) <= (others => '0');
 
 
          -- Status reg
-         logic_return_t_0.Status(5 downto 0) <= "101101";   -- test (0x2D)
+         logic_return_t_0.Status(5 downto 0) <= "000000";   -- 
          logic_return_t_0.Status(6) <= gt0_status.link_up;  -- LINK
          logic_return_t_0.Status(7) <= i_EVR_MOD_0;         -- SFPMOD
          logic_return_t_0.Status(31 downto 24) <= dbus_rxd; -- DBUS7-DBUS0

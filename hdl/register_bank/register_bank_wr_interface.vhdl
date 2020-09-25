@@ -238,9 +238,8 @@ architecture rtl of register_bank_wr_interface is
     signal Pulse31Presc_write_en : std_logic_vector(0 downto 0);
     signal Pulse31Delay_write_en : std_logic_vector(0 downto 0);
     signal Pulse31Width_write_en : std_logic_vector(0 downto 0);
-    signal master_reset_write_en : std_logic_vector(0 downto 0);
-    signal rxpath_reset_write_en : std_logic_vector(0 downto 0);
-    signal txpath_reset_write_en : std_logic_vector(0 downto 0);
+    signal ESSStatus_write_en : std_logic_vector(0 downto 0);
+    signal ESSControl_write_en : std_logic_vector(0 downto 0);
 
 
 begin
@@ -809,14 +808,8 @@ begin
     Pulse31Width_write_en(0) <= register_write_en_i.Pulse31Width;
     write_interface_core((0 => 0), (0 => WRITE), Pulse31Width_write_en, data_bus_i, field_write_en_o.Pulse31Width, field_data_o.Pulse31Width, current_field_value_i.Pulse31Width);
 
-    master_reset_write_en(0) <= register_write_en_i.master_reset;
-    write_interface_core((0 => 0), (0 => WRITE), master_reset_write_en, data_bus_i, field_write_en_o.master_reset, field_data_o.master_reset, current_field_value_i.master_reset);
-
-    rxpath_reset_write_en(0) <= register_write_en_i.rxpath_reset;
-    write_interface_core((0 => 0), (0 => WRITE), rxpath_reset_write_en, data_bus_i, field_write_en_o.rxpath_reset, field_data_o.rxpath_reset, current_field_value_i.rxpath_reset);
-
-    txpath_reset_write_en(0) <= register_write_en_i.txpath_reset;
-    write_interface_core((0 => 0), (0 => WRITE), txpath_reset_write_en, data_bus_i, field_write_en_o.txpath_reset, field_data_o.txpath_reset, current_field_value_i.txpath_reset);
+    ESSControl_write_en(0) <= register_write_en_i.ESSControl;
+    write_interface_core((0 => 0), (0 => WRITE), ESSControl_write_en, data_bus_i, field_write_en_o.ESSControl, field_data_o.ESSControl, current_field_value_i.ESSControl);
 
 
 
