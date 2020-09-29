@@ -244,6 +244,8 @@ begin
     read_interface_logic(32, 0, field_value_i.Pulse31Width, logic_value_i.Pulse31Width, register_data_o.Pulse31Width);
     read_interface_logic(32, 0, field_value_i.ESSStatus, logic_value_i.ESSStatus, register_data_o.ESSStatus);
     read_interface_logic(32, 0, field_value_i.ESSControl, logic_value_i.ESSControl, register_data_o.ESSControl);
+    read_interface_logic(32, 0, field_value_i.ESSExtSecCounter, logic_value_i.ESSExtSecCounter, register_data_o.ESSExtSecCounter);
+    read_interface_logic(32, 0, field_value_i.ESSExtEventCounter, logic_value_i.ESSExtEventCounter, register_data_o.ESSExtEventCounter);
 
 
   end process read_interface_cores;

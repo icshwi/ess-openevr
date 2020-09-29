@@ -41,21 +41,10 @@ package register_bank_config is
      EvCntPresc           : std_logic;
      UsecDivider          : std_logic;
      ClockControl         : std_logic;
-     SecSR                : std_logic;
-     SecCounter           : std_logic;
-     EventCounter         : std_logic;
-     SecLatch             : std_logic;
-     EvCntLatch           : std_logic;
-     EvFIFOSec            : std_logic;
-     EvFIFOEvCnt          : std_logic;
-     EvFIFOCode           : std_logic;
      GPIODir              : std_logic;
      GPIOIn               : std_logic;
      GPIOOut              : std_logic;
      DCTarget             : std_logic;
-     DCRxValue            : std_logic;
-     DCIntValue           : std_logic;
-     TopologyID           : std_logic;
      SeqRamCtrl           : std_logic;
      Prescaler0           : std_logic;
      Prescaler1           : std_logic;
@@ -233,21 +222,10 @@ package register_bank_config is
      EvCntPresc           : std_logic;
      UsecDivider          : std_logic;
      ClockControl         : std_logic;
-     SecSR                : std_logic;
-     SecCounter           : std_logic;
-     EventCounter         : std_logic;
-     SecLatch             : std_logic;
-     EvCntLatch           : std_logic;
-     EvFIFOSec            : std_logic;
-     EvFIFOEvCnt          : std_logic;
-     EvFIFOCode           : std_logic;
      GPIODir              : std_logic;
      GPIOIn               : std_logic;
      GPIOOut              : std_logic;
      DCTarget             : std_logic;
-     DCRxValue            : std_logic;
-     DCIntValue           : std_logic;
-     TopologyID           : std_logic;
      SeqRamCtrl           : std_logic;
      Prescaler0           : std_logic;
      Prescaler1           : std_logic;
@@ -607,6 +585,8 @@ package register_bank_config is
      Pulse31Width         : std_logic_vector(31 downto 0);
      ESSStatus            : std_logic_vector(31 downto 0);
      ESSControl           : std_logic_vector(31 downto 0);
+     ESSExtSecCounter     : std_logic_vector(31 downto 0);
+     ESSExtEventCounter   : std_logic_vector(31 downto 0);
   end record;
 
   -- register_bus_read_t
@@ -804,6 +784,8 @@ package register_bank_config is
      Pulse31Width         : std_logic_vector(REGISTER_WIDTH-1 downto 0);
      ESSStatus            : std_logic_vector(REGISTER_WIDTH-1 downto 0);
      ESSControl           : std_logic_vector(REGISTER_WIDTH-1 downto 0);
+     ESSExtSecCounter     : std_logic_vector(REGISTER_WIDTH-1 downto 0);
+     ESSExtEventCounter   : std_logic_vector(REGISTER_WIDTH-1 downto 0);
   end record;
 
   -- logic_read_data_t
@@ -819,21 +801,10 @@ package register_bank_config is
      EvCntPresc           : std_logic_vector(31 downto 0);
      UsecDivider          : std_logic_vector(31 downto 0);
      ClockControl         : std_logic_vector(31 downto 0);
-     SecSR                : std_logic_vector(31 downto 0);
-     SecCounter           : std_logic_vector(31 downto 0);
-     EventCounter         : std_logic_vector(31 downto 0);
-     SecLatch             : std_logic_vector(31 downto 0);
-     EvCntLatch           : std_logic_vector(31 downto 0);
-     EvFIFOSec            : std_logic_vector(31 downto 0);
-     EvFIFOEvCnt          : std_logic_vector(31 downto 0);
-     EvFIFOCode           : std_logic_vector(31 downto 0);
      GPIODir              : std_logic_vector(31 downto 0);
      GPIOIn               : std_logic_vector(31 downto 0);
      GPIOOut              : std_logic_vector(31 downto 0);
      DCTarget             : std_logic_vector(31 downto 0);
-     DCRxValue            : std_logic_vector(31 downto 0);
-     DCIntValue           : std_logic_vector(31 downto 0);
-     TopologyID           : std_logic_vector(31 downto 0);
      SeqRamCtrl           : std_logic_vector(31 downto 0);
      Prescaler0           : std_logic_vector(31 downto 0);
      Prescaler1           : std_logic_vector(31 downto 0);
@@ -1193,6 +1164,8 @@ package register_bank_config is
      Pulse31Width         : std_logic_vector(31 downto 0);
      ESSStatus            : std_logic_vector(31 downto 0);
      ESSControl           : std_logic_vector(31 downto 0);
+     ESSExtSecCounter     : std_logic_vector(31 downto 0);
+     ESSExtEventCounter   : std_logic_vector(31 downto 0);
   end record;
 
   type transfer_shadow_group_t is record

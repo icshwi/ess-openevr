@@ -240,6 +240,8 @@ architecture rtl of register_bank_wr_interface is
     signal Pulse31Width_write_en : std_logic_vector(0 downto 0);
     signal ESSStatus_write_en : std_logic_vector(0 downto 0);
     signal ESSControl_write_en : std_logic_vector(0 downto 0);
+    signal ESSExtSecCounter_write_en : std_logic_vector(0 downto 0);
+    signal ESSExtEventCounter_write_en : std_logic_vector(0 downto 0);
 
 
 begin
@@ -280,30 +282,6 @@ begin
     ClockControl_write_en(0) <= register_write_en_i.ClockControl;
     write_interface_core((0 => 0), (0 => WRITE), ClockControl_write_en, data_bus_i, field_write_en_o.ClockControl, field_data_o.ClockControl, current_field_value_i.ClockControl);
 
-    SecSR_write_en(0) <= register_write_en_i.SecSR;
-    write_interface_core((0 => 0), (0 => WRITE), SecSR_write_en, data_bus_i, field_write_en_o.SecSR, field_data_o.SecSR, current_field_value_i.SecSR);
-
-    SecCounter_write_en(0) <= register_write_en_i.SecCounter;
-    write_interface_core((0 => 0), (0 => WRITE), SecCounter_write_en, data_bus_i, field_write_en_o.SecCounter, field_data_o.SecCounter, current_field_value_i.SecCounter);
-
-    EventCounter_write_en(0) <= register_write_en_i.EventCounter;
-    write_interface_core((0 => 0), (0 => WRITE), EventCounter_write_en, data_bus_i, field_write_en_o.EventCounter, field_data_o.EventCounter, current_field_value_i.EventCounter);
-
-    SecLatch_write_en(0) <= register_write_en_i.SecLatch;
-    write_interface_core((0 => 0), (0 => WRITE), SecLatch_write_en, data_bus_i, field_write_en_o.SecLatch, field_data_o.SecLatch, current_field_value_i.SecLatch);
-
-    EvCntLatch_write_en(0) <= register_write_en_i.EvCntLatch;
-    write_interface_core((0 => 0), (0 => WRITE), EvCntLatch_write_en, data_bus_i, field_write_en_o.EvCntLatch, field_data_o.EvCntLatch, current_field_value_i.EvCntLatch);
-
-    EvFIFOSec_write_en(0) <= register_write_en_i.EvFIFOSec;
-    write_interface_core((0 => 0), (0 => WRITE), EvFIFOSec_write_en, data_bus_i, field_write_en_o.EvFIFOSec, field_data_o.EvFIFOSec, current_field_value_i.EvFIFOSec);
-
-    EvFIFOEvCnt_write_en(0) <= register_write_en_i.EvFIFOEvCnt;
-    write_interface_core((0 => 0), (0 => WRITE), EvFIFOEvCnt_write_en, data_bus_i, field_write_en_o.EvFIFOEvCnt, field_data_o.EvFIFOEvCnt, current_field_value_i.EvFIFOEvCnt);
-
-    EvFIFOCode_write_en(0) <= register_write_en_i.EvFIFOCode;
-    write_interface_core((0 => 0), (0 => WRITE), EvFIFOCode_write_en, data_bus_i, field_write_en_o.EvFIFOCode, field_data_o.EvFIFOCode, current_field_value_i.EvFIFOCode);
-
     GPIODir_write_en(0) <= register_write_en_i.GPIODir;
     write_interface_core((0 => 0), (0 => WRITE), GPIODir_write_en, data_bus_i, field_write_en_o.GPIODir, field_data_o.GPIODir, current_field_value_i.GPIODir);
 
@@ -315,15 +293,6 @@ begin
 
     DCTarget_write_en(0) <= register_write_en_i.DCTarget;
     write_interface_core((0 => 0), (0 => WRITE), DCTarget_write_en, data_bus_i, field_write_en_o.DCTarget, field_data_o.DCTarget, current_field_value_i.DCTarget);
-
-    DCRxValue_write_en(0) <= register_write_en_i.DCRxValue;
-    write_interface_core((0 => 0), (0 => WRITE), DCRxValue_write_en, data_bus_i, field_write_en_o.DCRxValue, field_data_o.DCRxValue, current_field_value_i.DCRxValue);
-
-    DCIntValue_write_en(0) <= register_write_en_i.DCIntValue;
-    write_interface_core((0 => 0), (0 => WRITE), DCIntValue_write_en, data_bus_i, field_write_en_o.DCIntValue, field_data_o.DCIntValue, current_field_value_i.DCIntValue);
-
-    TopologyID_write_en(0) <= register_write_en_i.TopologyID;
-    write_interface_core((0 => 0), (0 => WRITE), TopologyID_write_en, data_bus_i, field_write_en_o.TopologyID, field_data_o.TopologyID, current_field_value_i.TopologyID);
 
     SeqRamCtrl_write_en(0) <= register_write_en_i.SeqRamCtrl;
     write_interface_core((0 => 0), (0 => WRITE), SeqRamCtrl_write_en, data_bus_i, field_write_en_o.SeqRamCtrl, field_data_o.SeqRamCtrl, current_field_value_i.SeqRamCtrl);

@@ -5,7 +5,7 @@
 # @details
 # Generates an AXI4-Lite compatible register bank for the openEVR IP core.
 # Provides writeable registers for providing configuration and control signals
-# to the logic, and also readback registers for providing status and 
+# to the logic, and also readback registers for providing status and
 # diagnostic information
 #
 # @author Ross Elliot <ross.elliot@ess.eu>
@@ -49,7 +49,7 @@ bank = essffw.RegisterBank("ESS_openEVR_RegMap", address_width, register_width)
 bank.base_address = 0x0
 
 # EVR registers (see mTCA-ERV300U-DCManual, Sec. 3.8 Register Map)
-bank.add_register("Status",        address=0x000,    modes="R")  # Status Register 
+bank.add_register("Status",        address=0x000,    modes="R")  # Status Register
 bank.add_register("Control",       address=0x004,    modes="RW") # Control Register
 bank.add_register("IrqFlag",       address=0x008,    modes="RW") # Interrupt Flag Register
 bank.add_register("IrqEnable",     address=0x00C,    modes="RW") # Interrupt Enable Register
@@ -62,30 +62,30 @@ bank.add_register("TXDataBufCtrl", address=0x024,    modes="RW") # TX Data Buffe
 bank.add_register("TxSegBufCtrl",  address=0x028,    modes="RW") # TX Segmented Data Buffer Control and Status Register
 bank.add_register("FWVersion",     address=0x02C,    modes="R")  # Firmware Version Register
 
-bank.add_register("EvCntPresc",    address=0x040,    modes="RW") # Event Counter Prescaler 
+bank.add_register("EvCntPresc",    address=0x040,    modes="RW") # Event Counter Prescaler
 bank.add_register("UsecDivider",   address=0x04C,    modes="RW") # Divider to get from Event Clock to 1 MHz
 bank.add_register("ClockControl",  address=0x050,    modes="RW") # Event Clock Control Register
-bank.add_register("SecSR",         address=0x05C,    modes="RW") # Seconds Shift Register
-bank.add_register("SecCounter",    address=0x060,    modes="RW") # Timestamp Seconds Counter
-bank.add_register("EventCounter",  address=0x064,    modes="RW") # Timestamp Event Counter
-bank.add_register("SecLatch",      address=0x068,    modes="RW") # Timestamp Seconds Counter Latch
-bank.add_register("EvCntLatch",    address=0x06C,    modes="RW") # Timestamp Event Counter Latch
-bank.add_register("EvFIFOSec",     address=0x070,    modes="RW") # Event FIFO Seconds Register
-bank.add_register("EvFIFOEvCnt",   address=0x074,    modes="RW") # Event FIFO Event Counter Register
-bank.add_register("EvFIFOCode",    address=0x078,    modes="RW") # Event FIFO Event Code Register
+bank.add_register("SecSR",         address=0x05C,    modes="R")  # Seconds Shift Register
+bank.add_register("SecCounter",    address=0x060,    modes="R")  # Timestamp Seconds Counter
+bank.add_register("EventCounter",  address=0x064,    modes="R")  # Timestamp Event Counter
+bank.add_register("SecLatch",      address=0x068,    modes="R")  # Timestamp Seconds Counter Latch
+bank.add_register("EvCntLatch",    address=0x06C,    modes="R")  # Timestamp Event Counter Latch
+bank.add_register("EvFIFOSec",     address=0x070,    modes="R")  # Event FIFO Seconds Register
+bank.add_register("EvFIFOEvCnt",   address=0x074,    modes="R")  # Event FIFO Event Counter Register
+bank.add_register("EvFIFOCode",    address=0x078,    modes="R")  # Event FIFO Event Code Register
 bank.add_register("LogStatus",     address=0x07C,    modes="R")  # Event Log Status Register
 
 bank.add_register("GPIODir",       address=0x090,    modes="RW") # Front Panel UnivIO GPIO signal direction
 bank.add_register("GPIOIn",        address=0x094,    modes="RW") # Front Panel UnivIO GPIO input register
 bank.add_register("GPIOOut",       address=0x098,    modes="RW") # Front Panel UnivIO GPIO output register
 
-bank.add_register("DCTarget",      address=0x0B0,    modes="RW",  reset_value=0x02100000) # Delay compensation target value
-bank.add_register("DCRxValue",     address=0x0B4,    modes="RW") # Delay compensation transmission path delay value 
+bank.add_register("DCTarget",      address=0x0B0,    modes="RW",  reset_value=0x037084FC) # Delay compensation target value
+bank.add_register("DCRxValue",     address=0x0B4,    modes="R")  # Delay compensation transmission path delay value
 
-bank.add_register("DCIntValue",    address=0x0B8,    modes="RW") # Delay Compensation Internal Delay Value
+bank.add_register("DCIntValue",    address=0x0B8,    modes="R")  # Delay Compensation Internal Delay Value
 bank.add_register("DCStatus",      address=0x0BC,    modes="R")  # Delay Compensation Status Register
 
-bank.add_register("TopologyID",    address=0x0C0,    modes="RW") # Timing Node Topology ID 
+bank.add_register("TopologyID",    address=0x0C0,    modes="R")  # Timing Node Topology ID
 
 bank.add_register("SeqRamCtrl",    address=0x0E0,    modes="RW") # Sequence RAM Control Register
 
@@ -98,16 +98,16 @@ bank.add_register("Prescaler5",    address=0x114,    modes="RW") # Prescaler 5 D
 bank.add_register("Prescaler6",    address=0x118,    modes="RW") # Prescaler 6 Divider
 bank.add_register("Prescaler7",    address=0x11C,    modes="RW") # Prescaler 7 Divider
 
-bank.add_register("PrescPhase0",   address=0x120,    modes="RW") # Prescaler 0 Phase Offset Register 
-bank.add_register("PrescPhase1",   address=0x124,    modes="RW") # Prescaler 1 Phase Offset Register 
-bank.add_register("PrescPhase2",   address=0x128,    modes="RW") # Prescaler 2 Phase Offset Register 
-bank.add_register("PrescPhase3",   address=0x12C,    modes="RW") # Prescaler 3 Phase Offset Register 
-bank.add_register("PrescPhase4",   address=0x130,    modes="RW") # Prescaler 4 Phase Offset Register 
-bank.add_register("PrescPhase5",   address=0x134,    modes="RW") # Prescaler 5 Phase Offset Register 
-bank.add_register("PrescPhase6",   address=0x138,    modes="RW") # Prescaler 6 Phase Offset Register 
-bank.add_register("PrescPhase7",   address=0x13C,    modes="RW") # Prescaler 7 Phase Offset Register 
+bank.add_register("PrescPhase0",   address=0x120,    modes="RW") # Prescaler 0 Phase Offset Register
+bank.add_register("PrescPhase1",   address=0x124,    modes="RW") # Prescaler 1 Phase Offset Register
+bank.add_register("PrescPhase2",   address=0x128,    modes="RW") # Prescaler 2 Phase Offset Register
+bank.add_register("PrescPhase3",   address=0x12C,    modes="RW") # Prescaler 3 Phase Offset Register
+bank.add_register("PrescPhase4",   address=0x130,    modes="RW") # Prescaler 4 Phase Offset Register
+bank.add_register("PrescPhase5",   address=0x134,    modes="RW") # Prescaler 5 Phase Offset Register
+bank.add_register("PrescPhase6",   address=0x138,    modes="RW") # Prescaler 6 Phase Offset Register
+bank.add_register("PrescPhase7",   address=0x13C,    modes="RW") # Prescaler 7 Phase Offset Register
 
-bank.add_register("PrescTrig0",    address=0x140,    modes="RW") # Prescaler 0 Pulse Generator Trigger Register 
+bank.add_register("PrescTrig0",    address=0x140,    modes="RW") # Prescaler 0 Pulse Generator Trigger Register
 bank.add_register("PrescTrig1",    address=0x144,    modes="RW") # Prescaler 1 Pulse Generator Trigger Register
 bank.add_register("PrescTrig2",    address=0x148,    modes="RW") # Prescaler 2 Pulse Generator Trigger Register
 bank.add_register("PrescTrig3",    address=0x14C,    modes="RW") # Prescaler 3 Pulse Generator Trigger Register
@@ -116,7 +116,7 @@ bank.add_register("PrescTrig5",    address=0x154,    modes="RW") # Prescaler 5 P
 bank.add_register("PrescTrig6",    address=0x158,    modes="RW") # Prescaler 6 Pulse Generator Trigger Register
 bank.add_register("PrescTrig7",    address=0x15C,    modes="RW") # Prescaler 7 Pulse Generator Trigger Register
 
-bank.add_register("DBusTrig0",     address=0x180,    modes="RW") # DBus bit 0 Pulse Generator Trigger Register 
+bank.add_register("DBusTrig0",     address=0x180,    modes="RW") # DBus bit 0 Pulse Generator Trigger Register
 bank.add_register("DBusTrig1",     address=0x184,    modes="RW") # DBus bit 1 Pulse Generator Trigger Register
 bank.add_register("DBusTrig2",     address=0x188,    modes="RW") # DBus bit 2 Pulse Generator Trigger Register
 bank.add_register("DBusTrig3",     address=0x18C,    modes="RW") # DBus bit 3 Pulse Generator Trigger Register
@@ -257,9 +257,11 @@ bank.add_register("Pulse31Presc",  address=0x3F4,    modes="RW") # Pulse 31 Pres
 bank.add_register("Pulse31Delay",  address=0x3F8,    modes="RW") # Pulse 31 Delay Register
 bank.add_register("Pulse31Width",  address=0x3FC,    modes="RW") # Pulse 31 Width Register
 
-# ESS OpenEVR specific registers 
-bank.add_register("ESSStatus", address=0xFFF0, reset_value=0x0, modes="R")
-bank.add_register("ESSControl", address=0xFFF4, reset_value=0x0, modes="RW")
+# ESS OpenEVR specific registers
+bank.add_register("ESSStatus",          address=0xB000, reset_value=0x0, modes="R")
+bank.add_register("ESSControl",         address=0xB004, reset_value=0x0, modes="RW")
+bank.add_register("ESSExtSecCounter",   address=0xB060, reset_value=0x0, modes="R")
+bank.add_register("ESSExtEventCounter", address=0xB064, reset_value=0x0, modes="R")
 
 print()
 print(str(bank))

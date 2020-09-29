@@ -206,6 +206,9 @@ architecture rtl of ess_evr_top is
   signal databuf_clear_flag  : std_logic_vector(0 to 127);
   signal databuf_irq_dc      : std_logic;
 
+  signal ext_trig_ts_data    : std_logic_vector(63 downto 0);
+  signal ext_trig_ts_valid   : std_logic;
+
   signal debug_out           : std_logic_vector(g_DEBUG_WIDTH-1 downto 0) := (others => '0');
 
   signal transfer_shadow_group_t : transfer_shadow_group_t;
@@ -440,7 +443,7 @@ begin
 
 
          -- Status reg
-         logic_return_t_0.Status(5 downto 0) <= "000000";   -- 
+         logic_return_t_0.Status(5 downto 0) <= "000000";   --
          logic_return_t_0.Status(6) <= gt0_status.link_up;  -- LINK
          logic_return_t_0.Status(7) <= i_EVR_MOD_0;         -- SFPMOD
          logic_return_t_0.Status(31 downto 24) <= dbus_rxd; -- DBUS7-DBUS0
@@ -489,6 +492,11 @@ begin
          logic_return_t_0.EvFIFOEvCnt  <= ts_regs.event_fifo_cnt;
          logic_return_t_0.EvFIFOCode   <= x"0000" & ts_regs.event_fifo_code;
 
+         -- External trigger timestamp
+         -- From FPGA
+         logic_return_t_0.ESSExtSecCounter   <= ext_trig_ts_data(63 downto 32);
+         logic_return_t_0.ESSExtEventCounter <= ext_trig_ts_data(31 downto 0);
+
        end if;
      end process reg_assign;
 
@@ -499,8 +507,8 @@ begin
       event_code   => event_rxd,
       reset        => gbl_reset,
       ts_req       => ext_ts_trig,
-      ts_data      => o_TS_data,
-      ts_valid     => o_TS_valid,
+      ts_data      => ext_trig_ts_data,
+      ts_valid     => ext_trig_ts_valid,
       evr_ctrl     => evr_ctrl,
       ts_regs      => ts_regs,
       MAP14        => '0',
@@ -508,6 +516,9 @@ begin
       buffer_data  => open,
       buffer_valid => open
     );
+
+  o_TS_data  <= ext_trig_ts_data;
+  o_TS_valid <= ext_trig_ts_valid;
 
   -- Process to send out event 0x01 periodically
   process (refclk)

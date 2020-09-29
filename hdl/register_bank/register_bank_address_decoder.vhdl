@@ -91,22 +91,6 @@ begin
             register_write_en_o.UsecDivider          <= '1';
           when 16#50# =>
             register_write_en_o.ClockControl         <= '1';
-          when 16#5C# =>
-            register_write_en_o.SecSR                <= '1';
-          when 16#60# =>
-            register_write_en_o.SecCounter           <= '1';
-          when 16#64# =>
-            register_write_en_o.EventCounter         <= '1';
-          when 16#68# =>
-            register_write_en_o.SecLatch             <= '1';
-          when 16#6C# =>
-            register_write_en_o.EvCntLatch           <= '1';
-          when 16#70# =>
-            register_write_en_o.EvFIFOSec            <= '1';
-          when 16#74# =>
-            register_write_en_o.EvFIFOEvCnt          <= '1';
-          when 16#78# =>
-            register_write_en_o.EvFIFOCode           <= '1';
           when 16#90# =>
             register_write_en_o.GPIODir              <= '1';
           when 16#94# =>
@@ -115,12 +99,6 @@ begin
             register_write_en_o.GPIOOut              <= '1';
           when 16#B0# =>
             register_write_en_o.DCTarget             <= '1';
-          when 16#B4# =>
-            register_write_en_o.DCRxValue            <= '1';
-          when 16#B8# =>
-            register_write_en_o.DCIntValue           <= '1';
-          when 16#C0# =>
-            register_write_en_o.TopologyID           <= '1';
           when 16#E0# =>
             register_write_en_o.SeqRamCtrl           <= '1';
           when 16#100# =>
@@ -443,7 +421,7 @@ begin
             register_write_en_o.Pulse31Delay         <= '1';
           when 16#3FC# =>
             register_write_en_o.Pulse31Width         <= '1';
-          when 16#FFF4# =>
+          when 16#B004# =>
             register_write_en_o.ESSControl           <= '1';
 
 

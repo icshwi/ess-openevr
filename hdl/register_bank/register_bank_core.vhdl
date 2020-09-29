@@ -287,11 +287,11 @@ begin
     port map (
       clock_i          => clock_i,
       reset_n_i        => reset_n_i,
-      write_en_i       => write_en_i.SecSR,
+      write_en_i       => '0',
       bus_write_data_i => bus_write_data_i.SecSR,
       field_value_o    => current_data_o.SecSR,
       logic_to_bus_o   => logic_to_bus_o.SecSR,
-      logic_data_o     => logic_data_o.SecSR,
+      logic_data_o     => open,
       logic_return_i   => logic_return_i.SecSR
     );
 
@@ -304,11 +304,11 @@ begin
     port map (
       clock_i          => clock_i,
       reset_n_i        => reset_n_i,
-      write_en_i       => write_en_i.SecCounter,
+      write_en_i       => '0',
       bus_write_data_i => bus_write_data_i.SecCounter,
       field_value_o    => current_data_o.SecCounter,
       logic_to_bus_o   => logic_to_bus_o.SecCounter,
-      logic_data_o     => logic_data_o.SecCounter,
+      logic_data_o     => open,
       logic_return_i   => logic_return_i.SecCounter
     );
 
@@ -321,11 +321,11 @@ begin
     port map (
       clock_i          => clock_i,
       reset_n_i        => reset_n_i,
-      write_en_i       => write_en_i.EventCounter,
+      write_en_i       => '0',
       bus_write_data_i => bus_write_data_i.EventCounter,
       field_value_o    => current_data_o.EventCounter,
       logic_to_bus_o   => logic_to_bus_o.EventCounter,
-      logic_data_o     => logic_data_o.EventCounter,
+      logic_data_o     => open,
       logic_return_i   => logic_return_i.EventCounter
     );
 
@@ -338,11 +338,11 @@ begin
     port map (
       clock_i          => clock_i,
       reset_n_i        => reset_n_i,
-      write_en_i       => write_en_i.SecLatch,
+      write_en_i       => '0',
       bus_write_data_i => bus_write_data_i.SecLatch,
       field_value_o    => current_data_o.SecLatch,
       logic_to_bus_o   => logic_to_bus_o.SecLatch,
-      logic_data_o     => logic_data_o.SecLatch,
+      logic_data_o     => open,
       logic_return_i   => logic_return_i.SecLatch
     );
 
@@ -355,11 +355,11 @@ begin
     port map (
       clock_i          => clock_i,
       reset_n_i        => reset_n_i,
-      write_en_i       => write_en_i.EvCntLatch,
+      write_en_i       => '0',
       bus_write_data_i => bus_write_data_i.EvCntLatch,
       field_value_o    => current_data_o.EvCntLatch,
       logic_to_bus_o   => logic_to_bus_o.EvCntLatch,
-      logic_data_o     => logic_data_o.EvCntLatch,
+      logic_data_o     => open,
       logic_return_i   => logic_return_i.EvCntLatch
     );
 
@@ -372,11 +372,11 @@ begin
     port map (
       clock_i          => clock_i,
       reset_n_i        => reset_n_i,
-      write_en_i       => write_en_i.EvFIFOSec,
+      write_en_i       => '0',
       bus_write_data_i => bus_write_data_i.EvFIFOSec,
       field_value_o    => current_data_o.EvFIFOSec,
       logic_to_bus_o   => logic_to_bus_o.EvFIFOSec,
-      logic_data_o     => logic_data_o.EvFIFOSec,
+      logic_data_o     => open,
       logic_return_i   => logic_return_i.EvFIFOSec
     );
 
@@ -389,11 +389,11 @@ begin
     port map (
       clock_i          => clock_i,
       reset_n_i        => reset_n_i,
-      write_en_i       => write_en_i.EvFIFOEvCnt,
+      write_en_i       => '0',
       bus_write_data_i => bus_write_data_i.EvFIFOEvCnt,
       field_value_o    => current_data_o.EvFIFOEvCnt,
       logic_to_bus_o   => logic_to_bus_o.EvFIFOEvCnt,
-      logic_data_o     => logic_data_o.EvFIFOEvCnt,
+      logic_data_o     => open,
       logic_return_i   => logic_return_i.EvFIFOEvCnt
     );
 
@@ -406,11 +406,11 @@ begin
     port map (
       clock_i          => clock_i,
       reset_n_i        => reset_n_i,
-      write_en_i       => write_en_i.EvFIFOCode,
+      write_en_i       => '0',
       bus_write_data_i => bus_write_data_i.EvFIFOCode,
       field_value_o    => current_data_o.EvFIFOCode,
       logic_to_bus_o   => logic_to_bus_o.EvFIFOCode,
-      logic_data_o     => logic_data_o.EvFIFOCode,
+      logic_data_o     => open,
       logic_return_i   => logic_return_i.EvFIFOCode
     );
 
@@ -508,11 +508,11 @@ begin
     port map (
       clock_i          => clock_i,
       reset_n_i        => reset_n_i,
-      write_en_i       => write_en_i.DCRxValue,
+      write_en_i       => '0',
       bus_write_data_i => bus_write_data_i.DCRxValue,
       field_value_o    => current_data_o.DCRxValue,
       logic_to_bus_o   => logic_to_bus_o.DCRxValue,
-      logic_data_o     => logic_data_o.DCRxValue,
+      logic_data_o     => open,
       logic_return_i   => logic_return_i.DCRxValue
     );
 
@@ -525,11 +525,11 @@ begin
     port map (
       clock_i          => clock_i,
       reset_n_i        => reset_n_i,
-      write_en_i       => write_en_i.DCIntValue,
+      write_en_i       => '0',
       bus_write_data_i => bus_write_data_i.DCIntValue,
       field_value_o    => current_data_o.DCIntValue,
       logic_to_bus_o   => logic_to_bus_o.DCIntValue,
-      logic_data_o     => logic_data_o.DCIntValue,
+      logic_data_o     => open,
       logic_return_i   => logic_return_i.DCIntValue
     );
 
@@ -559,11 +559,11 @@ begin
     port map (
       clock_i          => clock_i,
       reset_n_i        => reset_n_i,
-      write_en_i       => write_en_i.TopologyID,
+      write_en_i       => '0',
       bus_write_data_i => bus_write_data_i.TopologyID,
       field_value_o    => current_data_o.TopologyID,
       logic_to_bus_o   => logic_to_bus_o.TopologyID,
-      logic_data_o     => logic_data_o.TopologyID,
+      logic_data_o     => open,
       logic_return_i   => logic_return_i.TopologyID
     );
 
@@ -3336,6 +3336,40 @@ begin
       logic_to_bus_o   => logic_to_bus_o.ESSControl,
       logic_data_o     => logic_data_o.ESSControl,
       logic_return_i   => logic_return_i.ESSControl
+    );
+
+    -- Register: ESSExtSecCounter
+    field_ESSExtSecCounter : field_core
+    generic map (
+      RESET_VALUE => std_logic_vector(to_unsigned(16#0#, 32)),
+      WIDTH => 32
+    )
+    port map (
+      clock_i          => clock_i,
+      reset_n_i        => reset_n_i,
+      write_en_i       => '0',
+      bus_write_data_i => bus_write_data_i.ESSExtSecCounter,
+      field_value_o    => current_data_o.ESSExtSecCounter,
+      logic_to_bus_o   => logic_to_bus_o.ESSExtSecCounter,
+      logic_data_o     => open,
+      logic_return_i   => logic_return_i.ESSExtSecCounter
+    );
+
+    -- Register: ESSExtEventCounter
+    field_ESSExtEventCounter : field_core
+    generic map (
+      RESET_VALUE => std_logic_vector(to_unsigned(16#0#, 32)),
+      WIDTH => 32
+    )
+    port map (
+      clock_i          => clock_i,
+      reset_n_i        => reset_n_i,
+      write_en_i       => '0',
+      bus_write_data_i => bus_write_data_i.ESSExtEventCounter,
+      field_value_o    => current_data_o.ESSExtEventCounter,
+      logic_to_bus_o   => logic_to_bus_o.ESSExtEventCounter,
+      logic_data_o     => open,
+      logic_return_i   => logic_return_i.ESSExtEventCounter
     );
 
 

@@ -446,10 +446,14 @@ begin
               bus_data_o <= register_data_i.Pulse31Delay;
             when 16#3FC# =>
               bus_data_o <= register_data_i.Pulse31Width;
-            when 16#FFF0# =>
+            when 16#B000# =>
               bus_data_o <= register_data_i.ESSStatus;
-            when 16#FFF4# =>
+            when 16#B004# =>
               bus_data_o <= register_data_i.ESSControl;
+            when 16#B060# =>
+              bus_data_o <= register_data_i.ESSExtSecCounter;
+            when 16#B064# =>
+              bus_data_o <= register_data_i.ESSExtEventCounter;
 
 
             when others =>
