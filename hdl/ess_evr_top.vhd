@@ -100,24 +100,39 @@ entity ess_evr_top is
     i_ZYNQ_CLKREF0_P : in std_logic;
     i_ZYNQ_CLKREF0_N : in std_logic;
 
-    --! SFP Tx&Rx lines
-    o_EVR_TX_P     : out std_logic;
-    o_EVR_TX_N     : out std_logic;
-    i_EVR_RX_P     : in std_logic;
-    i_EVR_RX_N     : in std_logic;
+    -- OpenEVR SFP interface --------------------------------------------------
 
+    --! SFP Tx&Rx lines
+    o_EVR_TX_P        : out std_logic;
+    o_EVR_TX_N        : out std_logic;
+    i_EVR_RX_P        : in std_logic;
+    i_EVR_RX_N        : in std_logic;
+
+    --! SFP Link LED
+    o_EVR_LINK_LED    : out std_logic;
+    --! SFP Event LED
+    o_EVR_EVNT_LED    : out std_logic;
+
+    --! Tx disable
+    o_EVR_TX_DISABLE  : out std_logic;
+    --! Tx fault flag
+    i_EVR_TX_FAULT    : in std_logic;
+    --! Rx signal lost
+    i_EVR_RX_LOS      : in std_logic;
     --! SFP MOD 0 line (module detected, active-low)
-    i_EVR_MOD_0    : in std_logic;
+    i_EVR_MOD_0       : in std_logic;
+
+    -- MRF Universal Module interface ------------------------------------------
+    o_MRF_UNIVMOD_OUT0 : out std_logic;
+    o_MRF_UNIVMOD_OUT1 : out std_logic;
+    i_MRF_UNIVMOD_IN0  : in std_logic;
+    i_MRF_UNIVMOD_IN1  : in std_logic;
 
     --! External timestamp request
     i_TS_req   : in  std_logic;
     o_TS_data  : out std_logic_vector(63 downto 0);
     o_TS_valid : out std_logic;
 
-    --! SFP Link LED
-    o_EVR_LINK_LED : out std_logic;
-    --! SFP Event LED
-    o_EVR_EVNT_LED : out std_logic;
     --! EVR event single-ended clock output - 88.0525 MHz
     o_EVR_EVENT_CLK  : out std_logic;
     --! Global logic single-ended clock output - 100 MHz
@@ -132,6 +147,7 @@ end ess_evr_top;
 
 architecture rtl of ess_evr_top is
   attribute keep : string;
+  attribute mark_debug : string;
 
   signal gnd     : std_logic := '0';
   signal vcc     : std_logic := '1';
@@ -232,13 +248,23 @@ architecture rtl of ess_evr_top is
   signal ext_ts_trig : std_logic;
   signal ext_ts_trig_t : std_logic;
 
-  attribute mark_debug : string;
+  -- OpenEVR SFP signals
+  signal evr_tx_dis : std_logic := '0';
+
+  -- MRF Universal Module interface signals -----------------------------------
+  -- IO direction bit: 0 -> Module used as input
+  --                   1 -> Module used as output
+  signal mrfunivmod_dir : std_logic := '0';
+  signal mrfunivmod_in0 : std_logic := '0';
+  signal mrfunivmod_in1 : std_logic := '0';
+  attribute mark_debug of mrfunivmod_in0 : signal is "true";
+  attribute mark_debug of mrfunivmod_in1 : signal is "true";
+
   attribute mark_debug of event_rxd : signal is "true";
   attribute mark_debug of ext_ts_trig : signal is "true";
   attribute mark_debug of ext_ts_trig_t : signal is "true";
   attribute mark_debug of debug_out : signal is "true";
-  attribute mark_debug of gt0_resets : signal is "true";
-  attribute mark_debug of gt0_status : signal is "true";
+
 
 begin
 
@@ -283,6 +309,9 @@ begin
 
   -- Send single-ended clock signal to top-level
   o_GLBL_LOGIC_CLK <= sys_clk;
+
+  -- Driven low - no foreseen use-case to dynamically change this line
+  o_EVR_TX_DISABLE <= evr_tx_dis;
 
   i_evr_dc : evr_dc
     generic map (
@@ -366,13 +395,15 @@ begin
   databuf_txd <= X"00";
   databuf_tx_k <= '0';
 
+  -- AXI register interface for the picoEVR ----------------------------------
+
   axi_reg_bank : register_bank_axi
     generic map (
       AXI_ADDR_WIDTH => ADDRESS_WIDTH+2,
       REG_ADDR_WIDTH	=> ADDRESS_WIDTH,    --! Width of the address signals
-      AXI_WSTRB_WIDTH => 4,                  --! Width of the AXI wstrb signal, may be determined by ADDRESS_WIDTH
-      REGISTER_WIDTH  => REGISTER_WIDTH,     --! Width of the registers
-      AXI_DATA_WIDTH  => AXI4L_DATA_WIDTH)   --! Width of the AXI data signals
+      AXI_WSTRB_WIDTH => 4,                --! Width of the AXI wstrb signal, may be determined by ADDRESS_WIDTH
+      REGISTER_WIDTH  => REGISTER_WIDTH,   --! Width of the registers
+      AXI_DATA_WIDTH  => AXI4L_DATA_WIDTH) --! Width of the AXI data signals
     port map (
       --! AXI4-Lite Register interface
       s_axi_aclk     => s_axi_aclk,
@@ -401,28 +432,6 @@ begin
       register_data_o         => logic_read_data_t,
       register_return_i       => logic_return_t);
 
-  -- Get the reset signals into sys_clk time domain
-  -- These are sw resets so it is assumed the pulse width will be long enough.
-  -- All signals are double-flopped
-  reset_reg : process(sys_clk)
-    begin
-      if rising_edge(sys_clk) then
-        -- reset register write (from processor to FPGA)
-        gbl_reset   <= gbl_reset_t;
-        gbl_reset_t <= logic_read_data_t.ESSControl(0);
-        gt0_resets.gbl_async   <= gt0_resets_t.gbl_async;
-        gt0_resets_t.gbl_async <= logic_read_data_t.ESSControl(1) or logic_read_data_t.ESSControl(0);
-        gt0_resets.tx_async    <= gt0_resets_t.tx_async;
-        gt0_resets_t.tx_async  <= logic_read_data_t.ESSControl(2);
-        gt0_resets.rx_async    <= gt0_resets_t.rx_async;
-        gt0_resets_t.rx_async  <= logic_read_data_t.ESSControl(3);
-
-      end if;
-    end process reset_reg;
-
-
-
-
    -- Synchronously assign relevant signals to the appropriate registers
    reg_assign : process(sys_clk)
      begin
@@ -430,17 +439,34 @@ begin
          -- register read (from FPGA to processor)
          logic_return_t <= logic_return_t_0;
 
-         -- Reset signals
+         -- ESS-Control register 0xB004
+         -- from processor to FPGA
+         gbl_reset              <= gbl_reset_t;
+         gbl_reset_t            <= logic_read_data_t.ESSControl(0);
+         gt0_resets.gbl_async   <= gt0_resets_t.gbl_async;
+         gt0_resets_t.gbl_async <= logic_read_data_t.ESSControl(1) or logic_read_data_t.ESSControl(0);
+         gt0_resets.tx_async    <= gt0_resets_t.tx_async;
+         gt0_resets_t.tx_async  <= logic_read_data_t.ESSControl(2);
+         gt0_resets.rx_async    <= gt0_resets_t.rx_async;
+         gt0_resets_t.rx_async  <= logic_read_data_t.ESSControl(3);
+         mrfunivmod_dir         <= logic_read_data_t.ESSControl(31);
          -- Read back from FPGA
          logic_return_t_0.ESSControl(3 downto 0) <= logic_read_data_t.ESSControl(3 downto 0);
-         logic_return_t_0.ESSControl(4) <= gt0_status.tx_fsm_done;
-         logic_return_t_0.ESSControl(5) <= gt0_status.rx_fsm_done;
-         logic_return_t_0.ESSControl(6) <= gt0_status.fbclk_lost;
-         logic_return_t_0.ESSControl(7) <= gt0_status.pll_locked;
-         logic_return_t_0.ESSControl(8) <= gt0_status.link_up;
-         logic_return_t_0.ESSControl(9) <= gt0_status.event_rcv;
-         logic_return_t_0.ESSControl(REGISTER_WIDTH-1 downto 10) <= (others => '0');
+         logic_return_t_0.ESSControl(REGISTER_WIDTH-2 downto 4) <= (others => '0');
+         -- Temporally assigned here
+         logic_return_t_0.ESSControl(31) <= logic_read_data_t.ESSControl(31);
 
+         -- ESS-Status register - 0xB000
+         logic_return_t_0.ESSStatus(0)  <= gt0_status.tx_fsm_done;
+         logic_return_t_0.ESSStatus(1)  <= gt0_status.rx_fsm_done;
+         logic_return_t_0.ESSStatus(2)  <= gt0_status.fbclk_lost;
+         logic_return_t_0.ESSStatus(3)  <= gt0_status.pll_locked;
+         logic_return_t_0.ESSStatus(4)  <= i_EVR_TX_FAULT;
+         logic_return_t_0.ESSStatus(5)  <= gt0_status.link_up;
+         logic_return_t_0.ESSStatus(6)  <= i_EVR_RX_LOS;
+         logic_return_t_0.ESSStatus(7)  <= gt0_status.event_rcv;
+         logic_return_t_0.ESSStatus(30) <= mrfunivmod_in0;
+         logic_return_t_0.ESSStatus(31) <= mrfunivmod_in1;
 
          -- Status reg
          logic_return_t_0.Status(5 downto 0) <= "000000";   --
@@ -549,5 +575,19 @@ begin
 
   -- Debug port signal assignment
   o_DEBUG <= event_clk & sys_clk & refclk & rx_link_ok & event_clk;
+
+  -- MRF Universal Module interface -------------------------------------------
+
+  -- There're different lines for inputs and outputs but it isn't clear if the
+  -- output lines are allowed to drive signals in case an input module is
+  -- installed. To avoid electrical issues, these lines are safely hold in
+  -- high Z when the installed module is a MRF Universal Input module.
+
+  -- TDB: drive a meaningful signal here - event_clock for debugging purpose
+  o_MRF_UNIVMOD_OUT0 <= event_clk when mrfunivmod_dir = '1' else 'Z';
+  o_MRF_UNIVMOD_OUT1 <= refclk when mrfunivmod_dir = '1' else 'Z';
+
+  mrfunivmod_in0 <= i_MRF_UNIVMOD_IN0 when mrfunivmod_dir = '0' else '0';
+  mrfunivmod_in1 <= i_MRF_UNIVMOD_IN1 when mrfunivmod_dir = '0' else '0';
 
 end rtl;
