@@ -149,8 +149,8 @@ begin
       i_sys_clk => sys_clk,
       i_gtref0_clk => i_mgt_ref0clk,
       i_gtref1_clk => i_mgt_ref1clk,
-      REFCLK_OUT => refclk,
-      recclk_out => up_event_clk,
+      o_refclk => refclk,
+      o_rxclk => up_event_clk,
       event_clk => event_clk,
 
       i_gt_resets => i_gt0_resets,
@@ -206,7 +206,7 @@ begin
 
   int_dly_adj : delay_adjust
     port map (
-      clk        => sys_clk,
+      clk        => refclk,
       psclk      => refclk, -- mmcm_psclk,
       psen       => mmcm_psen,
       psincdec   => mmcm_psincdec,

@@ -210,8 +210,8 @@ package evr_pkg is
       i_sys_clk       : in std_logic;   -- system bus clock
       i_gtref0_clk    : in std_logic;   -- MGTREFCLK0
       i_gtref1_clk    : in std_logic;   -- MGTREFCLK1
-      REFCLK_OUT      : out std_logic;  -- reference clock output
-      recclk_out      : out std_logic;  -- Recovered clock, locked to EVG
+      o_refclk        : out std_logic;  -- reference clock output from the transceiver
+      o_rxclk         : out std_logic;  -- Recovered clock, locked to EVG
       event_clk       : in std_logic;   -- event clock input (phase shifted by DCM)
 
       i_gt_resets     : in gt_resets; -- Transceiver resets
@@ -426,6 +426,11 @@ package evr_pkg is
   --!@}
 
   type integer_array is array (integer range <>) of integer;
+
+  -- picoEVR constant definitions ---------------------------------------------
+
+  -- Legacy EVR constant definitions ------------------------------------------
+
   constant EVENT_RATE          : integer := 125000000;
   constant MGT_RX_PRESCALER    : integer := 1024;
   constant MGT_RX_TIMEOUT      : integer := 1024;

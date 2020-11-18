@@ -166,17 +166,16 @@ architecture rtl of ess_evr_top is
   signal gt0_refclk0   : std_logic;
   --! Clock for driving debug logic
   signal debug_clk     : std_logic;
-  attribute keep of debug_clk : signal is "true";
 
   --------------- Resets ------------------
   -- Record for the reset signals going to the EVR GT
   signal gt0_resets, gt0_resets_t : gt_resets;
-  -- Global reset driven from SW - sys_clk domain
-  signal gbl_reset, gbl_reset_t   : std_logic := '0';
+  -- Global reset driven from SW for all the EVR logic
+  signal gbl_evr_rst, gbl_reset_0, gbl_reset_t   : std_logic := '0';
 
   ----------- Module parameters -----------
   --! Delay Compensation Enable
-  signal dc_mode : std_logic := '1';
+  signal dc_mode, dc_mode_r, dc_mode_0 : std_logic := '1';
   --! Place in the network topology.
   signal topology_addr      : std_logic_vector(31 downto 0);
   --! Target value for the DC module
@@ -225,8 +224,6 @@ architecture rtl of ess_evr_top is
   signal ext_trig_ts_data    : std_logic_vector(63 downto 0);
   signal ext_trig_ts_valid   : std_logic;
 
-  signal debug_out           : std_logic_vector(g_DEBUG_WIDTH-1 downto 0) := (others => '0');
-
   signal transfer_shadow_group_t : transfer_shadow_group_t;
   -- CTRL & status register map - (32-bit reg @ 0x43c00000)
   --         bit
@@ -257,14 +254,12 @@ architecture rtl of ess_evr_top is
   signal mrfunivmod_dir : std_logic := '0';
   signal mrfunivmod_in0 : std_logic := '0';
   signal mrfunivmod_in1 : std_logic := '0';
-  attribute mark_debug of mrfunivmod_in0 : signal is "true";
-  attribute mark_debug of mrfunivmod_in1 : signal is "true";
-
-  attribute mark_debug of event_rxd : signal is "true";
-  attribute mark_debug of ext_ts_trig : signal is "true";
-  attribute mark_debug of ext_ts_trig_t : signal is "true";
-  attribute mark_debug of debug_out : signal is "true";
-
+  -- attribute mark_debug of mrfunivmod_in0 : signal is "true";
+  -- attribute mark_debug of mrfunivmod_in1 : signal is "true";
+  --
+  -- attribute mark_debug of event_rxd : signal is "true";
+  -- attribute mark_debug of ext_ts_trig : signal is "true";
+  -- attribute mark_debug of ext_ts_trig_t : signal is "true";
 
 begin
 
@@ -307,11 +302,22 @@ begin
           I => i_DEBUG_clk);
   end generate;
 
-  -- Send single-ended clock signal to top-level
-  o_GLBL_LOGIC_CLK <= sys_clk;
-
   -- Driven low - no foreseen use-case to dynamically change this line
   o_EVR_TX_DISABLE <= evr_tx_dis;
+
+  systoeventclk : process(event_clk)
+    begin
+      if rising_edge(event_clk) then
+        dc_mode_0     <= dc_mode_r;
+        ext_ts_trig_t <= i_TS_req;
+        gbl_reset_0   <= not gt0_status.link_up;
+
+        dc_mode       <= dc_mode_0;
+        ext_ts_trig   <= ext_ts_trig_t;
+        gbl_evr_rst   <= gbl_reset_0;
+
+      end if;
+    end process systoeventclk;
 
   i_evr_dc : evr_dc
     generic map (
@@ -389,7 +395,7 @@ begin
       ov_flag => databuf_ov_flag,
       clear_flag => databuf_clear_flag,
 
-      reset => gbl_reset);
+      reset => gbl_evr_rst);
 
   dbus_txd <= X"00";
   databuf_txd <= X"00";
@@ -436,13 +442,11 @@ begin
    reg_assign : process(sys_clk)
      begin
        if rising_edge(sys_clk) then
-         -- register read (from FPGA to processor)
-         logic_return_t <= logic_return_t_0;
-
          -- ESS-Control register 0xB004
          -- from processor to FPGA
-         gbl_reset              <= gbl_reset_t;
-         gbl_reset_t            <= logic_read_data_t.ESSControl(0);
+         -- gbl_evr_rst              <= gbl_reset_t;
+         -- -- FROM bit 0 to 30 - check if the net improves
+         -- gbl_reset_t            <= logic_read_data_t.ESSControl(30);
          gt0_resets.gbl_async   <= gt0_resets_t.gbl_async;
          gt0_resets_t.gbl_async <= logic_read_data_t.ESSControl(1) or logic_read_data_t.ESSControl(0);
          gt0_resets.tx_async    <= gt0_resets_t.tx_async;
@@ -499,7 +503,7 @@ begin
          -- DC registers
          -- From processor
          delay_comp_target <= logic_read_data_t.DCTarget;
-         dc_mode           <= evr_ctrl.dc_enable;
+         dc_mode_r         <= evr_ctrl.dc_enable;
          -- From FPGA
          logic_return_t_0.DCTarget   <= delay_comp_target;
          logic_return_t_0.TopologyID <= topology_addr;
@@ -523,6 +527,8 @@ begin
          logic_return_t_0.ESSExtSecCounter   <= ext_trig_ts_data(63 downto 32);
          logic_return_t_0.ESSExtEventCounter <= ext_trig_ts_data(31 downto 0);
 
+         -- register read (from FPGA to processor)
+         logic_return_t <= logic_return_t_0;
        end if;
      end process reg_assign;
 
@@ -531,7 +537,7 @@ begin
     port map (
       event_clk    => event_clk,
       event_code   => event_rxd,
-      reset        => gbl_reset,
+      reset        => gbl_evr_rst,
       ts_req       => ext_ts_trig,
       ts_data      => ext_trig_ts_data,
       ts_valid     => ext_trig_ts_valid,
@@ -560,21 +566,30 @@ begin
     end if;
   end process;
 
-  -- Bring external trigger pulse signal into event_clk time-domain
-  process(event_clk)
-  begin
-    -- Double flip-flop the incoming signals
-    if rising_edge(event_clk) then
-      ext_ts_trig_t <= i_TS_req;
-      ext_ts_trig   <= ext_ts_trig_t;
-    end if;
-  end process;
+  -- Generate slow signals for the status LEDs --------------------------------
+  evr_event_led : process(event_clk)
+    variable counter : natural range 0 to 32 := 0;
+    variable counting : std_logic := '0';
+    begin
+      if rising_edge(event_clk) then
+        -- A new event was received
+        if counting = '0' and gt0_status.event_rcv = '1' then
+          counting := '1';
+        -- ~150 ns should be enough to see the LED
+        elsif counting = '1' and counter = 15 then
+          counting := '0';
+          counter  := 0;
+        elsif counting = '1' then
+          counter := counter + 1;
+        end if;
 
+        o_EVR_EVNT_LED <= counting;
+      end if;
+    end process evr_event_led;
+
+  -- HIGH when the EVR link is up and no errors were detected
   o_EVR_LINK_LED <= gt0_status.link_up;
-  o_EVR_EVNT_LED <= gt0_status.event_rcv;
 
-  -- Debug port signal assignment
-  o_DEBUG <= event_clk & sys_clk & refclk & rx_link_ok & event_clk;
 
   -- MRF Universal Module interface -------------------------------------------
 

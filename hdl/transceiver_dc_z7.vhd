@@ -43,8 +43,8 @@ entity transceiver_dc_z7 is
     i_sys_clk       : in std_logic;   -- system bus clock
     i_gtref0_clk    : in std_logic;   -- MGTREFCLK0
     i_gtref1_clk    : in std_logic;   -- MGTREFCLK1
-    REFCLK_OUT      : out std_logic;  -- reference clock output
-    recclk_out      : out std_logic;  -- Recovered clock, locked to EVG
+    o_refclk        : out std_logic;  -- reference clock output from the transceiver
+    o_rxclk         : out std_logic;  -- Recovered clock, locked to EVG
     event_clk       : in std_logic;   -- event clock input (phase shifted by DCM)
 
     i_gt_resets     : in gt_resets;      -- Transceiver resets
@@ -237,30 +237,10 @@ architecture structure of transceiver_dc_z7 is
   signal event_rxd_i : std_logic_vector(7 downto 0);
 
   attribute mark_debug of rx_data : signal is "true";
-  attribute mark_debug of rx_charisk : signal is "true";
-  attribute mark_debug of rx_disperr : signal is "true";
-  attribute mark_debug of rx_notintable : signal is "true";
-  attribute mark_debug of link_ok : signal is "true";
-  attribute mark_debug of CPLLRESET_in : signal is "true";
-  attribute mark_debug of GTTXRESET_in : signal is "true";
-  attribute mark_debug of TXUSERRDY_in : signal is "true";
-  attribute mark_debug of GTRXRESET_in : signal is "true";
-  attribute mark_debug of RXUSERRDY_in : signal is "true";
   attribute mark_debug of tx_data : signal is "true";
-  attribute mark_debug of tx_charisk : signal is "true";
-  attribute mark_debug of rx_error : signal is "true";
-  attribute mark_debug of rxcdrreset : signal is "true";
-  attribute mark_debug of align_error : signal is "true";
-  attribute mark_debug of databuf_rxd_i : signal is "true";
-  attribute mark_debug of databuf_rx_k_i : signal is "true";
-  attribute mark_debug of RXPMARESET_in : signal is "true";
-  attribute mark_debug of RXRESETDONE_out : signal is "true";
-  attribute mark_debug of databuf_tx_mode : signal is "true";
-  attribute mark_debug of databuf_tx_k : signal is "true";
-  attribute mark_debug of databuf_txd : signal is "true";
-  attribute mark_debug of tx_event_ena_i : signal is "true";
-  attribute mark_debug of fifo_di : signal is "true";
-  attribute mark_debug of fifo_do : signal is "true";
+
+  signal gt_resets, gt_resets_0  : gt_resets;
+  signal gt_status_0 : gt_ctrl_flags;
 
 begin
 
@@ -273,6 +253,8 @@ begin
     port map (
       O => txusrclk,
       I => tx_outclk);
+
+  gt_resets <= i_gt_resets;
 
   --! @brief Reset generator for the Rx path of the GT
   --! @details This component will generate a 500 ns width reset signal for
@@ -292,7 +274,7 @@ begin
       COMMON_RESET        => rxpath_common_rst
     );
 
-  gtx_rxreset <= rxcdrreset or i_gt_resets.rx_async;
+  gtx_rxreset <= rxcdrreset or gt_resets.rx_async;
 
   --! @brief Reset generator for the Tx path of the GT
   --! @details This component will generate a 500 ns width reset signal for
@@ -306,7 +288,7 @@ begin
     port map
     (
       STABLE_CLOCK        => refclk,
-      SOFT_RESET          => i_gt_resets.gbl_async,
+      SOFT_RESET          => gt_resets.gbl_async,
       COMMON_RESET        => CPLLRESET_in
     );
 
@@ -354,7 +336,7 @@ begin
       gt0_gtxrxn_in               => RXN,
       gt0_rxphmonitor_out         => open,
       gt0_rxphslipmonitor_out     => open,
-      gt0_rxdfelpmreset_in        => i_gt_resets.gbl_async,
+      gt0_rxdfelpmreset_in        => CPLLRESET_in,
       gt0_rxmonitorout_out        => open,
       gt0_rxmonitorsel_in         => c_gnd_vec(1 downto 0),
       gt0_rxoutclk_out            => RXOUTCLK_out,
@@ -452,11 +434,11 @@ begin
       DI => tx_fifo_di,
       DIP => tx_fifo_dip);
 
-  RXPMARESET_in <= i_gt_resets.gbl_async;
-  TXDLYSRESET_in <= i_gt_resets.gbl_async;
+  RXPMARESET_in <= CPLLRESET_in;
+  TXDLYSRESET_in <= CPLLRESET_in;
 
-  recclk_out <= rxusrclk;
-  REFCLK_OUT <= refclk;
+  o_rxclk <= rxusrclk;
+  o_refclk <= refclk;
   refclk <= txusrclk;
 
   fifo_di(63 downto 16) <= (others => '0');
@@ -491,22 +473,34 @@ begin
     end if;
   end process;
 
-  beacon_detect : process (rxusrclk, rx_data, rx_charisk,
-    rx_disperr, rx_notintable)
+  beacon_detect : process (rxusrclk)
     variable beacon_cnt : std_logic_vector(2 downto 0) := "000";
     variable cnt : std_logic_vector(12 downto 0);
   begin
     if rising_edge(rxusrclk) then
-      if beacon_cnt(beacon_cnt'high) = '1' then
-        beacon_cnt := beacon_cnt - 1;
-      end if;
+      -- if beacon_cnt(beacon_cnt'high) = '1' then
+      --   beacon_cnt := beacon_cnt - 1;
+      -- end if;
+      -- if link_ok = '1' and rx_charisk(1) = '0' and rx_data(15 downto 8) = C_EVENT_BEACON then
+      --   beacon_cnt := "111";
+      -- end if;
+
       if link_ok = '1' and rx_charisk(1) = '0' and rx_data(15 downto 8) = C_EVENT_BEACON then
         beacon_cnt := "111";
+      elsif beacon_cnt(beacon_cnt'high) = '1' then
+        beacon_cnt := beacon_cnt - 1;
       end if;
-      rx_beacon_i <= beacon_cnt(beacon_cnt'high);
+
       if dc_mode = '0' then
         rx_beacon_i <= cnt(cnt'high);
+      else
+        rx_beacon_i <= beacon_cnt(beacon_cnt'high);
       end if;
+
+      -- rx_beacon_i <= beacon_cnt(beacon_cnt'high);
+      -- if dc_mode = '0' then
+      --   rx_beacon_i <= cnt(cnt'high);
+      -- end if;
       if cnt(cnt'high) = '1' then
         cnt(cnt'high) := '0';
       end if;
@@ -514,22 +508,28 @@ begin
     end if;
   end process;
 
-  link_ok_detection : process (refclk, link_ok, i_gt_resets.gbl_async, rx_error_i, rx_link_ok_i)
+  link_ok_detection : process (refclk)
     variable link_ok_delay : std_logic_vector(19 downto 0) := (others => '0');
   begin
-    rx_link_ok <= rx_link_ok_i;
-    rx_link_ok_i <= link_ok_delay(link_ok_delay'high);
     if rising_edge(refclk) then
-      if link_ok_delay(link_ok_delay'high) = '0' then
-        link_ok_delay := link_ok_delay + 1;
-      end if;
-      if i_gt_resets.gbl_async = '1' or link_ok = '0' or rx_error_i = '1' then
+
+      if CPLLRESET_in = '1' or link_ok = '0' or rx_error_i = '1' then
         link_ok_delay := (others => '0');
+
+      else
+        rx_link_ok <= rx_link_ok_i;
+        rx_link_ok_i <= link_ok_delay(link_ok_delay'high);
+
+        if link_ok_delay(link_ok_delay'high) = '0' then
+          link_ok_delay := link_ok_delay + 1;
+        end if;
+
       end if;
+
     end if;
   end process;
 
-  link_status_testing : process (refclk, i_gt_resets.gbl_async, rx_charisk, link_ok,
+  link_status_testing : process (refclk, CPLLRESET_in, rx_charisk, link_ok,
                                  rx_disperr, CPLLLOCK_out)
     variable prescaler : std_logic_vector(14 downto 0);
     variable count : std_logic_vector(3 downto 0);
@@ -598,7 +598,7 @@ begin
       -- Synchronize asynchronous resets
       reset_sync(0) := reset_sync(1);
       reset_sync(1) := '0';
-      if i_gt_resets.gbl_async = '1' or CPLLLOCK_out = '0' then
+      if CPLLRESET_in = '1' or CPLLLOCK_out = '0' then
         reset_sync(1) := '1';
       end if;
     end if;
@@ -634,7 +634,7 @@ begin
 
       even := not even;
       event_rxd_i <= fifo_do(15 downto 8);
-      if rx_link_ok_i = '0' or fifo_dop(1) = '1' or i_gt_resets.gbl_async = '1' then
+      if rx_link_ok_i = '0' or fifo_dop(1) = '1' or CPLLRESET_in = '1' then
         event_rxd_i <= (others => '0');
         even := '0';
       end if;
@@ -643,10 +643,10 @@ begin
 
   event_rxd <= event_rxd_i;
 
-  rx_data_align_detect : process (rxusrclk, i_gt_resets.gbl_async, rx_charisk, rx_data,
+  rx_data_align_detect : process (rxusrclk, CPLLRESET_in, rx_charisk, rx_data,
                                   rx_clear_viol)
   begin
-    if i_gt_resets.gbl_async = '1' or rx_clear_viol = '1' then
+    if CPLLRESET_in = '1' or rx_clear_viol = '1' then
       align_error <= '0';
     elsif rising_edge(rxusrclk) then
       align_error <= '0';
@@ -693,7 +693,7 @@ begin
     variable control_event_gen : std_logic_vector(1 downto 0) := "00";
   begin
     if rising_edge(txusrclk) then
-      if i_gt_resets.gbl_async = '1' then
+      if CPLLRESET_in = '1' then
         tx_path_state <= s_EVENT_EMPTY;
         control_event_gen := "00";
       elsif beacon_cnt(1 downto 0) = "10" and dc_mode = '1' then
@@ -758,7 +758,7 @@ begin
       end if;
       databuf_tx_ena <= tx_beacon_gen;
       beacon_cnt <= rx_beacon_i & beacon_cnt(beacon_cnt'high downto 1);
-      if i_gt_resets.gbl_async = '1' then
+      if CPLLRESET_in = '1' then
         fifo_pend <= '0';
       end if;
     end if;
@@ -805,11 +805,11 @@ begin
   end process;
 
   tx_fifo_dip <= (others => '0');
-  tx_fifo_rst <= i_gt_resets.gbl_async;
+  tx_fifo_rst <= CPLLRESET_in;
 
   drpclk <= txusrclk;
 
-  process (drpclk, i_gt_resets.gbl_async, txbufstatus_i, TXUSERRDY_in)
+  process (drpclk, CPLLRESET_in, txbufstatus_i, TXUSERRDY_in)
     type state is (init, init_delay, acq_bufstate, deldec, delinc, locked);
     variable ph_state : state;
     variable phase       : std_logic_vector(6 downto 0);
@@ -829,7 +829,7 @@ begin
       if cnt(cnt'high) = '1' then
         case ph_state is
           when init =>
-            if i_gt_resets.gbl_async = '0' then
+            if CPLLRESET_in = '0' then
               ph_state := init_delay;
             end if;
           when init_delay =>
@@ -865,7 +865,7 @@ begin
       else
         cnt := cnt + 1;
       end if;
-      if i_gt_resets.gbl_async = '1' or TXUSERRDY_in = '0' then
+      if CPLLRESET_in = '1' or TXUSERRDY_in = '0' then
         ph_state := init;
         phase := (others => '0');
         cnt := (others => '0');
@@ -873,12 +873,29 @@ begin
     end if;
   end process;
 
-  o_gt_status.tx_fsm_done <= TXRESETDONE_out;
-  o_gt_status.rx_fsm_done <= RXRESETDONE_out;
-  o_gt_status.pll_locked <= CPLLLOCK_out;
-  o_gt_status.fbclk_lost <= CPLLFBCLKLOST_out;
-  o_gt_status.rx_data_valid <= not rx_error_i;
-  o_gt_status.link_up <= rx_link_ok_i;
-  o_gt_status.event_rcv <= '1' when event_rxd_i /= "00" else '0';
+  -- Get all this singals into the event_clock time domain
+  status_reg : process(event_clk)
+    begin
+      if rising_edge(event_clk) then
+        -- Rx domain
+        gt_status_0.rx_fsm_done <= RXRESETDONE_out;
+        gt_status_0.rx_data_valid <= not rx_error_i;
+        gt_status_0.link_up <= rx_link_ok_i;
+
+        -- Tx domain
+        gt_status_0.tx_fsm_done <= TXRESETDONE_out;
+
+        gt_status_0.pll_locked <= CPLLLOCK_out;
+        gt_status_0.fbclk_lost <= CPLLFBCLKLOST_out;
+
+        if event_rxd_i /= "00" then
+          gt_status_0.event_rcv <= '1';
+        else
+          gt_status_0.event_rcv <= '0';
+        end if;
+
+        o_gt_status <= gt_status_0;
+      end if;
+    end process status_reg;
 
 end structure;
