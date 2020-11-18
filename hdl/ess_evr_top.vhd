@@ -57,13 +57,14 @@ use ESS_openEVR_RegMap.register_bank_functions.all;
 entity ess_evr_top is
   Generic (
     g_CARRIER_VER   : string  := "revE";           --! Target carrier board hw revision: revE or revD
-    g_DEBUG_WIDTH   : integer := 5;                --! Width of debug port
     g_HAS_DEBUG_CLK : boolean := true;             --! Enable an input for a free running clock to drive ILA cores
     AXI_ADDR_WIDTH  : integer := ADDRESS_WIDTH+2;
     REG_ADDR_WIDTH  : integer := ADDRESS_WIDTH;    --! Width of the address signals
     AXI_WSTRB_WIDTH : integer := 4;                --! Width of the AXI wstrb signal, may be determined by ADDRESS_WIDTH
     REGISTER_WIDTH  : integer := REGISTER_WIDTH;   --! Width of the registers
-    AXI_DATA_WIDTH  : integer := AXI4L_DATA_WIDTH  --! Width of the AXI data signals
+    AXI_DATA_WIDTH  : integer := AXI4L_DATA_WIDTH; --! Width of the AXI data signals
+    FP_IN_CHANNELS  : integer := 2;                --! Front Panel Input channels
+    FP_OUT_CHANNELS : integer := 2                 --! Front Panel Output channels
     );
   Port (
     --! AXI4-Lite Register interface
@@ -122,11 +123,15 @@ entity ess_evr_top is
     --! SFP MOD 0 line (module detected, active-low)
     i_EVR_MOD_0       : in std_logic;
 
-    -- MRF Universal Module interface ------------------------------------------
+    -- MRF Universal Module interface -----------------------------------------
     o_MRF_UNIVMOD_OUT0 : out std_logic;
     o_MRF_UNIVMOD_OUT1 : out std_logic;
     i_MRF_UNIVMOD_IN0  : in std_logic;
     i_MRF_UNIVMOD_IN1  : in std_logic;
+
+    -- Front Panel I/O --------------------------------------------------------
+    o_FP_OUT  : out std_logic_vector(FP_OUT_CHANNELS-1 downto 0);
+    i_FP_IN   : in std_logic_vector(FP_IN_CHANNELS-1 downto 0);
 
     --! External timestamp request
     i_TS_req   : in  std_logic;
@@ -135,19 +140,14 @@ entity ess_evr_top is
 
     --! EVR event single-ended clock output - 88.0525 MHz
     o_EVR_EVENT_CLK  : out std_logic;
-    --! Global logic single-ended clock output - 100 MHz
-    o_GLBL_LOGIC_CLK : out std_logic;
-
-    --! Debug port (to connect to fmc-dio-5ch-ttl mezzanine card)
-    o_DEBUG          : out std_logic_vector(g_DEBUG_WIDTH-1 downto 0);
 
     --! Optional input clock to drive the ILA logic
     i_DEBUG_clk      : in std_logic);
 end ess_evr_top;
 
 architecture rtl of ess_evr_top is
-  attribute keep : string;
-  attribute mark_debug : string;
+  --attribute keep : string;
+  --attribute mark_debug : string;
 
   signal gnd     : std_logic := '0';
   signal vcc     : std_logic := '1';
@@ -604,5 +604,14 @@ begin
 
   mrfunivmod_in0 <= i_MRF_UNIVMOD_IN0 when mrfunivmod_dir = '0' else '0';
   mrfunivmod_in1 <= i_MRF_UNIVMOD_IN1 when mrfunivmod_dir = '0' else '0';
+
+  -- Fron Panel I/O -----------------------------------------------------------
+
+  fp_out_map: for i in 0 to FP_OUT_CHANNELS-1 generate
+    begin
+    o_FP_OUT(i) <= '0';
+  end generate;
+
+
 
 end rtl;
