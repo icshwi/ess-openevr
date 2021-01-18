@@ -446,6 +446,10 @@ begin
               bus_data_o <= register_data_i.Pulse31Delay;
             when 16#3FC# =>
               bus_data_o <= register_data_i.Pulse31Width;
+            when 16#400# =>
+              bus_data_o <= register_data_i.FPOutMap0_1;
+            when 16#440# =>
+              bus_data_o <= register_data_i.UnivOUTMap0_1;
             when 16#B000# =>
               bus_data_o <= register_data_i.ESSStatus;
             when 16#B004# =>

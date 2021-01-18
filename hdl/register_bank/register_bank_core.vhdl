@@ -3304,6 +3304,40 @@ begin
       logic_return_i   => logic_return_i.Pulse31Width
     );
 
+    -- Register: FPOutMap0_1
+    field_FPOutMap0_1 : field_core
+    generic map (
+      RESET_VALUE => x"003F003F",
+      WIDTH => 32
+    )
+    port map (
+      clock_i          => clock_i,
+      reset_n_i        => reset_n_i,
+      write_en_i       => write_en_i.FPOutMap0_1,
+      bus_write_data_i => bus_write_data_i.FPOutMap0_1,
+      field_value_o    => current_data_o.FPOutMap0_1,
+      logic_to_bus_o   => logic_to_bus_o.FPOutMap0_1,
+      logic_data_o     => logic_data_o.FPOutMap0_1,
+      logic_return_i   => logic_return_i.FPOutMap0_1
+    );
+
+    -- Register: UnivOUTMap0_1
+    field_UnivOUTMap0_1 : field_core
+    generic map (
+      RESET_VALUE => x"003F003F",
+      WIDTH => 32
+    )
+    port map (
+      clock_i          => clock_i,
+      reset_n_i        => reset_n_i,
+      write_en_i       => write_en_i.UnivOUTMap0_1,
+      bus_write_data_i => bus_write_data_i.UnivOUTMap0_1,
+      field_value_o    => current_data_o.UnivOUTMap0_1,
+      logic_to_bus_o   => logic_to_bus_o.UnivOUTMap0_1,
+      logic_data_o     => logic_data_o.UnivOUTMap0_1,
+      logic_return_i   => logic_return_i.UnivOUTMap0_1
+    );
+
     -- Register: ESSStatus
     field_ESSStatus : field_core
     generic map (

@@ -421,6 +421,10 @@ begin
             register_write_en_o.Pulse31Delay         <= '1';
           when 16#3FC# =>
             register_write_en_o.Pulse31Width         <= '1';
+          when 16#400# =>
+            register_write_en_o.FPOutMap0_1          <= '1';
+          when 16#440# =>
+            register_write_en_o.UnivOUTMap0_1        <= '1';
           when 16#B004# =>
             register_write_en_o.ESSControl           <= '1';
 

@@ -238,6 +238,8 @@ architecture rtl of register_bank_wr_interface is
     signal Pulse31Presc_write_en : std_logic_vector(0 downto 0);
     signal Pulse31Delay_write_en : std_logic_vector(0 downto 0);
     signal Pulse31Width_write_en : std_logic_vector(0 downto 0);
+    signal FPOutMap0_1_write_en : std_logic_vector(0 downto 0);
+    signal UnivOUTMap0_1_write_en : std_logic_vector(0 downto 0);
     signal ESSStatus_write_en : std_logic_vector(0 downto 0);
     signal ESSControl_write_en : std_logic_vector(0 downto 0);
     signal ESSExtSecCounter_write_en : std_logic_vector(0 downto 0);
@@ -776,6 +778,12 @@ begin
 
     Pulse31Width_write_en(0) <= register_write_en_i.Pulse31Width;
     write_interface_core((0 => 0), (0 => WRITE), Pulse31Width_write_en, data_bus_i, field_write_en_o.Pulse31Width, field_data_o.Pulse31Width, current_field_value_i.Pulse31Width);
+
+    FPOutMap0_1_write_en(0) <= register_write_en_i.FPOutMap0_1;
+    write_interface_core((0 => 0), (0 => WRITE), FPOutMap0_1_write_en, data_bus_i, field_write_en_o.FPOutMap0_1, field_data_o.FPOutMap0_1, current_field_value_i.FPOutMap0_1);
+
+    UnivOUTMap0_1_write_en(0) <= register_write_en_i.UnivOUTMap0_1;
+    write_interface_core((0 => 0), (0 => WRITE), UnivOUTMap0_1_write_en, data_bus_i, field_write_en_o.UnivOUTMap0_1, field_data_o.UnivOUTMap0_1, current_field_value_i.UnivOUTMap0_1);
 
     ESSControl_write_en(0) <= register_write_en_i.ESSControl;
     write_interface_core((0 => 0), (0 => WRITE), ESSControl_write_en, data_bus_i, field_write_en_o.ESSControl, field_data_o.ESSControl, current_field_value_i.ESSControl);

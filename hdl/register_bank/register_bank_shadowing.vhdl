@@ -226,6 +226,8 @@ begin
   logic_data_o.Pulse31Presc <= logic_data_i.Pulse31Presc;
   logic_data_o.Pulse31Delay <= logic_data_i.Pulse31Delay;
   logic_data_o.Pulse31Width <= logic_data_i.Pulse31Width;
+  logic_data_o.FPOutMap0_1 <= logic_data_i.FPOutMap0_1;
+  logic_data_o.UnivOUTMap0_1 <= logic_data_i.UnivOUTMap0_1;
   logic_data_o.ESSControl <= logic_data_i.ESSControl;
 
 

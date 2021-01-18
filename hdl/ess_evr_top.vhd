@@ -147,7 +147,7 @@ end ess_evr_top;
 
 architecture rtl of ess_evr_top is
   --attribute keep : string;
-  --attribute mark_debug : string;
+  attribute mark_debug : string;
 
   signal gnd     : std_logic := '0';
   signal vcc     : std_logic := '1';
@@ -246,12 +246,19 @@ architecture rtl of ess_evr_top is
   signal ext_ts_trig_t : std_logic;
 
   -- OpenEVR SFP signals
+
+  -- Front Panel I/O ----------------------------------------------------------
+  type fp_map is array (0 to FP_OUT_CHANNELS-1) of std_logic_vector(15 downto 0);
+  signal fp_out_map : fp_map := (others => x"003F"); -- Default to Low
+  attribute mark_debug of fp_out_map : signal is "true";
   signal evr_tx_dis : std_logic := '0';
 
   -- MRF Universal Module interface signals -----------------------------------
-  -- IO direction bit: 0 -> Module used as input
-  --                   1 -> Module used as output
-  signal mrfunivmod_dir : std_logic := '0';
+  signal univ_out : std_logic_vector (1 downto 0) := "00";
+  -- Only one UNIV I/O socket, which supports up to 2 channels
+  type fp_univ_map is array (0 to 1) of std_logic_vector(15 downto 0);
+  signal fp_univ_out_map : fp_univ_map := (others => x"003F"); -- Default to Low
+  attribute mark_debug of fp_univ_out_map : signal is "true";
   signal mrfunivmod_in0 : std_logic := '0';
   signal mrfunivmod_in1 : std_logic := '0';
   -- attribute mark_debug of mrfunivmod_in0 : signal is "true";
@@ -260,6 +267,8 @@ architecture rtl of ess_evr_top is
   -- attribute mark_debug of event_rxd : signal is "true";
   -- attribute mark_debug of ext_ts_trig : signal is "true";
   -- attribute mark_debug of ext_ts_trig_t : signal is "true";
+
+  signal trig_1kHz : std_logic := '0';
 
 begin
 
@@ -453,10 +462,9 @@ begin
          gt0_resets_t.tx_async  <= logic_read_data_t.ESSControl(2);
          gt0_resets.rx_async    <= gt0_resets_t.rx_async;
          gt0_resets_t.rx_async  <= logic_read_data_t.ESSControl(3);
-         mrfunivmod_dir         <= logic_read_data_t.ESSControl(31);
          -- Read back from FPGA
          logic_return_t_0.ESSControl(3 downto 0) <= logic_read_data_t.ESSControl(3 downto 0);
-         logic_return_t_0.ESSControl(REGISTER_WIDTH-2 downto 4) <= (others => '0');
+         logic_return_t_0.ESSControl(REGISTER_WIDTH-1 downto 4) <= (others => '0');
          -- Temporally assigned here
          logic_return_t_0.ESSControl(31) <= logic_read_data_t.ESSControl(31);
 
@@ -526,6 +534,18 @@ begin
          -- From FPGA
          logic_return_t_0.ESSExtSecCounter   <= ext_trig_ts_data(63 downto 32);
          logic_return_t_0.ESSExtEventCounter <= ext_trig_ts_data(31 downto 0);
+
+         -- Front Panel registers
+         -- From processor
+         fp_out_map(0) <= logic_read_data_t.FPOutMap0_1(15 downto 0);
+         fp_out_map(1) <= logic_read_data_t.FPOutMap0_1(31 downto 16);
+
+         fp_univ_out_map(0) <= logic_read_data_t.UnivOUTMap0_1(15 downto 0);
+         fp_univ_out_map(1) <= logic_read_data_t.UnivOUTMap0_1(31 downto 16);
+
+         -- Read back
+         logic_return_t_0.FPOutMap0_1 <= logic_read_data_t.FPOutMap0_1;
+         logic_return_t_0.UnivOUTMap0_1 <= logic_read_data_t.UnivOUTMap0_1;
 
          -- register read (from FPGA to processor)
          logic_return_t <= logic_return_t_0;
@@ -598,20 +618,33 @@ begin
   -- installed. To avoid electrical issues, these lines are safely hold in
   -- high Z when the installed module is a MRF Universal Input module.
 
-  -- TDB: drive a meaningful signal here - event_clock for debugging purpose
-  o_MRF_UNIVMOD_OUT0 <= event_clk when mrfunivmod_dir = '1' else 'Z';
-  o_MRF_UNIVMOD_OUT1 <= refclk when mrfunivmod_dir = '1' else 'Z';
+  -- Only one UNIV Module socket - up to 2 channels
+  univ_omapping : for I in 0 to 1 generate
+    with fp_univ_out_map(I) select
+    univ_out(I) <= event_clk          when x"003B",
+                   '1'                when x"003E",
+                   '0'                when x"003F",
+                   '0'                when others;
+  end generate;
 
-  mrfunivmod_in0 <= i_MRF_UNIVMOD_IN0 when mrfunivmod_dir = '0' else '0';
-  mrfunivmod_in1 <= i_MRF_UNIVMOD_IN1 when mrfunivmod_dir = '0' else '0';
+  o_MRF_UNIVMOD_OUT0 <= univ_out(0);
+  o_MRF_UNIVMOD_OUT1 <= univ_out(1);
+
+  mrfunivmod_in0 <= i_MRF_UNIVMOD_IN0;
+  mrfunivmod_in1 <= i_MRF_UNIVMOD_IN1;
 
   -- Fron Panel I/O -----------------------------------------------------------
 
-  fp_out_map: for i in 0 to FP_OUT_CHANNELS-1 generate
-    begin
-    o_FP_OUT(i) <= '0';
+ -- Mapping of internal resources to FP Output channels
+  -- Mapping is available at MRF's Event System with Delay Compensation
+  -- Technical Reference (p. 62)
+  fp_omapping : for I in 0 to FP_OUT_CHANNELS-1 generate
+    with fp_out_map(I) select
+    o_FP_OUT(I) <= event_clk          when x"003B",
+                   '1'                when x"003E",
+                   '0'                when x"003F",
+                   '0'                when others;
   end generate;
-
 
 
 end rtl;

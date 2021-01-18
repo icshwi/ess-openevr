@@ -206,6 +206,8 @@ package register_bank_config is
      Pulse31Presc         : std_logic;
      Pulse31Delay         : std_logic;
      Pulse31Width         : std_logic;
+     FPOutMap0_1          : std_logic;
+     UnivOUTMap0_1        : std_logic;
      ESSControl           : std_logic;
   end record;
 
@@ -387,6 +389,8 @@ package register_bank_config is
      Pulse31Presc         : std_logic;
      Pulse31Delay         : std_logic;
      Pulse31Width         : std_logic;
+     FPOutMap0_1          : std_logic;
+     UnivOUTMap0_1        : std_logic;
      ESSControl           : std_logic;
   end record;
 
@@ -583,6 +587,8 @@ package register_bank_config is
      Pulse31Presc         : std_logic_vector(31 downto 0);
      Pulse31Delay         : std_logic_vector(31 downto 0);
      Pulse31Width         : std_logic_vector(31 downto 0);
+     FPOutMap0_1          : std_logic_vector(31 downto 0);
+     UnivOUTMap0_1        : std_logic_vector(31 downto 0);
      ESSStatus            : std_logic_vector(31 downto 0);
      ESSControl           : std_logic_vector(31 downto 0);
      ESSExtSecCounter     : std_logic_vector(31 downto 0);
@@ -782,6 +788,8 @@ package register_bank_config is
      Pulse31Presc         : std_logic_vector(REGISTER_WIDTH-1 downto 0);
      Pulse31Delay         : std_logic_vector(REGISTER_WIDTH-1 downto 0);
      Pulse31Width         : std_logic_vector(REGISTER_WIDTH-1 downto 0);
+     FPOutMap0_1          : std_logic_vector(REGISTER_WIDTH-1 downto 0);
+     UnivOUTMap0_1        : std_logic_vector(REGISTER_WIDTH-1 downto 0);
      ESSStatus            : std_logic_vector(REGISTER_WIDTH-1 downto 0);
      ESSControl           : std_logic_vector(REGISTER_WIDTH-1 downto 0);
      ESSExtSecCounter     : std_logic_vector(REGISTER_WIDTH-1 downto 0);
@@ -966,6 +974,8 @@ package register_bank_config is
      Pulse31Presc         : std_logic_vector(31 downto 0);
      Pulse31Delay         : std_logic_vector(31 downto 0);
      Pulse31Width         : std_logic_vector(31 downto 0);
+     FPOutMap0_1          : std_logic_vector(31 downto 0);
+     UnivOUTMap0_1        : std_logic_vector(31 downto 0);
      ESSControl           : std_logic_vector(31 downto 0);
   end record;
 
@@ -1162,6 +1172,8 @@ package register_bank_config is
      Pulse31Presc         : std_logic_vector(31 downto 0);
      Pulse31Delay         : std_logic_vector(31 downto 0);
      Pulse31Width         : std_logic_vector(31 downto 0);
+     FPOutMap0_1          : std_logic_vector(31 downto 0);
+     UnivOUTMap0_1        : std_logic_vector(31 downto 0);
      ESSStatus            : std_logic_vector(31 downto 0);
      ESSControl           : std_logic_vector(31 downto 0);
      ESSExtSecCounter     : std_logic_vector(31 downto 0);

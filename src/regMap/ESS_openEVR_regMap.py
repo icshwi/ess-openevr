@@ -31,21 +31,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # =============================================================================
 
-# Load modules in other folders
-import os
-import sys
-import inspect
-import_folder = ".."
-import_folder_abs = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile(inspect.currentframe() ))[0], import_folder)))
-if import_folder_abs not in sys.path:
-    sys.path.insert(0, import_folder_abs)
-
-import essffw
+from lowlevhw import RegisterBank
 
 address_width  = 16
 register_width = 32
 
-bank = essffw.RegisterBank("ESS_openEVR_RegMap", address_width, register_width)
+bank = RegisterBank("ESS_openEVR_RegMap", address_width, register_width)
 bank.base_address = 0x0
 
 # EVR registers (see mTCA-ERV300U-DCManual, Sec. 3.8 Register Map)
@@ -256,6 +247,10 @@ bank.add_register("Pulse31Ctrl",   address=0x3F0,    modes="RW") # Pulse 31 Cont
 bank.add_register("Pulse31Presc",  address=0x3F4,    modes="RW") # Pulse 31 Prescaler Register
 bank.add_register("Pulse31Delay",  address=0x3F8,    modes="RW") # Pulse 31 Delay Register
 bank.add_register("Pulse31Width",  address=0x3FC,    modes="RW") # Pulse 31 Width Register
+
+# Front Panel Outputs
+bank.add_register("FPOutMap0_1",     address=0x400,    modes="RW", reset_value=0x3f003f) # FP Output 0 Map register
+bank.add_register("UnivOUTMap0_1",   address=0x440,    modes="RW", reset_value=0x3f003f) # FP Universal Output 0 Map register
 
 # ESS OpenEVR specific registers
 bank.add_register("ESSStatus",          address=0xB000, reset_value=0x0, modes="R")
