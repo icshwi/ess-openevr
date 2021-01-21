@@ -239,11 +239,11 @@ begin
   mmc_i : MMCME2_ADV
     generic map (
       BANDWIDTH => "OPTIMIZED",
-      CLKFBOUT_MULT_F => 7.0,
+      CLKFBOUT_MULT_F => 12.0,      -- This value leads in a very similar tap resolution as the one used by MRF
       CLKFBOUT_PHASE => 0.0,
-      CLKIN1_PERIOD => 7.0,
+      CLKIN1_PERIOD => 11.356,
       CLKIN2_PERIOD => 0.0,
-      CLKOUT0_DIVIDE_F => 7.000,
+      CLKOUT0_DIVIDE_F => 12.000,
       CLKOUT1_DIVIDE => 1,
       CLKOUT2_DIVIDE => 1,
       CLKOUT3_DIVIDE => 1,
