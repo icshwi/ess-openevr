@@ -1,0 +1,46 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Mon Jan 25 08:50:06 2021
+[*]
+[dumpfile] "/data_fast/workspace/picoevr_dev/fpga/srcs/libs/hdl-ip-repo/ess-openevr/build/heartbeat_mon_tb.vcd"
+[dumpfile_mtime] "Mon Jan 25 08:49:57 2021"
+[dumpfile_size] 5885
+[savefile] "/data_fast/workspace/picoevr_dev/fpga/srcs/libs/hdl-ip-repo/ess-openevr/waves/wavecfg_heartbeat_mon_tb.gtkw"
+[timestart] 0
+[size] 2560 1377
+[pos] -1 -1
+*-24.000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] heartbeat_mon_tb.
+[sst_width] 228
+[signals_width] 231
+[sst_expanded] 1
+[sst_vpaned_height] 412
+@28
+heartbeat_mon_tb.tb_clk
+heartbeat_mon_tb.tb_rst
+heartbeat_mon_tb.heartbeat_gen_en
+heartbeat_mon_tb.heartbeat_ov
+@22
+heartbeat_mon_tb.heartbeat_ov_cnt[7:0]
+heartbeat_mon_tb.event_rxd[7:0]
+@200
+-dut
+@22
+heartbeat_mon_tb.dut.counter[3:0]
+@28
+heartbeat_mon_tb.dut.counter_ov
+@22
+heartbeat_mon_tb.dut.heartbeat_ov_cnt[7:0]
+@28
+heartbeat_mon_tb.dut.i_event_clk
+@22
+heartbeat_mon_tb.dut.i_event_rxd[7:0]
+@28
+heartbeat_mon_tb.dut.i_reset
+heartbeat_mon_tb.dut.o_heartbeat_ov
+@22
+heartbeat_mon_tb.dut.o_heartbeat_ov_cnt[7:0]
+@28
+heartbeat_mon_tb.dut.rst_rcv
+[pattern_trace] 1
+[pattern_trace] 0
