@@ -12,10 +12,44 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;
 use ieee.numeric_std.all;
 
+library work;
+use work.sizing.all;
+
+
 package evr_pkg is
+
+--!@name Global definitions
+--!@{
+
+--! System clock period (ns)
+constant g_SYS_CLK_PERIOD    : integer := 10;
+
+--!@}
+
+type integer_array is array (integer range <>) of integer;
+
+-- picoEVR constant definitions ---------------------------------------------
+
+--! ESS Timing systems runs at 88.0525 MHz
+constant c_EVENT_RATE           : natural := 88052500;
+--! Heartbeat rate - 1.6 s approx
+constant c_HEARTBEAT_TIMEOUT    : natural := 140884000;
+--! Size of the missed heartbeat events counter - Up to 256 missed events
+constant c_HEARTBEAT_CNT_SIZE   : natural := 8;
+
+--! Event codes
+constant c_EVENT_CODE_BITS      : natural := 8;
+subtype event_code is std_logic_vector(c_EVENT_CODE_BITS-1 downto 0);
+
+constant c_EVENT_NULL           : event_code := x"00";
+constant c_EVENT_HEARTBEAT      : event_code := x"7A";
+constant c_EVENT_BEACON         : event_code := X"7E";
+-- Timestamp related event codes
+constant c_EVENT_SECONDS_0      : event_code := x"70";
+constant c_EVENT_SECONDS_1      : event_code := x"71";
+constant c_EVENT_TS_COUNT_RESET : event_code := x"7D";  
 
   -- Records
 
@@ -31,7 +65,7 @@ package evr_pkg is
     event_fifo_sec    : std_logic_vector(31 downto 0); --! Event FIFO seconds register
     event_fifo_cnt    : std_logic_vector(31 downto 0); --! Event FIFO event count register
     event_fifo_code   : std_logic_vector(15 downto 0); --! Event FIFO event code register
-  end record gt_resets;
+  end record ts_regs;
   --!@}
 
   --!@name evr_ctrl_reg
@@ -55,7 +89,7 @@ package evr_pkg is
     log_dis     : std_logic; --! Disable event log
     log_se      : std_logic; --! Log stop event enable
     rs_fifo     : std_logic; --! Reset Event FIFO
-  end record gt_ctrl_flags;
+  end record evr_ctrl_reg;
 
   --!@name gt_ctrl_flags
   --!@brief Record to group all the control flags for the EVR GTX wrapper
@@ -417,27 +451,34 @@ package evr_pkg is
       GT0_QPLLOUTREFCLK_IN : in std_logic);
   end component;
 
-  --!@name Global definitions
-  --!@{
-
-  --! System clock period (ns)
-  constant g_SYS_CLK_PERIOD    : integer := 10;
-
-  --!@}
-
-  type integer_array is array (integer range <>) of integer;
-
-  -- picoEVR constant definitions ---------------------------------------------
+  -- Heartbeat monitor for the picoEVR
+  component heartbeat_mon is
+  generic (
+      g_PRESCALER_SIZE : natural := bit_size(c_HEARTBEAT_TIMEOUT)
+  );
+  port (
+      --! Recovered clock from the link with delay compensation
+      i_event_clk     : in std_logic;
+      --! Reset - Rx path domain
+      i_reset         : in std_logic;
+      --! Read event - output from the Rx FIFO (delay compensated)
+      i_event_rxd     : in event_code;
+      --! Heartbeat timeout flag.
+      o_heartbeat_ov  : out std_logic;
+      --! Missed heartbeat counter. Increases every time 0x7A wasn't 
+      --! received on time 
+      o_heartbeat_ov_cnt : out unsigned(c_HEARTBEAT_CNT_SIZE-1 downto 0)
+  );
+  end component;
 
   -- Legacy EVR constant definitions ------------------------------------------
 
-  constant EVENT_RATE          : integer := 125000000;
   constant MGT_RX_PRESCALER    : integer := 1024;
   constant MGT_RX_TIMEOUT      : integer := 1024;
   constant MGT_RX_PWRDWN_TIME  : integer := 2;
   constant MGT_RX_LOCK_ACQ     : integer := 512;
   constant MGT_RX_K_COUNTER    : integer := 256;
-  constant COUNT_10US          : integer := (EVENT_RATE / 100000);
+  --constant COUNT_10US          : integer := (EVENT_RATE / 100000);
   type cml_data_vector is array (integer range <>) of std_logic_vector(23 downto 0);
   type cml_we_vector is array (integer range<>) of std_logic_vector(2 downto 0);
   type cml_samples_vector is array (integer range <>) of std_logic_vector(10 downto 0);
@@ -446,13 +487,7 @@ package evr_pkg is
   type we_vector is array (integer range<>) of std_logic_vector(3 downto 0);
   type data_vector is array (integer range<>) of std_logic_vector(31 downto 0);
   type short_vector is array (integer range<>) of std_logic_vector(15 downto 0);
-  constant C_EVENT_CODE_BITS    : integer := 8;
-  constant C_EVENT_HEARTBEAT    : std_logic_vector(7 downto 0) := X"7A";
-  constant C_EVENT_BEACON       : std_logic_vector(7 downto 0) := X"7E";
-  -- Timestamp related event codes
-  constant C_EVENT_SECONDS_0      : std_logic_vector(C_EVENT_CODE_BITS-1 downto 0) := x"70";
-  constant C_EVENT_SECONDS_1      : std_logic_vector(C_EVENT_CODE_BITS-1 downto 0) := x"71";
-  constant C_EVENT_TS_COUNT_RESET : std_logic_vector(C_EVENT_CODE_BITS-1 downto 0) := x"7D";
+  
   constant C_EVR_DBUS_BITS      : integer := 8;
   constant C_EVR_MAX_PULSE_GENS : integer := 32;
   constant C_EVR_PULSE_GATES    : integer := 4;
