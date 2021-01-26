@@ -13,7 +13,7 @@
 --! @author Ross Elliot <ross.elliot@ess.eu>
 --!
 --! @date 20200421
---! @version 0.4
+--! @version 0.5
 --!
 --! Company: European Spallation Source ERIC \n
 --! Platform: picoZED 7030 \n
@@ -44,6 +44,7 @@ use UNISIM.vcomponents.all;
 
 library work;
 use work.evr_pkg.ALL;
+use work.sizing.all;
 
 library essffw;
 use essffw.axi4.all;
@@ -181,12 +182,25 @@ architecture rtl of ess_evr_top is
   --! Target value for the DC module
   signal delay_comp_target  : std_logic_vector(31 downto 0) := x"02100000";
 
+  --! Target event for the heartbeat monitor
+  --! TODO: assign from the mapping RAM
+  signal hb_mon_target : event_code := x"7A";
+
+  --  IRQ related signals ----------------------------------------------------
+
+  --! Interrupt line coming from the Hearbeat monitor
+  signal heartbeat_mon_int : std_logic;
+  attribute mark_debug of heartbeat_mon_int : signal is "true";
+  signal hb_mon_cnt : unsigned(c_HEARTBEAT_CNT_SIZE-1 downto 0);
+  attribute mark_debug of hb_mon_cnt : signal is "true";
+
   signal event_link_ok : std_logic;
   signal gt0_status : gt_ctrl_flags;
   signal evr_ctrl : evr_ctrl_reg;
   signal ts_regs  : ts_regs;
 
   signal event_rxd       : std_logic_vector(7 downto 0);
+  attribute mark_debug of event_rxd : signal is "true";
   signal dbus_rxd        : std_logic_vector(7 downto 0);
   signal databuf_rxd     : std_logic_vector(7 downto 0);
   signal databuf_rx_k    : std_logic;
@@ -409,6 +423,22 @@ begin
   dbus_txd <= X"00";
   databuf_txd <= X"00";
   databuf_tx_k <= '0';
+
+  i_heartbeat_mon : heartbeat_mon
+    generic map (
+      g_PRESCALER_SIZE => bit_size(c_HEARTBEAT_TIMEOUT)
+    )
+    port map (
+      i_ref_clk           => refclk,
+      i_reset             => gt0_resets.gbl_async,
+      i_event_rxd         => event_rxd,
+      i_target_evnt       => hb_mon_target,
+      o_heartbeat_ov      => heartbeat_mon_int,
+      o_heartbeat_ov_cnt  => hb_mon_cnt
+    );
+ 
+  -- TODO (ROSS) : connect this line
+  -- <hb irq line> <= heartbeat_mon_int and evr_irqen.iehb and evr_irqen.irqen;
 
   -- AXI register interface for the picoEVR ----------------------------------
 
