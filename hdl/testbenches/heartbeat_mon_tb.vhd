@@ -9,7 +9,7 @@
 --! @author Felipe Torres González <felipe.torresgonzalez@ess.eu>
 --!
 --! @date 20201022
---! @version 0.1
+--! @version 0.2
 --!
 --! Company: European Spallation Source ERIC \n
 --! Standard: VHDL08
@@ -42,7 +42,7 @@ end heartbeat_mon_tb;
 
 architecture behaviour of heartbeat_mon_tb is
 
-    constant c_CLK_PERIOD : time := 4 ns;
+    constant c_CLK_PERIOD : time := 1 ns;
     constant c_PRESCALER_SIZE : natural := 4;
     -- Remember: Check the value for c_HEARTBEAT_TIMOUT in the package!
     constant c_MAX : integer := 2**(c_PRESCALER_SIZE-2)-1;
@@ -54,7 +54,10 @@ architecture behaviour of heartbeat_mon_tb is
     signal heartbeat_ov_cnt : unsigned(c_HEARTBEAT_CNT_SIZE-1 downto 0) := (others => '0');
 
     signal heartbeat_gen_cnt : unsigned(c_PRESCALER_SIZE-2 downto 0) := (others => '0');
-    signal heartbeat_gen_en  : std_logic := '1';
+    signal hb_target_evnt    : event_code := c_EVENT_NULL;
+    signal hb_gen_event      : event_code := c_EVENT_HEARTBEAT;
+
+    signal aux_cnt           : unsigned(c_HEARTBEAT_CNT_SIZE-1 downto 0) := (others => '0');
 
 
     shared variable sim_end : boolean := false;
@@ -73,17 +76,15 @@ begin
         end if;
     end process clock_gen;
 
-    heartbeat_gen: process (tb_clk, heartbeat_gen_en)
+    heartbeat_gen: process (tb_clk)
     begin
-        if heartbeat_gen_en = '1' then
-            if rising_edge(tb_clk) then
-                if heartbeat_gen_cnt = c_MAX then
-                    event_rxd           <= c_EVENT_HEARTBEAT;
-                    heartbeat_gen_cnt   <= (others => '0');
-                else
-                    event_rxd           <= c_EVENT_NULL;
-                    heartbeat_gen_cnt   <= heartbeat_gen_cnt + 1;
-                end if;
+        if rising_edge(tb_clk) then
+            if heartbeat_gen_cnt = c_MAX then
+                event_rxd           <= hb_gen_event;
+                heartbeat_gen_cnt   <= (others => '0');
+            else
+                event_rxd           <= c_EVENT_NULL;
+                heartbeat_gen_cnt   <= heartbeat_gen_cnt + 1;
             end if;
         end if;
     end process;
@@ -94,11 +95,12 @@ begin
     )
     port map (
         --! Recovered clock from the link with delay compensation
-        i_event_clk     => tb_clk,
+        i_ref_clk       => tb_clk,
         --! Reset - Rx path domain
         i_reset         => tb_rst,
         --! Read event - output from the Rx FIFO (delay compensated)
         i_event_rxd     => event_rxd,
+        i_target_evnt   => hb_target_evnt,
         --! Heartbeat timeout flag.
         o_heartbeat_ov  => heartbeat_ov,
         --! Missed heartbeat counter. Increases every time 0x7A wasn't 
@@ -109,27 +111,60 @@ begin
     stimulus : process 
     begin
         tb_rst <= '1';
-        wait for c_CLK_PERIOD * 2;
+        wait for c_CLK_PERIOD * 10;
         tb_rst <= '0';
         wait for c_CLK_PERIOD * 2;
-        heartbeat_gen_en <= '1';
-        wait for 100 ns;
-        assert heartbeat_ov_cnt /= 0 report "Heartbeat events received with the expected rate: OK" severity note;
-        assert heartbeat_ov_cnt = 0 report "Heartbeat events received with the expected rate: FAILED" severity error;
+        hb_gen_event <= c_EVENT_NULL;
+        wait for 20 ns;
 
-        heartbeat_gen_en <= '0';
+        -- First test: no valid target event is given, monitor should be disabled
+        assert heartbeat_ov_cnt /= 0 report "Hearbeat monitor disabled: OK" severity note;
+        assert heartbeat_ov_cnt = 0 report "Hearbeat monitor disabled: FAILED" severity error;
+
+        -- Second test: enable the generation of events 7A
+        hb_gen_event <= x"7A";
+        wait for 20 ns;
+
+        assert heartbeat_ov_cnt /= 0 report "Event generation enabled with NULL event: OK" severity note;
+        assert heartbeat_ov_cnt = 0 report "Event generation enabled with NULL event: FAILED" severity error;
+
+        hb_target_evnt <= hb_gen_event;
         wait for 100 ns;
-        assert heartbeat_ov_cnt = 0 report "Heartbeat timeout counter check: OK" severity note;
-        assert heartbeat_ov_cnt /= 0 report "Heartbeat timeout counter check: FAILED" severity error;
+
+        assert heartbeat_ov_cnt /= 0 report "Heartbeat events (7A) received with the expected rate: OK" severity note;
+        assert heartbeat_ov_cnt = 0 report "Heartbeat events (7A) received with the expected rate: FAILED" severity error;
+
+        -- Third test: check the timeout works
+
+        hb_gen_event <= c_EVENT_NULL;
+        wait for 100 ns;
+        assert heartbeat_ov_cnt = 0 report "Heartbeat (7A) timeout counter check: OK" severity note;
+        assert heartbeat_ov_cnt /= 0 report "Heartbeat (7A) timeout counter check: FAILED" severity error;
+
+        -- Fourth test: check the rest of the logic
 
         tb_rst <= '1';
-        wait for c_CLK_PERIOD * 2;
+        wait for c_CLK_PERIOD * 10;
         tb_rst <= '0';
         wait for c_CLK_PERIOD * 2;
-        heartbeat_gen_en <= '1';
+        hb_gen_event <= x"AA";
+        hb_target_evnt <= x"AA";
         wait for 100 ns;
-        assert heartbeat_ov_cnt /= 0 report "Heartbeat events received with the expected rate: OK" severity note;
-        assert heartbeat_ov_cnt = 0 report "Heartbeat events received with the expected rate: FAILED" severity error;
+        assert heartbeat_ov_cnt /= 0 report "Heartbeat events (AA) received with the expected rate: OK" severity note;
+        assert heartbeat_ov_cnt = 0 report "Heartbeat events (AA) received with the expected rate: FAILED" severity error;
+
+
+        hb_gen_event <= x"AB";
+        wait for 100 ns;
+        assert heartbeat_ov_cnt = 0 report "Heartbeat (AB) timeout counter check: OK" severity note;
+        assert heartbeat_ov_cnt /= 0 report "Heartbeat (AB) timeout counter check: FAILED" severity error;
+
+        -- Finally, sixth test: change the target event code according to the new generated one
+        hb_target_evnt <= hb_gen_event;
+        aux_cnt <= heartbeat_ov_cnt;
+        wait for 100 ns;
+        assert heartbeat_ov_cnt /= aux_cnt report "No extra timeouts detected: OK" severity note;
+        assert heartbeat_ov_cnt = aux_cnt report "Extra timeouts detected: FAILED" severity error;
 
         sim_end := true;
         wait;

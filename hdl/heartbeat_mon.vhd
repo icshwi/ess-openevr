@@ -14,7 +14,7 @@
 --! @author Felipe Torres González <felipe.torresgonzalez@ess.eu>
 --!
 --! @date 20210122
---! @version 0.1
+--! @version 0.2
 --!
 --! Company: European Spallation Source ERIC \n
 --! Platform: picoZED 7030 \n
@@ -58,12 +58,14 @@ entity heartbeat_mon is
         g_PRESCALER_SIZE : natural := bit_size(c_HEARTBEAT_TIMEOUT)
     );
     port (
-        --! Recovered clock from the link with delay compensation
-        i_event_clk     : in std_logic;
+        --! Ref clock for the EVR GT
+        i_ref_clk     : in std_logic;
         --! Reset - Rx path domain
         i_reset         : in std_logic;
         --! Read event - output from the Rx FIFO (delay compensated)
         i_event_rxd     : in event_code;
+        --! Target event
+        i_target_evnt   : in event_code;
         --! Heartbeat timeout flag.
         o_heartbeat_ov  : out std_logic;
         --! Missed heartbeat counter. Increases every time 0x7A wasn't 
@@ -74,20 +76,25 @@ end entity;
 
 architecture rtl of heartbeat_mon is
 
+    attribute mark_debug : string;
+
     signal counter          : unsigned(g_PRESCALER_SIZE-1 downto 0) := (others => '0');
+    attribute mark_debug of counter : signal is "true";
     signal heartbeat_ov_cnt : unsigned(c_HEARTBEAT_CNT_SIZE-1 downto 0) := (others => '0');    
     signal rst_rcv          : std_logic := '0';
+    attribute mark_debug of rst_rcv : signal is "true";
 
     signal counter_ov       : std_logic := '0';
+    attribute mark_debug of counter_ov : signal is "true";
 
-    type mon_status is (COUNTING, TIMEOUT, POST_TIMEOUT);
-    signal state            : mon_status := COUNTING;
+    type mon_status is (DISABLED, COUNTING, TIMEOUT, POST_TIMEOUT);
+    signal state            : mon_status := DISABLED;
 
 begin
 
-    prescaler: process (i_event_clk)
+    prescaler: process (i_ref_clk)
     begin
-        if rising_edge(i_event_clk) then
+        if rising_edge(i_ref_clk) then
             if rst_rcv = '1' OR i_reset = '1' then
                 counter     <= (others => '0');
                 counter_ov  <= '0';
@@ -102,18 +109,29 @@ begin
         end if;
     end process;
 
-    controller: process (i_event_clk)
+    controller: process (i_ref_clk)
     begin
-        if rising_edge(i_event_clk) then
+        if rising_edge(i_ref_clk) then
             if i_reset = '1' then
                 state               <= COUNTING;
                 o_heartbeat_ov      <= '0';
                 heartbeat_ov_cnt    <= (others => '0');
+
             else
                 
                 case state is
+                    when DISABLED =>
+                        if i_target_evnt = c_EVENT_NULL then
+                            state   <= DISABLED;
+                        else
+                            state   <= COUNTING;
+                            rst_rcv <= '1';
+                        end if;
+
                     when COUNTING =>
-                        if i_event_rxd = c_EVENT_HEARTBEAT then
+                        if i_target_evnt = c_EVENT_NULL then
+                            state   <= DISABLED;
+                        elsif i_event_rxd = i_target_evnt then
                             rst_rcv <= '1';
                             state   <= COUNTING;
                         elsif counter_ov = '1' then
@@ -139,7 +157,9 @@ begin
                         rst_rcv           <= '1';
 
                     when POST_TIMEOUT =>
-                        if i_event_rxd = c_EVENT_HEARTBEAT then
+                        if i_target_evnt = c_EVENT_NULL then
+                            state   <= DISABLED;
+                        elsif i_event_rxd = i_target_evnt then
                             rst_rcv <= '1';
                             state   <= COUNTING;
                         elsif counter_ov = '1' then

@@ -457,12 +457,14 @@ constant c_EVENT_TS_COUNT_RESET : event_code := x"7D";
       g_PRESCALER_SIZE : natural := bit_size(c_HEARTBEAT_TIMEOUT)
   );
   port (
-      --! Recovered clock from the link with delay compensation
-      i_event_clk     : in std_logic;
+      --! Ref clock for the EVR GT
+      i_ref_clk     : in std_logic;
       --! Reset - Rx path domain
       i_reset         : in std_logic;
       --! Read event - output from the Rx FIFO (delay compensated)
       i_event_rxd     : in event_code;
+      --! Target event
+      i_target_evnt   : in event_code;
       --! Heartbeat timeout flag.
       o_heartbeat_ov  : out std_logic;
       --! Missed heartbeat counter. Increases every time 0x7A wasn't 
