@@ -17,6 +17,9 @@ use ieee.numeric_std.all;
 library work;
 use work.sizing.all;
 
+library ESS_openEVR_RegMap;
+use ESS_openEVR_RegMap.register_bank_config.all;
+
 
 package evr_pkg is
 
@@ -113,6 +116,45 @@ constant c_EVENT_TS_COUNT_RESET : event_code := x"7D";
     rx_async  : std_logic; --! Reset the Rx path - Synt to sys_clk
     gbl_async : std_logic; --! Global reset for Tx&Rx paths
   end record gt_resets;
+  --!@}
+
+    --!@name irq_flags
+  --!@brief Record to group all the interrupt flags for the EVR
+  --!@{
+  type irq_flags is record
+    SeqOverflow     : std_logic; --! Sequence RAM sequence roll over
+    SeqHalfway      : std_logic; --! Sequence RAM sequence halfway through
+    SeqStop         : std_logic; --! Sequence RAM sequence stop
+    SeqStart        : std_logic; --! Sequence RAM sequence start
+    SegDataBuf      : std_logic; --! Segmented data buffer
+    LinkStateChange : std_logic; --! Link state change
+    DataBuf         : std_logic; --! Data buffer
+    Hardware        : std_logic; --! Hardware interrupt (mapped signal)
+    Event           : std_logic; --! Event interrupt
+    Heartbeat       : std_logic; --! Heartbeat interrupt
+    FIFOFull        : std_logic; --! Event FIFO fukk
+    RxViolation     : std_logic; --! Receiver violation
+  end record irq_flags;
+  --!@}
+
+  --!@name irq_en
+  --!@brief Record to group all the interrupt enables for the EVR
+  --!@{
+  type irq_en is record
+    IrqEn           : std_logic; --! Master interrupt enable ('0' = Disable/ '1' = Enable)
+    SeqOverflow     : std_logic; --! Sequence RAM sequence roll over
+    SeqHalfway      : std_logic; --! Sequence RAM sequence halfway through
+    SeqStop         : std_logic; --! Sequence RAM sequence stop
+    SeqStart        : std_logic; --! Sequence RAM sequence start
+    SegDataBuf      : std_logic; --! Segmented data buffer
+    LinkStateChange : std_logic; --! Link state change
+    DataBuf         : std_logic; --! Data buffer
+    Hardware        : std_logic; --! Hardware interrupt (mapped signal)
+    Event           : std_logic; --! Event interrupt
+    Heartbeat       : std_logic; --! Heartbeat interrupt
+    FIFOFull        : std_logic; --! Event FIFO fukk
+    RxViolation     : std_logic; --! Receiver violation
+  end record irq_en;
   --!@}
 
   component z7_gtx_evr_common_reset is
@@ -225,18 +267,20 @@ constant c_EVENT_TS_COUNT_RESET : event_code := x"7D";
 
   component timestamp is
     Port (
-      event_clk    : in  std_logic;
-      event_code   : in  std_logic_vector(7 downto 0);
-      reset        : in  std_logic;
-      MAP14        : in  std_logic;
-      ts_req       : in  std_logic;
-      ts_data      : out std_logic_vector(63 downto 0);
-      ts_valid     : out std_logic;
-      evr_ctrl     : in evr_ctrl_reg;
-      ts_regs      : out ts_regs;
-      buffer_pop   : in  std_logic;
-      buffer_data  : out std_logic_vector(71 downto 0);
-      buffer_valid : out std_logic );
+      event_clk        : in  std_logic;
+      event_code       : in  std_logic_vector(7 downto 0);
+      reset            : in  std_logic;
+      MAP14            : in  std_logic;
+      ts_req           : in  std_logic;
+      ts_data          : out std_logic_vector(63 downto 0);
+      ts_valid         : out std_logic;
+      evr_ctrl         : in evr_ctrl_reg;
+      ts_regs          : out ts_regs;
+      buffer_pop       : in  std_logic;
+      buffer_data      : out std_logic_vector(71 downto 0);
+      buffer_valid     : out std_logic;
+      buffer_full      : out std_logic;
+      buffer_not_empty : out std_logic );
   end component;
 
   component transceiver_dc_z7 is
@@ -470,6 +514,45 @@ constant c_EVENT_TS_COUNT_RESET : event_code := x"7D";
       --! Missed heartbeat counter. Increases every time 0x7A wasn't 
       --! received on time 
       o_heartbeat_ov_cnt : out unsigned(c_HEARTBEAT_CNT_SIZE-1 downto 0)
+  );
+  end component;
+  
+  -- Interrupt controller
+  component interrupt_ctrl is
+  generic (
+      --! Width of the interrupt register
+      g_IRQ_WIDTH         : integer := 32;
+      --! Interrupt Flag register address
+      g_IRQ_FLAG_REG_ADDR : integer := 8;
+      --! Width of the register bank address
+      g_REG_ADDR_WIDTH    : integer := ADDRESS_WIDTH;
+      --! Width of the AXI-Lite address signal
+      g_AXI_ADDR_WIDTH    : integer := ADDRESS_WIDTH+2
+  );
+  port (
+      --! System clock
+      i_sys_clk         : in std_logic;
+      --! Reset - Rx path domain
+      i_reset           : in std_logic;
+      --! Record containing interrupt flags from logic
+      i_logic_irq_flags : irq_flags;
+      --! Flag values received from processor
+      i_irq_flags       : in std_logic_vector(g_IRQ_WIDTH-1 downto 0);
+      --! Irq enables from processor
+      i_irq_en          : in std_logic_vector(g_IRQ_WIDTH-1 downto 0);
+      --! Flag values to processor
+      o_irq_flags       : out std_logic_vector(g_IRQ_WIDTH-1 downto 0);
+      --! Interrupt out (to processor)
+      o_irq             : out std_logic;
+      -- AXI-lite read signals ------------------------------------
+      --! AXI-Lite clock
+      i_s_axi_aclk      : in std_logic;
+      --! AXI-Lite active-low reset
+      i_s_axi_aresetn   : in std_logic;
+      --! AXI-Lite read enable
+      i_s_axi_arvalid   : in std_logic;
+      --! AXI-Lite read address
+      i_s_axi_araddr    : std_logic_vector(g_AXI_ADDR_WIDTH-1 downto 0)
   );
   end component;
 

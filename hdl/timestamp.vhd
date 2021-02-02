@@ -1,23 +1,35 @@
-----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date: 11.06.2020 14:03:24
--- Design Name: 
--- Module Name: timestamp - Behavioral
--- Project Name: 
--- Target Devices: 
--- Tool Versions: 
--- Description: 
--- 
--- Dependencies: 
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
--- 
-----------------------------------------------------------------------------------
-
+-- ===========================================================================
+--! @file   timestamp.vhd
+--! @brief  Simple component to generate timestamp values
+--!
+--! @details
+--!
+--! A component to decode the system-wide timestamp data from the incoming
+--! event stream.
+--!
+--! @author Ross Elliot <ross.elliot@ess.eu>
+--!
+--! @date 2020611
+--! @version 0.2
+--!
+--! Company: European Spallation Source ERIC \n
+--! Platform: picoZED 7030 \n
+--! Carrier board: Tallinn picoZED carrier board (aka FPGA-based IOC) rev. B \n
+--!
+--! @copyright
+--!
+--! Copyright (C) 2019- 2021 European Spallation Source ERIC \n
+--! This program is free software: you can redistribute it and/or modify
+--! it under the terms of the GNU General Public License as published by
+--! the Free Software Foundation, either version 3 of the License, or
+--! (at your option) any later version. \n
+--! This program is distributed in the hope that it will be useful,
+--! but WITHOUT ANY WARRANTY; without even the implied warranty of
+--! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--! GNU General Public License for more details. \n
+--! You should have received a copy of the GNU General Public License
+--! along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-- ===========================================================================
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -29,21 +41,23 @@ use work.evr_pkg.ALL;
 entity timestamp is  
   Port (
     -- Event clock and codes from RX transceiver
-    event_clk    : in  std_logic;
-    event_code   : in  std_logic_vector(7 downto 0);
-    reset        : in  std_logic;
-    MAP14        : in  std_logic;
+    event_clk        : in  std_logic;
+    event_code       : in  std_logic_vector(7 downto 0);
+    reset            : in  std_logic;
+    MAP14            : in  std_logic;
     -- Registers
-    evr_ctrl     : in evr_ctrl_reg;
-    ts_regs      : out ts_regs;
+    evr_ctrl         : in evr_ctrl_reg;
+    ts_regs          : out ts_regs;
     -- External timestamp request mechanism
-    ts_req       : in  std_logic;
-    ts_data      : out std_logic_vector(63 downto 0);
-    ts_valid     : out std_logic;
+    ts_req           : in  std_logic;
+    ts_data          : out std_logic_vector(63 downto 0);
+    ts_valid         : out std_logic;
     -- 512-sample Timestamp event FIFO buffer interface
-    buffer_pop   : in  std_logic;
-    buffer_data  : out std_logic_vector(71 downto 0);
-    buffer_valid : out std_logic );
+    buffer_pop       : in  std_logic;
+    buffer_data      : out std_logic_vector(71 downto 0);
+    buffer_valid     : out std_logic;
+    buffer_full      : out std_logic;
+    buffer_not_empty : out std_logic );
 end timestamp;
 
 architecture Behavioral of timestamp is
@@ -78,25 +92,25 @@ architecture Behavioral of timestamp is
     signal ext_trig_ts_tdl           : ts_delay_line;
     
     -- Enable debug
-    attribute mark_debug : string;
-    attribute mark_debug of seconds_shift_reg : signal is "true";
-    attribute mark_debug of seconds_reg : signal is "true";
-    attribute mark_debug of seconds_latch : signal is "true";
-    attribute mark_debug of ts_event_count : signal is "true";
-    attribute mark_debug of ts_latch : signal is "true";
+--    attribute mark_debug : string;
+--    attribute mark_debug of seconds_shift_reg : signal is "true";
+--    attribute mark_debug of seconds_reg : signal is "true";
+--    attribute mark_debug of seconds_latch : signal is "true";
+--    attribute mark_debug of ts_event_count : signal is "true";
+--    attribute mark_debug of ts_latch : signal is "true";
     
-    attribute mark_debug of fifo_empty : signal is "true";
-    attribute mark_debug of fifo_full : signal is "true";
-    attribute mark_debug of fifo_wr_en : signal is "true";
-    attribute mark_debug of fifo_rd_en : signal is "true";
-    attribute mark_debug of fifo_buffer_valid : signal is "true";
-    attribute mark_debug of fifo_count : signal is "true";
-    attribute mark_debug of fifo_event_data_in : signal is "true";
-    attribute mark_debug of fifo_event_data_out : signal is "true";
+--    attribute mark_debug of fifo_empty : signal is "true";
+--    attribute mark_debug of fifo_full : signal is "true";
+--    attribute mark_debug of fifo_wr_en : signal is "true";
+--    attribute mark_debug of fifo_rd_en : signal is "true";
+--    attribute mark_debug of fifo_buffer_valid : signal is "true";
+--    attribute mark_debug of fifo_count : signal is "true";
+--    attribute mark_debug of fifo_event_data_in : signal is "true";
+--    attribute mark_debug of fifo_event_data_out : signal is "true";
     
-    attribute mark_debug of ext_trig_ts_data : signal is "true";
-    attribute mark_debug of ext_trig_ts_valid : signal is "true";
-    attribute mark_debug of ext_trig_ts_tdl : signal is "true";
+--    attribute mark_debug of ext_trig_ts_data : signal is "true";
+--    attribute mark_debug of ext_trig_ts_valid : signal is "true";
+--    attribute mark_debug of ext_trig_ts_tdl : signal is "true";
 
     component fifo_generator_0 IS
       PORT (
@@ -266,10 +280,11 @@ begin
     data_count   => fifo_count );
 
   -- Assign outputs
-  buffer_data  <= fifo_event_data_out;
-  buffer_valid <= fifo_buffer_valid;
-  ts_data      <= ext_trig_ts_data;
-  ts_valid     <= ext_trig_ts_valid;
+  buffer_data      <= fifo_event_data_out;
+  buffer_valid     <= fifo_buffer_valid;
+  buffer_not_empty <= not(fifo_empty);
+  ts_data          <= ext_trig_ts_data;
+  ts_valid         <= ext_trig_ts_valid;
   
   -- Populate registers
   ts_regs.sec_shift_reg     <= seconds_shift_reg;

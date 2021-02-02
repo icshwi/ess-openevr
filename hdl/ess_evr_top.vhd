@@ -134,6 +134,9 @@ entity ess_evr_top is
     o_FP_OUT  : out std_logic_vector(FP_OUT_CHANNELS-1 downto 0);
     i_FP_IN   : in std_logic_vector(FP_IN_CHANNELS-1 downto 0);
 
+    -- Interrupt to processor
+    o_IRQ  : out std_logic;
+
     --! External timestamp request
     i_TS_req   : in  std_logic;
     o_TS_data  : out std_logic_vector(63 downto 0);
@@ -194,10 +197,18 @@ architecture rtl of ess_evr_top is
   signal hb_mon_cnt : unsigned(c_HEARTBEAT_CNT_SIZE-1 downto 0);
   attribute mark_debug of hb_mon_cnt : signal is "true";
 
+  --! Signals used for register bank values
+  signal gt0_status     : gt_ctrl_flags;
+  signal evr_ctrl       : evr_ctrl_reg;
+  signal ts_regs        : ts_regs;
+  signal irq_flag_logic : irq_flags;
+  signal irq_en         : std_logic_vector(31 downto 0);
+  attribute mark_debug of irq_en : signal is "true";
+  signal irq_flags_in, irq_flags_out : std_logic_vector(31 downto 0);
+  attribute mark_debug of irq_flags_in : signal is "true";
+  attribute mark_debug of irq_flags_out : signal is "true";
+
   signal event_link_ok : std_logic;
-  signal gt0_status : gt_ctrl_flags;
-  signal evr_ctrl : evr_ctrl_reg;
-  signal ts_regs  : ts_regs;
 
   signal event_rxd       : std_logic_vector(7 downto 0);
   attribute mark_debug of event_rxd : signal is "true";
@@ -208,8 +219,8 @@ architecture rtl of ess_evr_top is
   signal databuf_rx_mode : std_logic := '1';
 
   signal rx_link_ok      : std_logic;
-  signal rx_violation    : std_logic;
   signal rx_clear_viol   : std_logic;
+  attribute mark_debug of rx_clear_viol : signal is "true";
 
   signal event_txd       : std_logic_vector(7 downto 0);
   signal dbus_txd        : std_logic_vector(7 downto 0);
@@ -233,7 +244,6 @@ architecture rtl of ess_evr_top is
   signal databuf_cs_flag     : std_logic_vector(0 to 127);
   signal databuf_ov_flag     : std_logic_vector(0 to 127);
   signal databuf_clear_flag  : std_logic_vector(0 to 127);
-  signal databuf_irq_dc      : std_logic;
 
   signal ext_trig_ts_data    : std_logic_vector(63 downto 0);
   signal ext_trig_ts_valid   : std_logic;
@@ -252,12 +262,16 @@ architecture rtl of ess_evr_top is
   -- *        8  ->  GT Link up
   -- *        9  ->  GT Event received
   signal logic_read_data_t       : logic_read_data_t;
+  attribute mark_debug of logic_read_data_t : signal is "true";
   signal logic_return_t_0        : logic_return_t;
   signal logic_return_t          : logic_return_t;
 
   -- Timestamp external trigger
   signal ext_ts_trig : std_logic;
   signal ext_ts_trig_t : std_logic;
+
+  -- Interrupts
+  signal fifo_empty     : std_logic;
 
   -- OpenEVR SFP signals
 
@@ -333,6 +347,7 @@ begin
       if rising_edge(event_clk) then
         dc_mode_0     <= dc_mode_r;
         ext_ts_trig_t <= i_TS_req;
+
         gbl_reset_0   <= not gt0_status.link_up;
 
         dc_mode       <= dc_mode_0;
@@ -365,7 +380,7 @@ begin
       dc_mode => dc_mode,
 
       rx_link_ok => rx_link_ok,
-      rx_violation => rx_violation,
+      rx_violation => irq_flag_logic.RxViolation,
       rx_clear_viol => rx_clear_viol,
 
       -- Transmitter side connections
@@ -410,7 +425,7 @@ begin
       delay_comp_status => delay_comp_rx_status,
       topology_addr => topology_addr,
 
-      irq_out => databuf_irq_dc,
+      irq_out => irq_flag_logic.DataBuf,
 
       sirq_ena => databuf_sirq_ena,
       rx_flag => databuf_rx_flag,
@@ -433,12 +448,31 @@ begin
       i_reset             => gt0_resets.gbl_async,
       i_event_rxd         => event_rxd,
       i_target_evnt       => hb_mon_target,
-      o_heartbeat_ov      => heartbeat_mon_int,
+      o_heartbeat_ov      => irq_flag_logic.Heartbeat,
       o_heartbeat_ov_cnt  => hb_mon_cnt
     );
- 
-  -- TODO (ROSS) : connect this line
-  -- <hb irq line> <= heartbeat_mon_int and evr_irqen.iehb and evr_irqen.irqen;
+    
+  -- Interrupt controller
+  interrupt_controller : interrupt_ctrl
+      generic map (
+          g_IRQ_WIDTH         => 32,
+          g_IRQ_FLAG_REG_ADDR => 8,
+          g_REG_ADDR_WIDTH    => ADDRESS_WIDTH,
+          g_AXI_ADDR_WIDTH    => ADDRESS_WIDTH+2
+      )
+      port map (
+          i_sys_clk         => sys_clk,
+          i_reset           => gt0_resets.gbl_async,
+          i_logic_irq_flags => irq_flag_logic,
+          i_irq_flags       => irq_flags_in,
+          i_irq_en          => irq_en,
+          o_irq_flags       => irq_flags_out,
+          o_irq             => o_IRQ,
+          i_s_axi_aclk      => s_axi_aclk,
+          i_s_axi_arvalid   => s_axi_arvalid,
+          i_s_axi_aresetn   => s_axi_aresetn,
+          i_s_axi_araddr    => s_axi_araddr
+      );
 
   -- AXI register interface for the picoEVR ----------------------------------
 
@@ -538,6 +572,18 @@ begin
          -- Read back
          logic_return_t_0.Control <= logic_read_data_t.Control;
 
+         -- Interrupt flag register
+         -- From processor
+         irq_flags_in <= logic_read_data_t.IrqFlag;
+         -- To processor
+         logic_return_t_0.IrqFlag <= irq_flags_out;
+
+         -- Interrupt Enable Register
+         -- From processor
+         irq_en <= logic_read_data_t.IrqEnable;
+         -- To Processor
+         logic_return_t_0.IrqEnable <= irq_en;
+
          -- DC registers
          -- From processor
          delay_comp_target <= logic_read_data_t.DCTarget;
@@ -585,18 +631,20 @@ begin
    -- Instantiate timestamp component
    event_timestamp : timestamp
     port map (
-      event_clk    => event_clk,
-      event_code   => event_rxd,
-      reset        => gbl_evr_rst,
-      ts_req       => ext_ts_trig,
-      ts_data      => ext_trig_ts_data,
-      ts_valid     => ext_trig_ts_valid,
-      evr_ctrl     => evr_ctrl,
-      ts_regs      => ts_regs,
-      MAP14        => '0',
-      buffer_pop   => '1',
-      buffer_data  => open,
-      buffer_valid => open
+      event_clk        => event_clk,
+      event_code       => event_rxd,
+      reset            => gbl_evr_rst,
+      ts_req           => ext_ts_trig,
+      ts_data          => ext_trig_ts_data,
+      ts_valid         => ext_trig_ts_valid,
+      evr_ctrl         => evr_ctrl,
+      ts_regs          => ts_regs,
+      MAP14            => '0',
+      buffer_pop       => '1',
+      buffer_data      => open,
+      buffer_valid     => open,
+      buffer_full      => irq_flag_logic.FIFOFull,
+      buffer_not_empty => irq_flag_logic.Event
     );
 
   o_TS_data  <= ext_trig_ts_data;
@@ -663,9 +711,9 @@ begin
   mrfunivmod_in0 <= i_MRF_UNIVMOD_IN0;
   mrfunivmod_in1 <= i_MRF_UNIVMOD_IN1;
 
-  -- Fron Panel I/O -----------------------------------------------------------
+  -- Front Panel I/O -----------------------------------------------------------
 
- -- Mapping of internal resources to FP Output channels
+  -- Mapping of internal resources to FP Output channels
   -- Mapping is available at MRF's Event System with Delay Compensation
   -- Technical Reference (p. 62)
   fp_omapping : for I in 0 to FP_OUT_CHANNELS-1 generate
@@ -675,6 +723,5 @@ begin
                    '0'                when x"003F",
                    '0'                when others;
   end generate;
-
 
 end rtl;
