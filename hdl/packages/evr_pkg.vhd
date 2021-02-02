@@ -20,36 +20,44 @@ use work.sizing.all;
 
 package evr_pkg is
 
---!@name Global definitions
---!@{
+  --!@name Global definitions
+  --!@{
 
---! System clock period (ns)
-constant g_SYS_CLK_PERIOD    : integer := 10;
+  --! System clock period (ns)
+  constant g_SYS_CLK_PERIOD    : integer := 10;
 
---!@}
+  --!@}
 
-type integer_array is array (integer range <>) of integer;
+  type integer_array is array (integer range <>) of integer;
 
--- picoEVR constant definitions ---------------------------------------------
+  -- picoEVR constant definitions ---------------------------------------------
 
---! ESS Timing systems runs at 88.0525 MHz
-constant c_EVENT_RATE           : natural := 88052500;
---! Heartbeat rate - 1.6 s approx
-constant c_HEARTBEAT_TIMEOUT    : natural := 140884000;
---! Size of the missed heartbeat events counter - Up to 256 missed events
-constant c_HEARTBEAT_CNT_SIZE   : natural := 8;
+  --! ESS Timing systems runs at 88.0525 MHz
+  constant c_EVENT_RATE           : natural := 88052500;
+  --! Heartbeat rate - 1.6 s approx
+  constant c_HEARTBEAT_TIMEOUT    : natural := 140884000;
+  --! Size of the missed heartbeat events counter - Up to 256 missed events
+  constant c_HEARTBEAT_CNT_SIZE   : natural := 8;
 
---! Event codes
-constant c_EVENT_CODE_BITS      : natural := 8;
-subtype event_code is std_logic_vector(c_EVENT_CODE_BITS-1 downto 0);
+  --! Event codes
+  constant c_EVENT_CODE_BITS      : natural := 8;
+  subtype event_code is std_logic_vector(c_EVENT_CODE_BITS-1 downto 0);
 
-constant c_EVENT_NULL           : event_code := x"00";
-constant c_EVENT_HEARTBEAT      : event_code := x"7A";
-constant c_EVENT_BEACON         : event_code := X"7E";
--- Timestamp related event codes
-constant c_EVENT_SECONDS_0      : event_code := x"70";
-constant c_EVENT_SECONDS_1      : event_code := x"71";
-constant c_EVENT_TS_COUNT_RESET : event_code := x"7D";  
+  constant c_EVENT_NULL           : event_code := x"00";
+  constant c_EVENT_HEARTBEAT      : event_code := x"7A";
+  constant c_EVENT_BEACON         : event_code := X"7E";
+  -- Timestamp related event codes
+  constant c_EVENT_SECONDS_0      : event_code := x"70";
+  constant c_EVENT_SECONDS_1      : event_code := x"71";
+  constant c_EVENT_TS_COUNT_RESET : event_code := x"7D";
+
+  -- Event memory mapping RAM constants
+  constant c_EVNT_MAP_ADDR_WIDTH : natural := 8;
+  constant c_EVNT_MAP_DATA_WIDTH : natural := 128;
+  constant c_EVNT_MAP_DATA_DEPTH : natural := 256;
+
+  -- Number of Pulse Generators that will be instantiated - MAX 32
+  constant c_PULSE_GENS_CNT      : natural := 16;
 
   -- Records
 
@@ -90,7 +98,8 @@ constant c_EVENT_TS_COUNT_RESET : event_code := x"7D";
     log_se      : std_logic; --! Log stop event enable
     rs_fifo     : std_logic; --! Reset Event FIFO
   end record evr_ctrl_reg;
-
+  --!@}
+  
   --!@name gt_ctrl_flags
   --!@brief Record to group all the control flags for the EVR GTX wrapper
   --!@{
@@ -114,6 +123,22 @@ constant c_EVENT_TS_COUNT_RESET : event_code := x"7D";
     gbl_async : std_logic; --! Global reset for Tx&Rx paths
   end record gt_resets;
   --!@}
+
+  --!@name pgen_regs
+  --!@brief Record to group all the control registers for a pulse generator
+  --!@{
+  type pgen_regs is record
+    control : std_logic_vector( 7 downto 0); --! Control and status register - Only lower 8 bits used
+    --prescaler  : std_logic_vector(31 downto 0); --! Prescaler value - not used
+    delay   : std_logic_vector(31 downto 0); --! Delay value
+    width   : std_logic_vector(31 downto 0); --! Width value
+  end record pgen_regs;
+  --!@}
+
+  -- Custom types and arrays
+
+  --! Array for the control registers in the pulse generator controller
+  type pgen_ctrl_regs is array (0 to c_PULSE_GENS_CNT-1) of pgen_regs;
 
   component z7_gtx_evr_common_reset is
     generic (
@@ -473,6 +498,37 @@ constant c_EVENT_TS_COUNT_RESET : event_code := x"7D";
   );
   end component;
 
+  -- The pulse_generator implements the MRF Pulse Generators from the EVR
+  component pulse_generator is
+    port (
+        --! Rx clock with DC : Used for the time counter.
+        i_event_clk   : in std_logic;
+        --! Enable    : Activates the logic of the Pulse Generator.
+        --!             When LOW, the output of the module is set to LOW as well.
+        --!             When HIGH, the output depends on the rest of the inputs
+        i_enable      : in std_logic;
+        --! Trigger   : Activates the delay counter
+        i_trigger     : in std_logic;
+        --! Set       : Asynchronously sets the output to HIGH level (watch polarity)
+        i_set         : in std_logic;
+        --! Reset     : Asynchronously sets the output to LOW level (watch polarity)
+        i_reset       : in std_logic;
+        --! Output polarity : LOW -> Normal polarity | HIGH -> Inverted polarity
+        --!                   Affects the output value always but when i_enable = '0'.
+        i_polarity    : in std_logic;
+        --! Delay value : Value for the delay counter. 
+        --!               This value relates to the amount of time the output is set to LOW
+        --!               level after a rising edge on the trigger signal was received.
+        i_delay_val   : in std_logic_vector(31 downto 0);
+        --! Width value : Value for the width counter.
+        --!               This value relates to the amount of time the output is set to HIGH
+        --!               level after the delay counter is overflowed.
+        i_width_val   : in std_logic_vector(31 downto 0);
+        --! Output pulse : Output of a D-FlipFlop with asynchronous Set, Reset and Enable inputs.
+        o_pulse       : out std_logic
+    );
+  end component;
+
   -- Legacy EVR constant definitions ------------------------------------------
 
   constant MGT_RX_PRESCALER    : integer := 1024;
@@ -819,6 +875,6 @@ constant c_EVENT_TS_COUNT_RESET : event_code := x"7D";
   constant C_DIAG_COUNTERS_INDEX_LOW  : integer := 25;
   constant C_DIAG_COUNTERS_INDEX_HIGH : integer := 29;
 
-  type gtx_data is array (natural range <>) of std_logic_vector(39 downto 0);
+  --type gtx_data is array (natural range <>) of std_logic_vector(39 downto 0);
 
 end evr_pkg;

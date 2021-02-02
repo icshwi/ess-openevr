@@ -29,11 +29,14 @@ TB_PATH = $(SRC_PATH)/testbenches
 SOURCES = $(SRC_PATH)/packages/sizing.vhd \
           $(SRC_PATH)/packages/evr_pkg.vhd \
           $(SRC_PATH)/heartbeat_mon.vhd \
-          $(TB_PATH)/heartbeat_mon_tb.vhd
+          $(TB_PATH)/heartbeat_mon_tb.vhd \
+		  $(SRC_PATH)/pulse_gen.vhd \
+		  $(TB_PATH)/pulse_gen_tb.vhd
 
 TB1 = heartbeat_mon_tb
+TB2 = pulse_gen_tb
 
-TESTBENCHES = $(TB1)
+TESTBENCHES = $(TB1) $(TB2)
 
 # Targets
 .PHONY: all clean opendoc run_sim
@@ -64,6 +67,13 @@ tb1: elab1
 
 elab1: obj
 	$(GHDL) -m $(GHDLFLAGS) $(TB1)
+
+tb2: elab2
+	$(GHDL) -r $(TB2) --vcd=build/$(TB2).vcd
+	$(WAVE_VIEWER) build/$(TB2).vcd waves/wavecfg_$(TB2).gtkw
+
+elab2: obj
+	$(GHDL) -m $(GHDLFLAGS) $(TB2)
 
 obj: $(SOURCES)
 	@mkdir -p build
