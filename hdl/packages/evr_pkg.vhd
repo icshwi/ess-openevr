@@ -128,11 +128,21 @@ package evr_pkg is
   --!@brief Record to group all the control registers for a pulse generator
   --!@{
   type pgen_regs is record
-    control : std_logic_vector( 7 downto 0); --! Control and status register - Only lower 8 bits used
+    control : std_logic_vector( 6 downto 0); --! Control and status register - Only lower 8 bits used
     --prescaler  : std_logic_vector(31 downto 0); --! Prescaler value - not used
     delay   : std_logic_vector(31 downto 0); --! Delay value
     width   : std_logic_vector(31 downto 0); --! Width value
   end record pgen_regs;
+  --!@}
+
+  --!@name pgen_map_reg
+  --!@brief Record to group all the control bits which are mapped to the event decoding RAM
+  --!@{
+  type pgen_map_reg is record
+    triggerx : std_logic_vector(c_PULSE_GENS_CNT-1 downto 0); --! Trigger bits from the mapping RAM
+    setx     : std_logic_vector(c_PULSE_GENS_CNT-1 downto 0); --! Set bits from the mapping RAM
+    resetx   : std_logic_vector(c_PULSE_GENS_CNT-1 downto 0); --! Reset bits from the mapping RAM
+  end record pgen_map_reg;
   --!@}
 
   -- Custom types and arrays
@@ -496,6 +506,25 @@ package evr_pkg is
       --! received on time 
       o_heartbeat_ov_cnt : out unsigned(c_HEARTBEAT_CNT_SIZE-1 downto 0)
   );
+  end component;
+
+  -- The pulse_gen_controller includes the control logic for the individual pulse generators
+  component pulse_gen_controller is
+    generic (
+        --! Amount of pulse generators to instantiate
+        g_PULSE_GEN_CNT     : natural := c_PULSE_GENS_CNT
+    );
+    port (
+        --! Event clock (DC compensated)
+        i_event_clk     : in std_logic;
+        --! Array containing the record with the configuration register for each PGen
+        i_pgen_ctrl_reg : in pgen_ctrl_regs;
+        --! Record with the control bits coming from the mapping RAM
+        i_pgen_map_reg  : in pgen_map_reg;
+        --! Output from each Pulse Generator
+        o_pgen_pxout    : out std_logic_vector(c_PULSE_GENS_CNT-1 downto 0)
+
+    );
   end component;
 
   -- The pulse_generator implements the MRF Pulse Generators from the EVR
