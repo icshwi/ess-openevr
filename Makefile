@@ -31,12 +31,15 @@ SOURCES = $(SRC_PATH)/packages/sizing.vhd \
           $(SRC_PATH)/heartbeat_mon.vhd \
           $(TB_PATH)/heartbeat_mon_tb.vhd \
 		  $(SRC_PATH)/pulse_gen.vhd \
-		  $(TB_PATH)/pulse_gen_tb.vhd
+		  $(TB_PATH)/pulse_gen_tb.vhd \
+		  $(SRC_PATH)/pulse_gen_controller.vhd \
+		  $(TB_PATH)/pulse_gen_controller_tb.vhd
 
 TB1 = heartbeat_mon_tb
 TB2 = pulse_gen_tb
+TB3 = pulse_gen_controller_tb
 
-TESTBENCHES = $(TB1) $(TB2)
+TESTBENCHES = $(TB1) $(TB2) $(TB3)
 
 # Targets
 .PHONY: all clean opendoc run_sim
@@ -75,6 +78,13 @@ tb2: elab2
 elab2: obj
 	$(GHDL) -m $(GHDLFLAGS) $(TB2)
 
+tb3: elab3
+	$(GHDL) -r $(TB3) --vcd=build/$(TB3).vcd
+	$(WAVE_VIEWER) build/$(TB3).vcd waves/wavecfg_$(TB3).gtkw
+
+elab3: obj
+	$(GHDL) -m $(GHDLFLAGS) $(TB3)
+
 obj: $(SOURCES)
 	@mkdir -p build
 	$(GHDL) -i $(GHDLFLAGS) $^
@@ -83,7 +93,7 @@ clean:
 	@echo "\033[1;92mDeleting all generated files\033[0m"
 	@rm -rf $(DOC_OUTDIR)
 	@rm -rf build/
-	@rm -f $(TB1)
+	@rm -f $(TESTBENCHES)
 	@rm -f *.o
 	@rm -f $(SRC_PATH)/*.o
 	@rm -f $(SRC_PATH)/*.vcd
