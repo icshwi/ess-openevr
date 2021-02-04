@@ -34,33 +34,6 @@ proc validate_PARAM_VALUE.g_HAS_DEBUG_CLK { PARAM_VALUE.g_HAS_DEBUG_CLK } {
 	return true
 }
 
-proc update_PARAM_VALUE.AXI_ADDR_WIDTH { PARAM_VALUE.AXI_ADDR_WIDTH } {
-	# Procedure called to update AXI_ADDR_WIDTH when any of the dependent parameters in the arguments change
-}
-
-proc validate_PARAM_VALUE.AXI_ADDR_WIDTH { PARAM_VALUE.AXI_ADDR_WIDTH } {
-	# Procedure called to validate AXI_ADDR_WIDTH
-	return true
-}
-
-proc update_PARAM_VALUE.AXI_DATA_WIDTH { PARAM_VALUE.AXI_DATA_WIDTH } {
-	# Procedure called to update AXI_DATA_WIDTH when any of the dependent parameters in the arguments change
-}
-
-proc validate_PARAM_VALUE.AXI_DATA_WIDTH { PARAM_VALUE.AXI_DATA_WIDTH } {
-	# Procedure called to validate AXI_DATA_WIDTH
-	return true
-}
-
-proc update_PARAM_VALUE.AXI_WSTRB_WIDTH { PARAM_VALUE.AXI_WSTRB_WIDTH } {
-	# Procedure called to update AXI_WSTRB_WIDTH when any of the dependent parameters in the arguments change
-}
-
-proc validate_PARAM_VALUE.AXI_WSTRB_WIDTH { PARAM_VALUE.AXI_WSTRB_WIDTH } {
-	# Procedure called to validate AXI_WSTRB_WIDTH
-	return true
-}
-
 proc update_PARAM_VALUE.FP_IN_CHANNELS { PARAM_VALUE.FP_IN_CHANNELS } {
 	# Procedure called to update FP_IN_CHANNELS when any of the dependent parameters in the arguments change
 }
@@ -79,24 +52,6 @@ proc validate_PARAM_VALUE.FP_OUT_CHANNELS { PARAM_VALUE.FP_OUT_CHANNELS } {
 	return true
 }
 
-proc update_PARAM_VALUE.REGISTER_WIDTH { PARAM_VALUE.REGISTER_WIDTH } {
-	# Procedure called to update REGISTER_WIDTH when any of the dependent parameters in the arguments change
-}
-
-proc validate_PARAM_VALUE.REGISTER_WIDTH { PARAM_VALUE.REGISTER_WIDTH } {
-	# Procedure called to validate REGISTER_WIDTH
-	return true
-}
-
-proc update_PARAM_VALUE.REG_ADDR_WIDTH { PARAM_VALUE.REG_ADDR_WIDTH } {
-	# Procedure called to update REG_ADDR_WIDTH when any of the dependent parameters in the arguments change
-}
-
-proc validate_PARAM_VALUE.REG_ADDR_WIDTH { PARAM_VALUE.REG_ADDR_WIDTH } {
-	# Procedure called to validate REG_ADDR_WIDTH
-	return true
-}
-
 proc update_PARAM_VALUE.g_CARRIER_VER { PARAM_VALUE.g_CARRIER_VER } {
 	# Procedure called to update g_CARRIER_VER when any of the dependent parameters in the arguments change
 }
@@ -104,32 +59,6 @@ proc update_PARAM_VALUE.g_CARRIER_VER { PARAM_VALUE.g_CARRIER_VER } {
 proc validate_PARAM_VALUE.g_CARRIER_VER { PARAM_VALUE.g_CARRIER_VER } {
 	# Procedure called to validate g_CARRIER_VER
 	return true
-}
-
-
-proc update_MODELPARAM_VALUE.AXI_ADDR_WIDTH { MODELPARAM_VALUE.AXI_ADDR_WIDTH PARAM_VALUE.AXI_ADDR_WIDTH } {
-	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
-	set_property value [get_property value ${PARAM_VALUE.AXI_ADDR_WIDTH}] ${MODELPARAM_VALUE.AXI_ADDR_WIDTH}
-}
-
-proc update_MODELPARAM_VALUE.REG_ADDR_WIDTH { MODELPARAM_VALUE.REG_ADDR_WIDTH PARAM_VALUE.REG_ADDR_WIDTH } {
-	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
-	set_property value [get_property value ${PARAM_VALUE.REG_ADDR_WIDTH}] ${MODELPARAM_VALUE.REG_ADDR_WIDTH}
-}
-
-proc update_MODELPARAM_VALUE.AXI_WSTRB_WIDTH { MODELPARAM_VALUE.AXI_WSTRB_WIDTH PARAM_VALUE.AXI_WSTRB_WIDTH } {
-	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
-	set_property value [get_property value ${PARAM_VALUE.AXI_WSTRB_WIDTH}] ${MODELPARAM_VALUE.AXI_WSTRB_WIDTH}
-}
-
-proc update_MODELPARAM_VALUE.REGISTER_WIDTH { MODELPARAM_VALUE.REGISTER_WIDTH PARAM_VALUE.REGISTER_WIDTH } {
-	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
-	set_property value [get_property value ${PARAM_VALUE.REGISTER_WIDTH}] ${MODELPARAM_VALUE.REGISTER_WIDTH}
-}
-
-proc update_MODELPARAM_VALUE.AXI_DATA_WIDTH { MODELPARAM_VALUE.AXI_DATA_WIDTH PARAM_VALUE.AXI_DATA_WIDTH } {
-	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
-	set_property value [get_property value ${PARAM_VALUE.AXI_DATA_WIDTH}] ${MODELPARAM_VALUE.AXI_DATA_WIDTH}
 }
 
 proc update_MODELPARAM_VALUE.g_HAS_DEBUG_CLK { MODELPARAM_VALUE.g_HAS_DEBUG_CLK PARAM_VALUE.g_HAS_DEBUG_CLK } {

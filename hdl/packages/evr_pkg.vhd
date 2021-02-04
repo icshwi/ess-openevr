@@ -20,7 +20,6 @@ use work.sizing.all;
 library ESS_openEVR_RegMap;
 use ESS_openEVR_RegMap.register_bank_config.all;
 
-
 package evr_pkg is
 
 --!@name Global definitions
@@ -552,7 +551,11 @@ constant c_EVENT_TS_COUNT_RESET : event_code := x"7D";
       --! AXI-Lite read enable
       i_s_axi_arvalid   : in std_logic;
       --! AXI-Lite read address
-      i_s_axi_araddr    : std_logic_vector(g_AXI_ADDR_WIDTH-1 downto 0)
+      i_s_axi_araddr    : std_logic_vector(g_AXI_ADDR_WIDTH-1 downto 0);
+      --! AXI-Lite read enable
+      i_s_axi_awvalid   : in std_logic;
+      --! AXI-Lite read address
+      i_s_axi_awaddr    : std_logic_vector(g_AXI_ADDR_WIDTH-1 downto 0)
   );
   end component;
 

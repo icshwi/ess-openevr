@@ -34,7 +34,6 @@
 --! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -- =============================================================================
 
-
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
@@ -471,7 +470,9 @@ begin
           i_s_axi_aclk      => s_axi_aclk,
           i_s_axi_arvalid   => s_axi_arvalid,
           i_s_axi_aresetn   => s_axi_aresetn,
-          i_s_axi_araddr    => s_axi_araddr
+          i_s_axi_araddr    => s_axi_araddr,
+          i_s_axi_awvalid   => s_axi_awvalid,
+          i_s_axi_awaddr    => s_axi_awaddr
       );
 
   -- AXI register interface for the picoEVR ----------------------------------

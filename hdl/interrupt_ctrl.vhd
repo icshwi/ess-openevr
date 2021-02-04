@@ -77,14 +77,18 @@ entity interrupt_ctrl is
         --! AXI-Lite read enable
         i_s_axi_arvalid   : in std_logic;
         --! AXI-Lite read address
-        i_s_axi_araddr    : std_logic_vector(g_AXI_ADDR_WIDTH-1 downto 0)
+        i_s_axi_araddr    : std_logic_vector(g_AXI_ADDR_WIDTH-1 downto 0);
+        --! AXI-Lite read enable
+        i_s_axi_awvalid   : in std_logic;
+        --! AXI-Lite read address
+        i_s_axi_awaddr    : std_logic_vector(g_AXI_ADDR_WIDTH-1 downto 0)
     );
 end interrupt_ctrl;
 
 architecture Behavioral of interrupt_ctrl is
 
-    signal evr_irq_en      : irq_en;
-    signal evr_irq_flag    : irq_flags;
+    signal evr_irq_en      : irq_en := (others => '0');
+    signal evr_irq_flag    : irq_flags := (others => '0');
     signal irq_en_t        : std_logic_vector(g_IRQ_WIDTH-1 downto 0) := (others => '0');
     signal irq_flags_t     :  std_logic_vector(g_IRQ_WIDTH-1 downto 0) := (others => '0');
     signal irq_flags_t_out : std_logic_vector(g_IRQ_WIDTH-1 downto 0) := (others => '0');
@@ -92,8 +96,10 @@ architecture Behavioral of interrupt_ctrl is
     signal irq_logic_t     : std_logic_vector(g_IRQ_WIDTH-1 downto 0) := (others => '0');
     signal irq_flagged     : std_logic := '0';
     signal flag_read_in_progress : std_logic := '0';
+    signal flag_write_in_progress : std_logic := '0';
     signal flag_read_in_progress_t : std_logic_vector(1 downto 0) := (others => '0');
-    
+    signal flag_write_in_progress_t : std_logic_vector(1 downto 0) := (others => '0');
+
     -- DEBUG
     attribute mark_debug : string;
     attribute mark_debug of evr_irq_en : signal is "true";
@@ -103,89 +109,111 @@ architecture Behavioral of interrupt_ctrl is
     attribute mark_debug of irq_flagged : signal is "true";
     attribute mark_debug of flag_read_in_progress : signal is "true";
     attribute mark_debug of flag_read_in_progress_t : signal is "true";
+    attribute mark_debug of flag_write_in_progress : signal is "true";
+    attribute mark_debug of flag_write_in_progress_t : signal is "true";
     attribute mark_debug of irq_flags_t_out : signal is "true";
     attribute mark_debug of irq_logic : signal is "true";
     attribute mark_debug of irq_logic_t : signal is "true";
-    
+
     -- TEMP SIGNALS FOR ILA ONLY
-    signal s_axi_aresetn, s_axi_arvalid : std_logic;
-    signal s_axi_araddr : std_logic_vector(g_AXI_ADDR_WIDTH-1 downto 0);
-    signal s_axi_araddr_check : std_logic_vector(g_REG_ADDR_WIDTH-1 downto 0);
+    signal s_axi_aresetn, s_axi_arvalid, s_axi_awvalid : std_logic;
+    signal s_axi_araddr, s_axi_awaddr : std_logic_vector(g_AXI_ADDR_WIDTH-1 downto 0);
     attribute mark_debug of s_axi_aresetn : signal is "true";
     attribute mark_debug of s_axi_arvalid : signal is "true";
     attribute mark_debug of s_axi_araddr : signal is "true";
-    attribute mark_debug of s_axi_araddr_check : signal is "true";
+    attribute mark_debug of s_axi_awaddr : signal is "true";
+    attribute mark_debug of s_axi_awvalid : signal is "true";
 
     -- State machine states
-    type irq_states is (IDLE, TRIGGER);
-    signal state : irq_states := IDLE;
-    attribute mark_debug of state : signal is "true";
+    type irq_states is (IDLE, TRIGGER, CLEAR);
+    signal cur_state, next_state : irq_states := IDLE;
+    attribute mark_debug of cur_state : signal is "true";
 
 begin
     -- Simple 2-state state machine
     ctrl : process(i_reset, i_sys_clk)
     begin
         if i_reset = '1' then
-            state <= IDLE;
+            cur_state <= IDLE;
             irq_flags_t <= (others => '0');
             irq_logic_t <= (others => '0');
             irq_flags_t_out <= (others => '0');
             flag_read_in_progress_t <= (others => '0');
         elsif rising_edge(i_sys_clk) then
-            -- Transfer flag read from s_axi_clk domain to sys_clk domain
+            -- Transfer read/write flags from s_axi_clk domain to sys_clk domain
             flag_read_in_progress_t(0) <= flag_read_in_progress;
             flag_read_in_progress_t(1) <= flag_read_in_progress_t(0);
-            
-            case state is
+            flag_write_in_progress_t(0) <= flag_write_in_progress;
+            flag_write_in_progress_t(1) <= flag_write_in_progress_t(0);
+            case cur_state is
                 -- IDLE state.
                 -- Stay in this state until we get a flag from the hardware
                 when IDLE =>
                     if evr_irq_en.IrqEn = '1' then
                         -- Check if any flags have been raised
-                        case irq_logic is 
-                            when x"00000000" => irq_flagged <= '0';
-                            when others      => irq_flagged <= '1';
-                        end case; 
-                      
+                        if irq_logic /= x"00000000" then
+                            irq_flagged <= '1';
+                        else
+                            irq_flagged <= '0';
+                        end if;
+
                         if irq_flagged = '1' then
-                            state <= TRIGGER;
+                            next_state <= TRIGGER;
                             -- hold input flag values from trigger point
                             irq_logic_t <= irq_logic;
-                            irq_flags_t <= i_irq_flags;
+                            -- Assign output IRQ flags
+                            irq_flags_t_out <= irq_logic;
                         else
-                            state <= IDLE;
+                            next_state <= IDLE;
                         end if;
                     end if;
                 -- Stay in trigger state until we get a response from
-                -- the SW 
+                -- the SW
                 when TRIGGER =>
                     if evr_irq_en.IrqEn = '1' then
                         -- The register has been read from software
-                        if flag_read_in_progress_t(1) = '1' then 
+                        if flag_read_in_progress_t(1) = '1' then
+                            next_state <= CLEAR;
+                            -- Latch latest flag values written from processor
+                            irq_flags_t <= i_irq_flags;
+                        else
+                            next_state <= TRIGGER;
+                        end if;
+                    else
+                        next_state <= IDLE;
+                    end if;
+                when CLEAR =>
+                    if evr_irq_en.IrqEn = '1' then
+                        -- Flag register has been written back from software
+                        if flag_write_in_progress_t(1) = '1' then
                             -- Check if flag needs cleared
                             -- If a flag value of '1' is received from the proessor
                             -- clear the flag value in the register.
                             for I in 0 to g_IRQ_WIDTH-1 loop
                                 if irq_flags_t(I) = '1' then
                                     irq_flags_t_out(I) <= '0';
-                                else 
+                                else
                                     -- Keep flag value from when triggered
                                     irq_flags_t_out(I) <= irq_logic_t(I);
                                 end if;
                             end loop;
-                            state <= IDLE;
+                            next_state <= IDLE;
                         else
-                            state <= TRIGGER;
+                            next_state <= CLEAR;
                         end if;
                     else
-                        state <= IDLE;
+                        next_state <= IDLE;
                     end if;
                 when OTHERS =>
-                    state <= IDLE;
+                    next_state <= IDLE;
                     irq_flags_t <= (others => '0');
                     irq_flags_t_out <= (others => '0');
             end case;
-        end if; 
+
+        end if;
+        -- Assign next state
+        cur_state <= next_state;
+    
     end process;
 
     -- Internal signal assignments
@@ -198,6 +226,13 @@ begin
         elsif rising_edge(i_sys_clk) then
             -- Register enable values
             irq_en_t    <= i_irq_en;
+
+            -- Assign irq_logic vector
+            irq_logic(5) <= i_logic_irq_flags.DataBuf;
+            irq_logic(3) <= i_logic_irq_flags.Event;
+            irq_logic(2) <= i_logic_irq_flags.Heartbeat;
+            irq_logic(1) <= i_logic_irq_flags.FIFOFull;
+            irq_logic(0) <= i_logic_irq_flags.RxViolation;
 
             -- Assign values to enable record
             evr_irq_en.IrqEn           <= irq_en_t(31);
@@ -228,21 +263,14 @@ begin
             evr_irq_flag.FIFOFull        <= irq_flags_t_out(1);
             evr_irq_flag.RxViolation     <= irq_flags_t_out(0);
 
-            -- Assign irq_logic vector
-            irq_logic(5) <= i_logic_irq_flags.DataBuf;
-            irq_logic(3) <= i_logic_irq_flags.Event;
-            irq_logic(2) <= i_logic_irq_flags.Heartbeat;
-            irq_logic(1) <= i_logic_irq_flags.FIFOFull;
-            irq_logic(0) <= i_logic_irq_flags.RxViolation;
-            
         end if;
-        
+
     end process;
-    
-  -- Process to monitor the AXI-Lite register interface,
-  -- and get the register address of the current read
+
+-- Process to monitor the AXI-Lite register interface,
+-- and get the register address of the current read
   -- operation, and raise a flag if it is the interrupt
-  -- flag register. 
+  -- flag register.
   check_flag_reg_read : process(i_s_axi_aclk)
     constant read_addr : std_logic_vector(g_REG_ADDR_WIDTH-1 downto 0) := std_logic_vector(to_unsigned(g_IRQ_FLAG_REG_ADDR, g_REG_ADDR_WIDTH));
   begin
@@ -258,14 +286,39 @@ begin
             flag_read_in_progress <= '0';
         end if;
       end if;
-      
-      s_axi_aresetn <= i_s_axi_aresetn;
-      s_axi_araddr <= i_s_axi_araddr;
-      s_axi_arvalid <= i_s_axi_arvalid;
-      s_axi_araddr_check <= read_addr;
-      
+
+
     end if;
+    s_axi_aresetn <= i_s_axi_aresetn;
+    s_axi_araddr <= i_s_axi_araddr;
+    s_axi_arvalid <= i_s_axi_arvalid;
   end process check_flag_reg_read;
+
+  -- Process to monitor the AXI-Lite register interface,
+  -- and get the register address of the current read
+  -- operation, and raise a flag if it is the interrupt
+  -- flag register.
+  check_flag_reg_write : process(i_s_axi_aclk)
+    constant write_addr : std_logic_vector(g_REG_ADDR_WIDTH-1 downto 0) := std_logic_vector(to_unsigned(g_IRQ_FLAG_REG_ADDR, g_REG_ADDR_WIDTH));
+  begin
+    if rising_edge(i_s_axi_aclk) then
+      if i_s_axi_aresetn = '0' then
+        flag_write_in_progress <= '0';
+      else
+        if i_s_axi_awvalid = '1' then
+            if i_s_axi_awaddr(g_REG_ADDR_WIDTH-1 downto 0) = write_addr then
+                flag_write_in_progress <= '1';
+            end if;
+        else
+            flag_write_in_progress <= '0';
+        end if;
+      end if;
+
+
+    end if;
+    s_axi_awaddr <= i_s_axi_araddr;
+    s_axi_awvalid <= i_s_axi_arvalid;
+  end process check_flag_reg_write;
 
   ---------------------------------------------------------------------------
   -- Assign outputs ---------------------------------------------------------

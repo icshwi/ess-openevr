@@ -1,0 +1,53 @@
+[*]
+[*] GTKWave Analyzer v3.3.98 (w)1999-2019 BSI
+[*] Thu Feb  4 12:12:29 2021
+[*]
+[dumpfile] "/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr/build/interrupt_tb.vcd"
+[dumpfile_mtime] "Thu Feb  4 12:11:13 2021"
+[dumpfile_size] 16226
+[savefile] "/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr/waves/wavecfg_interrupt_tb.gtkw"
+[timestart] 0
+[size] 1436 1256
+[pos] -1 -1
+*-25.409985 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] interrupt_tb.
+[sst_width] 261
+[signals_width] 320
+[sst_expanded] 1
+[sst_vpaned_height] 378
+@28
+interrupt_tb.tb_clk
+interrupt_tb.tb_axi_clk
+interrupt_tb.tb_rst
+interrupt_tb.tb_axi_rstn
+@200
+-
+@28
+interrupt_tb.interrupt_controller.s_axi_aresetn
+@22
+interrupt_tb.axi_araddr[17:0]
+@28
+interrupt_tb.axi_arvalid
+@22
+interrupt_tb.axi_awaddr[17:0]
+@28
+interrupt_tb.axi_awvalid
+@200
+-
+@28
+interrupt_tb.interrupt_controller.irq_flagged
+interrupt_tb.interrupt_controller.flag_read_in_progress
+interrupt_tb.interrupt_controller.flag_read_in_progress_t[1:0]
+interrupt_tb.interrupt_controller.flag_write_in_progress
+interrupt_tb.interrupt_controller.flag_write_in_progress_t[1:0]
+@22
+interrupt_tb.interrupt_controller.irq_en_t[31:0]
+interrupt_tb.interrupt_controller.irq_flags_t[31:0]
+interrupt_tb.interrupt_controller.irq_flags_t_out[31:0]
+interrupt_tb.interrupt_controller.irq_logic[31:0]
+interrupt_tb.interrupt_controller.irq_logic_t[31:0]
+interrupt_tb.irq_en[31:0]
+interrupt_tb.irq_flags_in[31:0]
+interrupt_tb.irq_flags_out[31:0]
+[pattern_trace] 1
+[pattern_trace] 0

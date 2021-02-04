@@ -107,6 +107,26 @@ proc validate_PARAM_VALUE.g_CARRIER_VER { PARAM_VALUE.g_CARRIER_VER } {
 }
 
 
+proc update_MODELPARAM_VALUE.g_HAS_DEBUG_CLK { MODELPARAM_VALUE.g_HAS_DEBUG_CLK PARAM_VALUE.g_HAS_DEBUG_CLK } {
+	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
+	set_property value [get_property value ${PARAM_VALUE.g_HAS_DEBUG_CLK}] ${MODELPARAM_VALUE.g_HAS_DEBUG_CLK}
+}
+
+proc update_MODELPARAM_VALUE.g_CARRIER_VER { MODELPARAM_VALUE.g_CARRIER_VER PARAM_VALUE.g_CARRIER_VER } {
+	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
+	set_property value [get_property value ${PARAM_VALUE.g_CARRIER_VER}] ${MODELPARAM_VALUE.g_CARRIER_VER}
+}
+
+proc update_MODELPARAM_VALUE.FP_IN_CHANNELS { MODELPARAM_VALUE.FP_IN_CHANNELS PARAM_VALUE.FP_IN_CHANNELS } {
+	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
+	set_property value [get_property value ${PARAM_VALUE.FP_IN_CHANNELS}] ${MODELPARAM_VALUE.FP_IN_CHANNELS}
+}
+
+proc update_MODELPARAM_VALUE.FP_OUT_CHANNELS { MODELPARAM_VALUE.FP_OUT_CHANNELS PARAM_VALUE.FP_OUT_CHANNELS } {
+	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
+	set_property value [get_property value ${PARAM_VALUE.FP_OUT_CHANNELS}] ${MODELPARAM_VALUE.FP_OUT_CHANNELS}
+}
+
 proc update_MODELPARAM_VALUE.AXI_ADDR_WIDTH { MODELPARAM_VALUE.AXI_ADDR_WIDTH PARAM_VALUE.AXI_ADDR_WIDTH } {
 	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
 	set_property value [get_property value ${PARAM_VALUE.AXI_ADDR_WIDTH}] ${MODELPARAM_VALUE.AXI_ADDR_WIDTH}
@@ -132,22 +152,3 @@ proc update_MODELPARAM_VALUE.AXI_DATA_WIDTH { MODELPARAM_VALUE.AXI_DATA_WIDTH PA
 	set_property value [get_property value ${PARAM_VALUE.AXI_DATA_WIDTH}] ${MODELPARAM_VALUE.AXI_DATA_WIDTH}
 }
 
-proc update_MODELPARAM_VALUE.g_HAS_DEBUG_CLK { MODELPARAM_VALUE.g_HAS_DEBUG_CLK PARAM_VALUE.g_HAS_DEBUG_CLK } {
-	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
-	set_property value [get_property value ${PARAM_VALUE.g_HAS_DEBUG_CLK}] ${MODELPARAM_VALUE.g_HAS_DEBUG_CLK}
-}
-
-proc update_MODELPARAM_VALUE.g_CARRIER_VER { MODELPARAM_VALUE.g_CARRIER_VER PARAM_VALUE.g_CARRIER_VER } {
-	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
-	set_property value [get_property value ${PARAM_VALUE.g_CARRIER_VER}] ${MODELPARAM_VALUE.g_CARRIER_VER}
-}
-
-proc update_MODELPARAM_VALUE.FP_IN_CHANNELS { MODELPARAM_VALUE.FP_IN_CHANNELS PARAM_VALUE.FP_IN_CHANNELS } {
-	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
-	set_property value [get_property value ${PARAM_VALUE.FP_IN_CHANNELS}] ${MODELPARAM_VALUE.FP_IN_CHANNELS}
-}
-
-proc update_MODELPARAM_VALUE.FP_OUT_CHANNELS { MODELPARAM_VALUE.FP_OUT_CHANNELS PARAM_VALUE.FP_OUT_CHANNELS } {
-	# Procedure called to set VHDL generic/Verilog parameter value(s) based on TCL parameter value
-	set_property value [get_property value ${PARAM_VALUE.FP_OUT_CHANNELS}] ${MODELPARAM_VALUE.FP_OUT_CHANNELS}
-}

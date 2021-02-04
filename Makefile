@@ -29,11 +29,15 @@ TB_PATH = $(SRC_PATH)/testbenches
 SOURCES = $(SRC_PATH)/packages/sizing.vhd \
           $(SRC_PATH)/packages/evr_pkg.vhd \
           $(SRC_PATH)/heartbeat_mon.vhd \
-          $(TB_PATH)/heartbeat_mon_tb.vhd
+          $(TB_PATH)/heartbeat_mon_tb.vhd \
+          $(SRC_PATH)/packages/register_bank_config_pkg.vhdl \
+          $(SRC_PATH)/interrupt_ctrl.vhd \
+          $(TB_PATH)/interrupt_tb.vhd
 
 TB1 = heartbeat_mon_tb
+TB3 = interrupt_tb
 
-TESTBENCHES = $(TB1)
+TESTBENCHES = $(TB1) $(TB3)
 
 # Targets
 .PHONY: all clean opendoc run_sim
@@ -62,8 +66,15 @@ tb1: elab1
 	$(GHDL) -r $(TB1) --vcd=build/$(TB1).vcd
 	$(WAVE_VIEWER) build/$(TB1).vcd waves/wavecfg_$(TB1).gtkw
 
+tb3: elab1
+	$(GHDL) -r $(TB3) --vcd=build/$(TB3).vcd
+	$(WAVE_VIEWER) build/$(TB3).vcd waves/wavecfg_$(TB3).gtkw
+
 elab1: obj
 	$(GHDL) -m $(GHDLFLAGS) $(TB1)
+
+elab3: obj
+	$(GHDL) -m $(GHDLFLAGS) $(TB3)
 
 obj: $(SOURCES)
 	@mkdir -p build
@@ -74,6 +85,7 @@ clean:
 	@rm -rf $(DOC_OUTDIR)
 	@rm -rf build/
 	@rm -f $(TB1)
+	@rm -f $(TB3)
 	@rm -f *.o
 	@rm -f $(SRC_PATH)/*.o
 	@rm -f $(SRC_PATH)/*.vcd
