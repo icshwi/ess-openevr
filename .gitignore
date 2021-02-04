@@ -12,9 +12,17 @@ ip/*
 
 # Misc Vivado files
 .Xil/
+src/hdl/
+src/synth/
+src/
+src/fifo_generator_0.xdc
 
 # Generated output of register map
 output/ESS_openEVR_regMap_hdl/
 
 # VIM swap files
 **/*.swp
+
+# GHDL compiled files
+**/*.o
+build/
