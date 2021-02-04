@@ -13,7 +13,7 @@
 --! @author Ross Elliot <ross.elliot@ess.eu>
 --!
 --! @date 20200421
---! @version 0.5
+--! @version 0.6
 --!
 --! Company: European Spallation Source ERIC \n
 --! Platform: picoZED 7030 \n
@@ -90,6 +90,26 @@ entity ess_evr_top is
       s_axi_rresp             : out std_logic_vector(AXI4_RESP_WIDTH-1 downto 0);
       s_axi_rvalid            : out std_logic;
       s_axi_rready            : in  std_logic;
+
+    --!@name Event mapping RAM interface
+    --!@brief Signals for the control of 2 external BRAM blocks used as event mapping RAMs
+    --!@desc Only one BRAM block is active at a time, thus most of the lines can be
+    --!       shared to save some resources. Only the enable lines are specific to a BRAM block.
+    --!@{
+    --! Address port (shared)
+    o_evnt_map_addr    : out std_logic_vector(c_EVNT_MAP_ADDR_WIDTH-1 downto 0);
+    --! Data out port (shared)
+    o_evnt_map_data    : out std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
+    --! Data in port (shared)
+    i_evnt_map_data    : in  std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
+    --! Write enable port (shared)
+    o_evnt_map_wren    : out std_logic;
+    --! Enable line for the Block RAM 0
+    o_evnt_map0_en     : out std_logic;
+    --! Enable line for the Block RAM 1
+    o_evnt_map1_en     : out std_logic;
+    --!@}
+
 
     --! Global logic clock, differential input from Si5346 Out2
     i_ZYNQ_MRCC_LVDS_P : in std_logic;
@@ -186,13 +206,19 @@ architecture rtl of ess_evr_top is
   --! TODO: assign from the mapping RAM
   signal hb_mon_target : event_code := x"7A";
 
-  --  IRQ related signals ----------------------------------------------------
+  --------  IRQ related signals -----------
 
   --! Interrupt line coming from the Hearbeat monitor
   signal heartbeat_mon_int : std_logic;
   attribute mark_debug of heartbeat_mon_int : signal is "true";
   signal hb_mon_cnt : unsigned(c_HEARTBEAT_CNT_SIZE-1 downto 0);
   attribute mark_debug of hb_mon_cnt : signal is "true";
+
+  ------------ Pulse generators -----------
+  --! Array to hold the control register of each instance of pulse generator
+  signal pulse_gen_ctrl_reg : pgen_ctrl_regs;
+  signal pulse_gen_map_reg  : pgen_map_reg;
+  signal pulse_gen_pxout    : std_logic_vector(c_PULSE_GENS_CNT-1 downto 0);
 
   signal event_link_ok : std_logic;
   signal gt0_status : gt_ctrl_flags;
@@ -282,7 +308,17 @@ architecture rtl of ess_evr_top is
   -- attribute mark_debug of ext_ts_trig : signal is "true";
   -- attribute mark_debug of ext_ts_trig_t : signal is "true";
 
-  signal trig_1kHz : std_logic := '0';
+
+  component standalone is
+    generic (
+        g_PRESCALER_SIZE : natural := bit_size(c_EVENT_RATE)
+    );
+    port (
+        i_gt_refclk : in std_logic;
+
+        o_event_tx  : out std_logic_vector(7 downto 0)
+    );
+  end component;
 
 begin
 
@@ -393,6 +429,12 @@ begin
 
   o_EVR_EVENT_CLK <= event_clk;
 
+  i_standalone : standalone
+    port map (
+      i_gt_refclk   => refclk,
+      o_event_tx    => event_txd
+    );
+
   databuf_dc : databuf_rx_dc
     port map (
       data_out => databuf_dc_data_out,
@@ -440,6 +482,17 @@ begin
   -- TODO (ROSS) : connect this line
   -- <hb irq line> <= heartbeat_mon_int and evr_irqen.iehb and evr_irqen.irqen;
 
+  i_pulse_gen_controller : pulse_gen_controller
+    generic map (
+      g_PULSE_GEN_CNT => c_PULSE_GENS_CNT
+    )
+    port map (
+      i_event_clk     => i_event_clk,         -- The event_clock is down when no link is present, is this a problem?
+      i_pgen_ctrl_reg => pulse_gen_ctrl_reg,
+      i_pgen_map_reg  => pulse_gen_map_reg,
+      o_pgen_pxout    => pulse_gen_pxout
+    );
+
   -- AXI register interface for the picoEVR ----------------------------------
 
   axi_reg_bank : register_bank_axi
@@ -477,110 +530,217 @@ begin
       register_data_o         => logic_read_data_t,
       register_return_i       => logic_return_t);
 
-   -- Synchronously assign relevant signals to the appropriate registers
-   reg_assign : process(sys_clk)
-     begin
-       if rising_edge(sys_clk) then
-         -- ESS-Control register 0xB004
-         -- from processor to FPGA
-         -- gbl_evr_rst              <= gbl_reset_t;
-         -- -- FROM bit 0 to 30 - check if the net improves
-         -- gbl_reset_t            <= logic_read_data_t.ESSControl(30);
-         gt0_resets.gbl_async   <= gt0_resets_t.gbl_async;
-         gt0_resets_t.gbl_async <= logic_read_data_t.ESSControl(1) or logic_read_data_t.ESSControl(0);
-         gt0_resets.tx_async    <= gt0_resets_t.tx_async;
-         gt0_resets_t.tx_async  <= logic_read_data_t.ESSControl(2);
-         gt0_resets.rx_async    <= gt0_resets_t.rx_async;
-         gt0_resets_t.rx_async  <= logic_read_data_t.ESSControl(3);
-         -- Read back from FPGA
-         logic_return_t_0.ESSControl(3 downto 0) <= logic_read_data_t.ESSControl(3 downto 0);
-         logic_return_t_0.ESSControl(REGISTER_WIDTH-1 downto 4) <= (others => '0');
-         -- Temporally assigned here
-         logic_return_t_0.ESSControl(31) <= logic_read_data_t.ESSControl(31);
+  -- Synchronously assign relevant signals to the appropriate registers
+  reg_assign : process(sys_clk)
+    begin
+      if rising_edge(sys_clk) then
+        -- ESS-Control register 0xB004
+        -- from processor to FPGA
+        -- gbl_evr_rst              <= gbl_reset_t;
+        -- -- FROM bit 0 to 30 - check if the net improves
+        -- gbl_reset_t            <= logic_read_data_t.ESSControl(30);
+        gt0_resets.gbl_async   <= gt0_resets_t.gbl_async;
+        gt0_resets_t.gbl_async <= logic_read_data_t.ESSControl(1) or logic_read_data_t.ESSControl(0);
+        gt0_resets.tx_async    <= gt0_resets_t.tx_async;
+        gt0_resets_t.tx_async  <= logic_read_data_t.ESSControl(2);
+        gt0_resets.rx_async    <= gt0_resets_t.rx_async;
+        gt0_resets_t.rx_async  <= logic_read_data_t.ESSControl(3);
+        -- Read back from FPGA
+        logic_return_t_0.ESSControl(3 downto 0) <= logic_read_data_t.ESSControl(3 downto 0);
+        logic_return_t_0.ESSControl(REGISTER_WIDTH-1 downto 4) <= (others => '0');
+        -- Temporally assigned here
+        logic_return_t_0.ESSControl(31) <= logic_read_data_t.ESSControl(31);
 
-         -- ESS-Status register - 0xB000
-         logic_return_t_0.ESSStatus(0)  <= gt0_status.tx_fsm_done;
-         logic_return_t_0.ESSStatus(1)  <= gt0_status.rx_fsm_done;
-         logic_return_t_0.ESSStatus(2)  <= gt0_status.fbclk_lost;
-         logic_return_t_0.ESSStatus(3)  <= gt0_status.pll_locked;
-         logic_return_t_0.ESSStatus(4)  <= i_EVR_TX_FAULT;
-         logic_return_t_0.ESSStatus(5)  <= gt0_status.link_up;
-         logic_return_t_0.ESSStatus(6)  <= i_EVR_RX_LOS;
-         logic_return_t_0.ESSStatus(7)  <= gt0_status.event_rcv;
-         logic_return_t_0.ESSStatus(30) <= mrfunivmod_in0;
-         logic_return_t_0.ESSStatus(31) <= mrfunivmod_in1;
+        -- ESS-Status register - 0xB000
+        logic_return_t_0.ESSStatus(0)  <= gt0_status.tx_fsm_done;
+        logic_return_t_0.ESSStatus(1)  <= gt0_status.rx_fsm_done;
+        logic_return_t_0.ESSStatus(2)  <= gt0_status.fbclk_lost;
+        logic_return_t_0.ESSStatus(3)  <= gt0_status.pll_locked;
+        logic_return_t_0.ESSStatus(4)  <= i_EVR_TX_FAULT;
+        logic_return_t_0.ESSStatus(5)  <= gt0_status.link_up;
+        logic_return_t_0.ESSStatus(6)  <= i_EVR_RX_LOS;
+        logic_return_t_0.ESSStatus(7)  <= gt0_status.event_rcv;
+        logic_return_t_0.ESSStatus(30) <= mrfunivmod_in0;
+        logic_return_t_0.ESSStatus(31) <= mrfunivmod_in1;
 
-         -- Status reg
-         logic_return_t_0.Status(5 downto 0) <= "000000";   --
-         logic_return_t_0.Status(6) <= gt0_status.link_up;  -- LINK
-         logic_return_t_0.Status(7) <= i_EVR_MOD_0;         -- SFPMOD
-         logic_return_t_0.Status(31 downto 24) <= dbus_rxd; -- DBUS7-DBUS0
+        -- Status reg
+        logic_return_t_0.Status(5 downto 0) <= "000000";   --
+        logic_return_t_0.Status(6) <= gt0_status.link_up;  -- LINK
+        logic_return_t_0.Status(7) <= i_EVR_MOD_0;         -- SFPMOD
+        logic_return_t_0.Status(31 downto 24) <= dbus_rxd; -- DBUS7-DBUS0
 
-         -- Control reg
-         -- Assign from processor
-         evr_ctrl.evr_en      <= logic_read_data_t.Control(31);
-         evr_ctrl.event_fwd   <= logic_read_data_t.Control(30);
-         evr_ctrl.tx_loopback <= logic_read_data_t.Control(29);
-         evr_ctrl.rx_loopback <= logic_read_data_t.Control(28);
-         evr_ctrl.output_en   <= logic_read_data_t.Control(27);
-         evr_ctrl.soft_reset  <= logic_read_data_t.Control(26);
-         evr_ctrl.dc_enable   <= logic_read_data_t.Control(22);
-         evr_ctrl.ts_dbus     <= logic_read_data_t.Control(14);
-         evr_ctrl.rst_ts      <= logic_read_data_t.Control(13);
-         evr_ctrl.latch_ts    <= logic_read_data_t.Control(10);
-         evr_ctrl.map_en      <= logic_read_data_t.Control(9);
-         evr_ctrl.map_rs      <= logic_read_data_t.Control(8);
-         evr_ctrl.log_rst     <= logic_read_data_t.Control(7);
-         evr_ctrl.log_en      <= logic_read_data_t.Control(6);
-         evr_ctrl.log_dis     <= logic_read_data_t.Control(5);
-         evr_ctrl.log_se      <= logic_read_data_t.Control(4);
-         evr_ctrl.rs_fifo     <= logic_read_data_t.Control(3);
-         -- Read back
-         logic_return_t_0.Control <= logic_read_data_t.Control;
+        -- Control reg
+        -- Assign from processor
+        evr_ctrl.evr_en      <= logic_read_data_t.Control(31);
+        evr_ctrl.event_fwd   <= logic_read_data_t.Control(30);
+        evr_ctrl.tx_loopback <= logic_read_data_t.Control(29);
+        evr_ctrl.rx_loopback <= logic_read_data_t.Control(28);
+        evr_ctrl.output_en   <= logic_read_data_t.Control(27);
+        evr_ctrl.soft_reset  <= logic_read_data_t.Control(26);
+        evr_ctrl.dc_enable   <= logic_read_data_t.Control(22);
+        evr_ctrl.ts_dbus     <= logic_read_data_t.Control(14);
+        evr_ctrl.rst_ts      <= logic_read_data_t.Control(13);
+        evr_ctrl.latch_ts    <= logic_read_data_t.Control(10);
+        evr_ctrl.map_en      <= logic_read_data_t.Control(9);
+        evr_ctrl.map_rs      <= logic_read_data_t.Control(8);
+        evr_ctrl.log_rst     <= logic_read_data_t.Control(7);
+        evr_ctrl.log_en      <= logic_read_data_t.Control(6);
+        evr_ctrl.log_dis     <= logic_read_data_t.Control(5);
+        evr_ctrl.log_se      <= logic_read_data_t.Control(4);
+        evr_ctrl.rs_fifo     <= logic_read_data_t.Control(3);
+        -- Read back
+        logic_return_t_0.Control <= logic_read_data_t.Control;
 
-         -- DC registers
-         -- From processor
-         delay_comp_target <= logic_read_data_t.DCTarget;
-         dc_mode_r         <= evr_ctrl.dc_enable;
-         -- From FPGA
-         logic_return_t_0.DCTarget   <= delay_comp_target;
-         logic_return_t_0.TopologyID <= topology_addr;
-         logic_return_t_0.DCStatus   <= delay_comp_rx_status;
-         logic_return_t_0.DCRxValue  <= delay_comp_value;
-         logic_return_t_0.DCIntValue <= int_delay_value;
+        -- DC registers
+        -- From processor
+        delay_comp_target <= logic_read_data_t.DCTarget;
+        dc_mode_r         <= evr_ctrl.dc_enable;
+        -- From FPGA
+        logic_return_t_0.DCTarget   <= delay_comp_target;
+        logic_return_t_0.TopologyID <= topology_addr;
+        logic_return_t_0.DCStatus   <= delay_comp_rx_status;
+        logic_return_t_0.DCRxValue  <= delay_comp_value;
+        logic_return_t_0.DCIntValue <= int_delay_value;
 
-         -- Timestamp registers
-         -- From FPGA
-         logic_return_t_0.SecSR        <= ts_regs.sec_shift_reg;
-         logic_return_t_0.SecCounter   <= ts_regs.sec_counter;
-         logic_return_t_0.EventCounter <= ts_regs.event_counter;
-         logic_return_t_0.SecLatch     <= ts_regs.sec_latch;
-         logic_return_t_0.EvCntLatch   <= ts_regs.event_count_latch;
-         logic_return_t_0.EvFIFOSec    <= ts_regs.event_fifo_sec;
-         logic_return_t_0.EvFIFOEvCnt  <= ts_regs.event_fifo_cnt;
-         logic_return_t_0.EvFIFOCode   <= x"0000" & ts_regs.event_fifo_code;
+        -- Timestamp registers
+        -- From FPGA
+        logic_return_t_0.SecSR        <= ts_regs.sec_shift_reg;
+        logic_return_t_0.SecCounter   <= ts_regs.sec_counter;
+        logic_return_t_0.EventCounter <= ts_regs.event_counter;
+        logic_return_t_0.SecLatch     <= ts_regs.sec_latch;
+        logic_return_t_0.EvCntLatch   <= ts_regs.event_count_latch;
+        logic_return_t_0.EvFIFOSec    <= ts_regs.event_fifo_sec;
+        logic_return_t_0.EvFIFOEvCnt  <= ts_regs.event_fifo_cnt;
+        logic_return_t_0.EvFIFOCode   <= x"0000" & ts_regs.event_fifo_code;
 
-         -- External trigger timestamp
-         -- From FPGA
-         logic_return_t_0.ESSExtSecCounter   <= ext_trig_ts_data(63 downto 32);
-         logic_return_t_0.ESSExtEventCounter <= ext_trig_ts_data(31 downto 0);
+        -- External trigger timestamp
+        -- From FPGA
+        logic_return_t_0.ESSExtSecCounter   <= ext_trig_ts_data(63 downto 32);
+        logic_return_t_0.ESSExtEventCounter <= ext_trig_ts_data(31 downto 0);
 
-         -- Front Panel registers
-         -- From processor
-         fp_out_map(0) <= logic_read_data_t.FPOutMap0_1(15 downto 0);
-         fp_out_map(1) <= logic_read_data_t.FPOutMap0_1(31 downto 16);
+        -- Pulse generators -- 16 by now
+        -- From processor
+        pulse_gen_ctrl_reg(0).control(6 downto 0)  <= logic_read_data_t.Pulse0Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(0).delay    <= logic_read_data_t.Pulse0Delay;
+        pulse_gen_ctrl_reg(0).width    <= logic_read_data_t.Pulse0Width;
+        pulse_gen_ctrl_reg(1).control(6 downto 0)  <= logic_read_data_t.Pulse1Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(1).delay    <= logic_read_data_t.Pulse1Delay;
+        pulse_gen_ctrl_reg(1).width    <= logic_read_data_t.Pulse1Width;
+        pulse_gen_ctrl_reg(2).control(6 downto 0)  <= logic_read_data_t.Pulse2Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(2).delay    <= logic_read_data_t.Pulse2Delay;
+        pulse_gen_ctrl_reg(2).width    <= logic_read_data_t.Pulse2Width;
+        pulse_gen_ctrl_reg(3).control(6 downto 0)  <= logic_read_data_t.Pulse3Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(3).delay    <= logic_read_data_t.Pulse3Delay;
+        pulse_gen_ctrl_reg(3).width    <= logic_read_data_t.Pulse3Width;
 
-         fp_univ_out_map(0) <= logic_read_data_t.UnivOUTMap0_1(15 downto 0);
-         fp_univ_out_map(1) <= logic_read_data_t.UnivOUTMap0_1(31 downto 16);
+        pulse_gen_ctrl_reg(4).control(6 downto 0)  <= logic_read_data_t.Pulse4Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(4).delay    <= logic_read_data_t.Pulse4Delay;
+        pulse_gen_ctrl_reg(4).width    <= logic_read_data_t.Pulse4Width;
+        pulse_gen_ctrl_reg(5).control(6 downto 0)  <= logic_read_data_t.Pulse5Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(5).delay    <= logic_read_data_t.Pulse5Delay;
+        pulse_gen_ctrl_reg(5).width    <= logic_read_data_t.Pulse5Width;
+        pulse_gen_ctrl_reg(6).control(6 downto 0)  <= logic_read_data_t.Pulse6Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(6).delay    <= logic_read_data_t.Pulse6Delay;
+        pulse_gen_ctrl_reg(6).width    <= logic_read_data_t.Pulse6Width;
+        pulse_gen_ctrl_reg(7).control(6 downto 0)  <= logic_read_data_t.Pulse7Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(7).delay    <= logic_read_data_t.Pulse7Delay;
+        pulse_gen_ctrl_reg(7).width    <= logic_read_data_t.Pulse7Width;
 
-         -- Read back
-         logic_return_t_0.FPOutMap0_1 <= logic_read_data_t.FPOutMap0_1;
-         logic_return_t_0.UnivOUTMap0_1 <= logic_read_data_t.UnivOUTMap0_1;
+        pulse_gen_ctrl_reg(8).control(6 downto 0)  <= logic_read_data_t.Pulse8Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(8).delay    <= logic_read_data_t.Pulse8Delay;
+        pulse_gen_ctrl_reg(8).width    <= logic_read_data_t.Pulse8Width;
+        pulse_gen_ctrl_reg(9).control(6 downto 0)  <= logic_read_data_t.Pulse9Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(9).delay    <= logic_read_data_t.Pulse9Delay;
+        pulse_gen_ctrl_reg(9).width    <= logic_read_data_t.Pulse9Width;
+        pulse_gen_ctrl_reg(10).control(6 downto 0) <= logic_read_data_t.Pulse10Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(10).delay   <= logic_read_data_t.Pulse10Delay;
+        pulse_gen_ctrl_reg(10).width   <= logic_read_data_t.Pulse10Width;
+        pulse_gen_ctrl_reg(11).control(6 downto 0) <= logic_read_data_t.Pulse11Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(11).delay   <= logic_read_data_t.Pulse11Delay;
+        pulse_gen_ctrl_reg(11).width   <= logic_read_data_t.Pulse11Width;
 
-         -- register read (from FPGA to processor)
-         logic_return_t <= logic_return_t_0;
-       end if;
-     end process reg_assign;
+        pulse_gen_ctrl_reg(12).control(6 downto 0) <= logic_read_data_t.Pulse12Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(12).delay   <= logic_read_data_t.Pulse12Delay;
+        pulse_gen_ctrl_reg(12).width   <= logic_read_data_t.Pulse132Width;
+        pulse_gen_ctrl_reg(13).control(6 downto 0) <= logic_read_data_t.Pulse13Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(13).delay   <= logic_read_data_t.Pulse13Delay;
+        pulse_gen_ctrl_reg(13).width   <= logic_read_data_t.Pulse14Width;
+        pulse_gen_ctrl_reg(14).control(6 downto 0) <= logic_read_data_t.Pulse14Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(14).delay   <= logic_read_data_t.Pulse14Delay;
+        pulse_gen_ctrl_reg(14).width   <= logic_read_data_t.Pulse1Width;
+        pulse_gen_ctrl_reg(15).control(6 downto 0) <= logic_read_data_t.Pulse15Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(15).delay   <= logic_read_data_t.Pulse15Delay;
+        pulse_gen_ctrl_reg(15).width   <= logic_read_data_t.Pulse15Width;
+
+        -- Read back
+        logic_return_t_0.Pulse0Ctrl   <= x"0000" & pgen_pxout(0) & logic_read_data_t.Pulse0Ctrl(6 downto 0);
+        logic_return_t_0.Pulse0Delay  <= logic_read_data_t.Pulse0Delay;
+        logic_return_t_0.Pulse0Width  <= logic_read_data_t.Pulse0Width;
+        logic_return_t_0.Pulse1Ctrl   <= x"0000" & pgen_pxout(1) & logic_read_data_t.Pulse1Ctrl(6 downto 0);
+        logic_return_t_0.Pulse1Delay  <= logic_read_data_t.Pulse1Delay;
+        logic_return_t_0.Pulse1Width  <= logic_read_data_t.Pulse1Width;
+        logic_return_t_0.Pulse2Ctrl   <= x"0000" & pgen_pxout(2) & logic_read_data_t.Pulse2Ctrl(6 downto 0);
+        logic_return_t_0.Pulse2Delay  <= logic_read_data_t.Pulse2Delay;
+        logic_return_t_0.Pulse2Width  <= logic_read_data_t.Pulse2Width;
+        logic_return_t_0.Pulse3Ctrl   <= x"0000" & pgen_pxout(3) & logic_read_data_t.Pulse3Ctrl(6 downto 0);
+        logic_return_t_0.Pulse3Delay  <= logic_read_data_t.Pulse3Delay;
+        logic_return_t_0.Pulse3Width  <= logic_read_data_t.Pulse3Width;
+
+        logic_return_t_0.Pulse4Ctrl   <= x"0000" & pgen_pxout(4) & logic_read_data_t.Pulse4Ctrl(6 downto 0);
+        logic_return_t_0.Pulse4Delay  <= logic_read_data_t.Pulse4Delay;
+        logic_return_t_0.Pulse4Width  <= logic_read_data_t.Pulse4Width;
+        logic_return_t_0.Pulse5Ctrl   <= x"0000" & pgen_pxout(5) & logic_read_data_t.Pulse5Ctrl(6 downto 0);
+        logic_return_t_0.Pulse5Delay  <= logic_read_data_t.Pulse5Delay;
+        logic_return_t_0.Pulse5Width  <= logic_read_data_t.Pulse5Width;
+        logic_return_t_0.Pulse6Ctrl   <= x"0000" & pgen_pxout(6) & logic_read_data_t.Pulse6Ctrl(6 downto 0);
+        logic_return_t_0.Pulse6Delay  <= logic_read_data_t.Pulse6Delay;
+        logic_return_t_0.Pulse6Width  <= logic_read_data_t.Pulse6Width;
+        logic_return_t_0.Pulse7Ctrl   <= x"0000" & pgen_pxout(7) & logic_read_data_t.Pulse7Ctrl(6 downto 0);
+        logic_return_t_0.Pulse7Delay  <= logic_read_data_t.Pulse7Delay;
+        logic_return_t_0.Pulse7Width  <= logic_read_data_t.Pulse7Width;
+
+        logic_return_t_0.Pulse8Ctrl   <= x"0000" & pgen_pxout(8) & logic_read_data_t.Pulse8Ctrl(6 downto 0);
+        logic_return_t_0.Pulse8Delay  <= logic_read_data_t.Pulse8Delay;
+        logic_return_t_0.Pulse8Width  <= logic_read_data_t.Pulse8Width;
+        logic_return_t_0.Pulse9Ctrl   <= x"0000" & pgen_pxout(9) & logic_read_data_t.Pulse9Ctrl(6 downto 0);
+        logic_return_t_0.Pulse9Delay  <= logic_read_data_t.Pulse9Delay;
+        logic_return_t_0.Pulse9Width  <= logic_read_data_t.Pulse9Width;
+        logic_return_t_0.Pulse10Ctrl   <= x"0000" & pgen_pxout(10) & logic_read_data_t.Pulse10Ctrl(6 downto 0);
+        logic_return_t_0.Pulse10Delay <= logic_read_data_t.Pulse10Delay;
+        logic_return_t_0.Pulse10Width <= logic_read_data_t.Pulse10Width;
+        logic_return_t_0.Pulse11Ctrl   <= x"0000" & pgen_pxout(11) & logic_read_data_t.Pulse11Ctrl(6 downto 0);
+        logic_return_t_0.Pulse11Delay <= logic_read_data_t.Pulse11Delay;
+        logic_return_t_0.Pulse11Width <= logic_read_data_t.Pulse11Width;
+
+        logic_return_t_0.Pulse12Ctrl   <= x"0000" & pgen_pxout(12) & logic_read_data_t.Pulse12Ctrl(6 downto 0);
+        logic_return_t_0.Pulse12Delay <= logic_read_data_t.Pulse12Delay;
+        logic_return_t_0.Pulse12Width <= logic_read_data_t.Pulse12Width;
+        logic_return_t_0.Pulse13Ctrl   <= x"0000" & pgen_pxout(13) & logic_read_data_t.Pulse13Ctrl(6 downto 0);
+        logic_return_t_0.Pulse13Delay <= logic_read_data_t.Pulse13Delay;
+        logic_return_t_0.Pulse13Width <= logic_read_data_t.Pulse13Width;
+        logic_return_t_0.Pulse14Ctrl   <= x"0000" & pgen_pxout(14) & logic_read_data_t.Pulse14Ctrl(6 downto 0);
+        logic_return_t_0.Pulse14Delay <= logic_read_data_t.Pulse14Delay;
+        logic_return_t_0.Pulse14Width <= logic_read_data_t.Pulse14Width;
+        logic_return_t_0.Pulse15Ctrl   <= x"0000" & pgen_pxout(15) & logic_read_data_t.Pulse15Ctrl(6 downto 0);
+        logic_return_t_0.Pulse15Delay <= logic_read_data_t.Pulse15Delay;
+        logic_return_t_0.Pulse15Width <= logic_read_data_t.Pulse15Width;
+
+        -- Front Panel registers
+        -- From processor
+        fp_out_map(0) <= logic_read_data_t.FPOutMap0_1(15 downto 0);
+        fp_out_map(1) <= logic_read_data_t.FPOutMap0_1(31 downto 16);
+
+        fp_univ_out_map(0) <= logic_read_data_t.UnivOUTMap0_1(15 downto 0);
+        fp_univ_out_map(1) <= logic_read_data_t.UnivOUTMap0_1(31 downto 16);
+
+        -- Read back
+        logic_return_t_0.FPOutMap0_1 <= logic_read_data_t.FPOutMap0_1;
+        logic_return_t_0.UnivOUTMap0_1 <= logic_read_data_t.UnivOUTMap0_1;
+
+        -- register read (from FPGA to processor)
+        logic_return_t <= logic_return_t_0;
+      end if;
+    end process reg_assign;
 
    -- Instantiate timestamp component
    event_timestamp : timestamp
@@ -601,20 +761,6 @@ begin
 
   o_TS_data  <= ext_trig_ts_data;
   o_TS_valid <= ext_trig_ts_valid;
-
-  -- Process to send out event 0x01 periodically
-  process (refclk)
-    variable count : unsigned(31 downto 0) := X"FFFFFFFF";
-  begin
-    if rising_edge(refclk) then
-      event_txd <= X"00";
-      if count(26) = '0' then
-        event_txd <= X"01";
-        count := X"FFFFFFFF";
-      end if;
-      count := count - 1;
-    end if;
-  end process;
 
   -- Generate slow signals for the status LEDs --------------------------------
   evr_event_led : process(event_clk)
@@ -651,10 +797,27 @@ begin
   -- Only one UNIV Module socket - up to 2 channels
   univ_omapping : for I in 0 to 1 generate
     with fp_univ_out_map(I) select
-    univ_out(I) <= event_clk          when x"003B",
-                   '1'                when x"003E",
-                   '0'                when x"003F",
-                   '0'                when others;
+    univ_out(I) <=  pulse_gen_pxout(0)    when x"0000", -- Up to 16 pulse generators in the default configuration of the picoEVR
+                    pulse_gen_pxout(1)    when x"0001",
+                    pulse_gen_pxout(2)    when x"0002",
+                    pulse_gen_pxout(3)    when x"0003",
+                    pulse_gen_pxout(4)    when x"0004",
+                    pulse_gen_pxout(5)    when x"0005",
+                    pulse_gen_pxout(6)    when x"0006",
+                    pulse_gen_pxout(7)    when x"0007",
+                    pulse_gen_pxout(8)    when x"0008",
+                    pulse_gen_pxout(9)    when x"0009",
+                    pulse_gen_pxout(10)   when x"000A",
+                    pulse_gen_pxout(11)   when x"000B",
+                    pulse_gen_pxout(12)   when x"000C",
+                    pulse_gen_pxout(13)   when x"000D",
+                    pulse_gen_pxout(14)   when x"000E",
+                    pulse_gen_pxout(15)   when x"000F",
+                    pulse_gen_pxout(16)   when x"0010",
+                    event_clk             when x"003B",
+                   '1'                    when x"003E",
+                   '0'                    when x"003F",
+                   '0'                    when others;
   end generate;
 
   o_MRF_UNIVMOD_OUT0 <= univ_out(0);
