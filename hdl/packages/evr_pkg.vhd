@@ -16,9 +16,7 @@ use ieee.numeric_std.all;
 
 library work;
 use work.sizing.all;
-
-library ESS_openEVR_RegMap;
-use ESS_openEVR_RegMap.register_bank_config.all;
+use work.register_bank_config.all;
 
 package evr_pkg is
 

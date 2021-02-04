@@ -42,16 +42,12 @@ Library UNISIM;
 use UNISIM.vcomponents.all;
 
 library work;
-use work.evr_pkg.ALL;
+use work.axi4.all;
+use work.register_bank_config.all;
+use work.evr_pkg.all;
 use work.sizing.all;
-
-library essffw;
-use essffw.axi4.all;
-
-library ESS_openEVR_RegMap;
-use ESS_openEVR_RegMap.register_bank_config.all;
-use ESS_openEVR_RegMap.register_bank_components.all;
-use ESS_openEVR_RegMap.register_bank_functions.all;
+use work.register_bank_components.all;
+use work.register_bank_functions.all;
 
 --!  @brief ess_evr_top: Top entity for the ESS openEVR
 entity ess_evr_top is

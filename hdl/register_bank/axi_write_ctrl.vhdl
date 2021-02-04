@@ -25,8 +25,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-library essffw;
-use essffw.axi4.all;
+library work;
+use work.axi4.all;
 
 --------------------------------------------------------------------------------
 --!

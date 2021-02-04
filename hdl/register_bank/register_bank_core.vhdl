@@ -24,10 +24,10 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library ESS_openEVR_RegMap;
-use ESS_openEVR_RegMap.register_bank_config.all;
-use ESS_openEVR_RegMap.register_bank_functions.all;
-use ESS_openEVR_RegMap.register_bank_components.all;
+library work;
+use work.register_bank_config.all;
+use work.register_bank_functions.all;
+use work.register_bank_components.all;
 
 --------------------------------------------------------------------------------
 --!

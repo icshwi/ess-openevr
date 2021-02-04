@@ -35,8 +35,8 @@ use IEEE.NUMERIC_STD.ALL;
 library work;
 use work.evr_pkg.ALL;
 
-library ESS_openEVR_RegMap;
-use ESS_openEVR_RegMap.register_bank_config.all;
+library work;
+use work.register_bank_config.all;
 
 entity interrupt_tb is
 end interrupt_tb;
