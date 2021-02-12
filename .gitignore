@@ -1,4 +1,6 @@
 doc/html/*
+doc/doc/*
+doc/*.png
 
 # Vivado log files
 *.str

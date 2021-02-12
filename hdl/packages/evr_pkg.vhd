@@ -59,6 +59,37 @@ package evr_pkg is
   -- Number of Pulse Generators that will be instantiated - MAX 32
   constant c_PULSE_GENS_CNT      : natural := 16;
 
+  -- Mapping RAM related constants ---------------
+  
+  -- The field "Internal functions" inside the mapping RAM allows 
+  -- translating event codes into actions. Each valid event code
+  -- (codes from 0x1 to 0xFF) includes this field into the mapping
+  -- RAM entry.
+  -- The field internal functions is located from bit 96 to 127
+  constant c_EVR_MAP_FUNC_WIDTH        : natural := 32;
+  constant c_EVR_MAP_INT_FUNC_SHIFT    : natural := 96;
+  -- Each function is econded using a position (yes, let's burn memory!)
+  constant c_EVR_MAP_SAVE_EVENT        : natural := 31;
+  constant c_EVR_MAP_LATCH_TIMESTAMP   : natural := 30;
+  constant c_EVR_MAP_LED_EVENT         : natural := 29;
+  constant c_EVR_MAP_FORWARD_EVENT     : natural := 28;
+  constant c_EVR_MAP_STOP_LOG          : natural := 27;
+  constant c_EVR_MAP_LOG_EVENT         : natural := 26;
+  constant c_EVR_MAP_HEARTBEAT_EVENT   : natural := 5;
+  constant c_EVR_MAP_RESETPRESC_EVENT  : natural := 4;
+  constant c_EVR_MAP_TIMESTAMP_RESET   : natural := 3;
+  constant c_EVR_MAP_TIMESTAMP_CLK     : natural := 2;
+  constant c_EVR_MAP_SECONDS_1         : natural := 1;
+  constant c_EVR_MAP_SECONDS_0         : natural := 0;
+  -- From bit 0 to 95, the Pulse Generator related bits are located
+  constant c_EVR_MAP_RST_PULSE_LOW     : natural := 0;
+  constant c_EVR_MAP_RST_PULSE_HIGH    : natural := 31;
+  constant c_EVR_MAP_SET_PULSE_LOW     : natural := 32;
+  constant c_EVR_MAP_SET_PULSE_HIGH    : natural := 63;
+  constant c_EVR_MAP_TRI_PULSE_LOW     : natural := 64;
+  constant c_EVR_MAP_TRI_PULSE_HIGH    : natural := 95;
+  
+
   -- Records
 
   --!@name ts_regs
@@ -139,10 +170,28 @@ package evr_pkg is
   --!@brief Record to group all the control bits which are mapped to the event decoding RAM
   --!@{
   type pgen_map_reg is record
-    triggerx : std_logic_vector(c_PULSE_GENS_CNT-1 downto 0); --! Trigger bits from the mapping RAM
-    setx     : std_logic_vector(c_PULSE_GENS_CNT-1 downto 0); --! Set bits from the mapping RAM
-    resetx   : std_logic_vector(c_PULSE_GENS_CNT-1 downto 0); --! Reset bits from the mapping RAM
+    triggerx  : std_logic_vector(c_PULSE_GENS_CNT-1 downto 0); --! Trigger bits from the mapping RAM
+    setxNrstx : std_logic_vector(c_PULSE_GENS_CNT-1 downto 0); --! Set/Reset bits from the mapping RAM
   end record pgen_map_reg;
+  --!@}
+
+  --!@name picoevr_int_func
+  --!@brief This record gathers a set of internal flags to communicate different modules within the picoEVR
+  --!@{
+  type picoevr_int_func is record
+    evnttofifo  : std_logic; --! Save event in FIFO - map bit 127
+    latchts     : std_logic; --! Latch timestamp - map bit 126 
+    ledevnt     : std_logic; --! Led event - map bit 125
+    fwdevnt     : std_logic; --! Forward event from RX to TX - map bit 124
+    stopevntlog : std_logic; --! Stop event log - map bit 123
+    logevnt     : std_logic; --! Log event - map bit 122
+    hbevnt      : std_logic; --! Heart beat event - map bit 101
+    rstprsclrs  : std_logic; --! Reset prescalers - map bit 100
+    tsrstevnt   : std_logic; --! Timestamp reset event (TS counter reset) - map bit 99
+    tsclkevnt   : std_logic; --! Timestamp clock event (TS counter increment) - map bit 98
+    secsshift1  : std_logic; --! Seconds shift register '1' - map bit 97
+    secsshift0  : std_logic; --! Seconds shift register '0' - map bit 96
+  end record picoevr_int_func; 
   --!@}
 
   -- Custom types and arrays
@@ -875,19 +924,6 @@ package evr_pkg is
   constant C_EVR_PULSE_MAP_SET_ENA    : integer := 2;
   constant C_EVR_PULSE_MAP_TRIG_ENA   : integer := 1;
   constant C_EVR_PULSE_ENA            : integer := 0;
-  -- Map RAM Internal event mappings
-  constant C_EVR_MAP_SAVE_EVENT       : integer := 31;
-  constant C_EVR_MAP_LATCH_TIMESTAMP  : integer := 30;
-  constant C_EVR_MAP_LED_EVENT        : integer := 29;
-  constant C_EVR_MAP_FORWARD_EVENT    : integer := 28;
-  constant C_EVR_MAP_STOP_LOG         : integer := 27;
-  constant C_EVR_MAP_LOG_EVENT        : integer := 26;
-  constant C_EVR_MAP_HEARTBEAT_EVENT  : integer := 5;
-  constant C_EVR_MAP_RESETPRESC_EVENT : integer := 4;
-  constant C_EVR_MAP_TIMESTAMP_RESET  : integer := 3;
-  constant C_EVR_MAP_TIMESTAMP_CLK    : integer := 2;
-  constant C_EVR_MAP_SECONDS_1        : integer := 1;
-  constant C_EVR_MAP_SECONDS_0        : integer := 0;
   -- FP Input Mapping bits
   constant C_EVR_FPIN_EXTEVENT_BASE   : integer := 0;
   constant C_EVR_FPIN_BACKEVENT_BASE  : integer := 8;

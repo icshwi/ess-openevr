@@ -35,6 +35,10 @@ SOURCES = $(SRC_PATH)/packages/sizing.vhd \
 		  $(SRC_PATH)/pulse_gen_controller.vhd \
 		  $(TB_PATH)/pulse_gen_controller_tb.vhd
 
+GRAPH_PATH = doc
+GRAPH_SRC = $(wildcard $(GRAPH_PATH)/*.gv)
+GRAPH_OBJ = $(GRAPH_SRC:.gv=.png)
+
 TB1 = heartbeat_mon_tb
 TB2 = pulse_gen_tb
 TB3 = pulse_gen_controller_tb
@@ -44,12 +48,17 @@ TESTBENCHES = $(TB1) $(TB2) $(TB3)
 # Targets
 .PHONY: all clean opendoc run_sim
 
-all: doc opendoc
+all: graphs doc opendoc
 
-doc: $(DOC_OUTDIR)/index.html
+doc: graphs $(DOC_OUTDIR)/index.html
 
 
 # Documentation rules
+
+graphs: $(GRAPH_OBJ)
+
+$(GRAPH_OBJ): $(GRAPH_SRC)
+	dot -Tpng $^ -o $@ 
 
 $(DOC_OUTDIR)/index.html: $(DOXYGEN_FILE) $(DOC_SOURCES)
 	@echo "\033[1;92mBuilding: $@\033[0m"

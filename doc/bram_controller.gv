@@ -1,0 +1,28 @@
+digraph picoEVR_BRAM_controller {
+    label = "Moore FSM diagram for the picoEVR BRAM controller"
+    labelloc = top;
+    fontsize = 22;
+    graph [fontname = "helvetica"];
+    node [fontname = "helvetica"];
+    edge [fontname = "helvetica"];
+    fontname = "helvetica";
+
+    /* Ranks */
+    {rank=min; idle}
+
+    /* Entities */
+    idle [label="IDLE\n-------\ndata_rdy = 0\naddr = 0\nrden = 0\ndataout = 0"]
+    fetch [label="FETCH\n-------\ndata_rdy = 0\naddr = event\nrden = 1\ndataout = 0"]
+    read [label="READ\n-------\ndata_rdy = 1\naddr = 0\nrden = 0\ndataout= m[event]"]
+    readNfetch [label="READ&FETCH\n-------\ndata_rdy = 1\naddr = event\nrden = 1\ndataout= m[event]"]
+
+    /* Relationships */
+    idle -> fetch [label="event != 0x0"]
+    idle -> idle [label="event = 0x0"]
+    fetch -> read [label="event = 0x0"]
+    fetch -> readNfetch [label="event != 0x0"]
+    read -> idle [label="event = 0x0"]
+    read -> fetch [label="event != 0x0"]
+    readNfetch -> readNfetch [label="event != 0x0"]
+    readNfetch -> read [label="event = 0x0"]
+}
