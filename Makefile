@@ -40,12 +40,26 @@ TB3 = interrupt_tb
 TESTBENCHES = $(TB1) $(TB3)
 
 # Targets
-.PHONY: all clean opendoc run_sim
+.PHONY: all clean opendoc run_sim $(TESTBENCHES)
 
 all: doc opendoc
 
 doc: $(DOC_OUTDIR)/index.html
 
+# Canned recipes
+
+define DO_ELAB
+    @echo "\033[1;92mElaborating: $1 \033[0m"
+	$(GHDL) -m $(GHDLFLAGS) $1
+    @echo ""
+endef
+
+define DO_TB
+    @echo "\033[1;92mSimulating: $1 \033[0m"
+	$(GHDL) -r $1 --vcd=build/$1.vcd
+	$(WAVE_VIEWER) build/$1.vcd waves/wavecfg_$1.gtkw
+    @echo ""
+endef
 
 # Documentation rules
 
@@ -59,23 +73,27 @@ opendoc: $(DOC_OUTDIR)/index.html
 
 # VHDL simulation rules
 
-run_sim: elab1
+elab-all: $(TESTBENCHES)
+
+## Run elaborate recipe for testbench number (denoted by %)
+run-elab%: obj
+	$(call DO_ELAB,$(TB$*))
+
+## Run elaborate recipe for ALL testbenches in $(TESTBENCH) list
+$(TESTBENCHES): obj
+	$(call DO_ELAB,$@)
+
+## Run simluation for ALL testbenches in $(TESTBENCH) list
+run_sim: elab-all
 	$(foreach var,$(TESTBENCHES),./$(var);)
 
-tb1: elab1
-	$(GHDL) -r $(TB1) --vcd=build/$(TB1).vcd
-	$(WAVE_VIEWER) build/$(TB1).vcd waves/wavecfg_$(TB1).gtkw
+## Run full testbench for testbench number (denoted by %)
+## Call elaboration recipe as dependency
+tb%: run-elab%
+	$(call DO_TB,$(TB$*))
 
-tb3: elab1
-	$(GHDL) -r $(TB3) --vcd=build/$(TB3).vcd
-	$(WAVE_VIEWER) build/$(TB3).vcd waves/wavecfg_$(TB3).gtkw
-
-elab1: obj
-	$(GHDL) -m $(GHDLFLAGS) $(TB1)
-
-elab3: obj
-	$(GHDL) -m $(GHDLFLAGS) $(TB3)
-
+## Recipe to create output directory, if not already created
+## and import sources.
 obj: $(SOURCES)
 	@mkdir -p build
 	$(GHDL) -i $(GHDLFLAGS) $^
@@ -84,8 +102,7 @@ clean:
 	@echo "\033[1;92mDeleting all generated files\033[0m"
 	@rm -rf $(DOC_OUTDIR)
 	@rm -rf build/
-	@rm -f $(TB1)
-	@rm -f $(TB3)
+	@rm -f $(TESTBENCHES)
 	@rm -f *.o
 	@rm -f $(SRC_PATH)/*.o
 	@rm -f $(SRC_PATH)/*.vcd
