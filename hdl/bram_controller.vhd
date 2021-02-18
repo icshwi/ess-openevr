@@ -3,6 +3,7 @@
 --! @brief A simple Block RAM controller for the picoEVR mapping RAM
 --!
 --! @author Felipe Torres González <felipe.torresgonzalez@ess.eu>
+--! @author Ross Elliot <ross.elliot@ess.eu>
 --!
 --! @date 20210209
 --! @version 0.1
@@ -47,10 +48,10 @@ use work.evr_pkg.ALL;
 --! do when a particular event code is received from the master.
 --! The RAM's shape is quite simple: 256 words of 128 bit. One word per event code.
 --! When an event code is received, the BRAM controller uses the code to address the
---! configuration word linked to the event and sends out the data word to the 
+--! configuration word linked to the event and sends out the data word to the
 --! Event decoder which will transform the information into pulses.
 --! The latency of the controller is 3 cycles so the upstream module has to properly
---! hold the event code while the configuration word is fetch and written into the 
+--! hold the event code while the configuration word is fetch and written into the
 --! configuration register.
 --! \image html "bram_controller.png"
 entity bram_controller is
@@ -58,7 +59,7 @@ entity bram_controller is
         --! Event clock (DC compensated) - use the same clock as the one used for the
         --! port going to the BRAM in order to avoid CDC issues.
         i_evnt_clk  : in std_logic;
-        --! Rx path reset is a good reset source for this module 
+        --! Rx path reset is a good reset source for this module
         i_reset     : in std_logic;
         --! Active Event code
         i_evnt_rxd  : in event_code;
@@ -71,7 +72,7 @@ entity bram_controller is
         --! Flag indicating when a data word is ready to be read from the port
         o_data_rdy  : out std_logic;
         --! Data word linked to the event used for addressing - 3 cycles latency
-        o_evnt_cfg  : out std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0)        
+        o_evnt_cfg  : out std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0)
     );
 end entity bram_controller;
 
@@ -80,6 +81,7 @@ architecture behaviour of bram_controller is
     type ctrl_state is (IDLE, FETCH, READ, READNFETCH);
     signal ctrl_cur, ctrl_next : ctrl_state := IDLE;
 
+    signal event_code_reg : event_code := c_EVENT_NULL;
     signal bram_en   : std_logic := '0';
     signal bram_addr : std_logic_vector(c_EVNT_MAP_ADDR_WIDTH-1 downto 0) := (others => '0');
     signal data_rdy  : std_logic := '0';
@@ -87,17 +89,89 @@ architecture behaviour of bram_controller is
 
 begin
 
-    -- FSM state update
-    process (i_evnt_clk)
+    -- Mealy FSM for BRAM controller
+    -- Implemented as one process for now. Should it be split up?
+    bram_fsm : process(i_evnt_clk)
+        variable read_in_progress : std_logic := '0';
     begin
         if rising_edge(i_evnt_clk) then
             if i_reset = '1' then
                 ctrl_cur <= IDLE;
-            else
-                ctrl_cur <= ctrl_next;
-            end if;
+                data_rdy    <= '0';
+                bram_addr   <= (others => '0');
+                bram_en     <= '0';
+                evnt_cfg    <= (others => '0');
+                read_in_progress := '0';
+             else
+                case ctrl_cur is
+                    when IDLE =>
+                        data_rdy    <= '0';
+                        bram_addr   <= (others => '0');
+                        bram_en     <= '0';
+                        evnt_cfg    <= (others => '0');
+                        read_in_progress := '0';
+                        -- New event received
+                        if i_evnt_rxd /= c_EVENT_NULL then
+                            -- Move to fetch, and set read address and enable
+                            ctrl_next <= FETCH;
+                            bram_addr <= i_evnt_rxd;
+                            bram_en   <= '1';
+                        else
+                            -- Remain in IDLE
+                            ctrl_next <= IDLE;
+                        end if;
+                     when FETCH =>
+                        -- Assert ready signal
+                        data_rdy <= '0';
+                        evnt_cfg <= (others => '0');
+
+                        -- New event received
+                        if i_evnt_rxd /= c_EVENT_NULL then
+                            -- Move to read, but line up next fetch
+                            ctrl_next <= READ;
+                            bram_addr <= i_evnt_rxd;
+                            bram_en   <= '1';
+                            read_in_progress := '1';
+                        else
+                            -- Move to read, with no fetch
+                            ctrl_next <= READ;
+                            bram_addr <= (others => '0');
+                            bram_en   <= '0';
+                            read_in_progress := '0';
+                        end if;
+                     when READ =>
+                        data_rdy <= '1';
+                        evnt_cfg <= i_bram_do;
+                        if i_evnt_rxd /= c_EVENT_NULL then
+                            if read_in_progress = '1' then
+                                ctrl_next <= READ;
+                            else
+                                ctrl_next <= FETCH;
+                            end if;
+                            bram_addr <= i_evnt_rxd;
+                            bram_en   <= '1';
+                        else
+                            if read_in_progress = '1' then
+                                ctrl_next <= READ;
+                            else
+                                ctrl_next <= IDLE;
+                            end if;
+                            bram_addr <= (others => '0');
+                            bram_en   <= '0';
+                            read_in_progress := '0';
+                        end if;
+                     when others =>
+                        ctrl_next <= IDLE;
+                        data_rdy    <= '0';
+                        bram_addr   <= (others => '0');
+                        bram_en     <= '0';
+                        evnt_cfg    <= (others => '0');
+                        read_in_progress := '0';
+                 end case;
+             end if;
         end if;
-    end process;
+        ctrl_cur <= ctrl_next;
+    end process bram_fsm;
 
     -- Moore FSM for the BRAM controller
     -- ---------------------------------
@@ -109,73 +183,11 @@ begin
     --   the READ stage for the data fetched during FETCH stage and initiates a new FETCH stage.
     --   This way, the controller won't be blocked more than 1 cycle, i.e. it can handle consecutive
     --   arrivals of many event codes (hopefully... fingers crossed!).
-    process(ctrl_cur, i_evnt_rxd)
-    begin
-        ctrl_next <= ctrl_cur;
 
-        case ctrl_cur is
-            when IDLE       =>
-                data_rdy    <= '0';
-                bram_addr   <= (others => '0');
-                bram_en     <= '0';
-                evnt_cfg    <= (others => '0');
 
-                if i_evnt_rxd /= c_EVENT_NULL then
-                    ctrl_next <= FETCH;
-                else
-                    ctrl_next <= IDLE;
-                end if;
-
-            when FETCH      =>
-                bram_addr   <= i_evnt_rxd;
-                data_rdy    <= '0';
-                bram_en     <= '1';
-                evnt_cfg    <= (others => '0');
-
-                if i_evnt_rxd /= c_EVENT_NULL then
-                    ctrl_next <= READNFETCH);;
-                else
-                    ctrl_next <= READ;
-                end if;
-
-            WHEN READ       =>
-                evnt_cfg    <= i_bram_do;
-                data_rdy    <= '1';
-                bram_en     <= '0';
-                bram_addr   <= (others => '0');
-
-                if i_evnt_rxd /= c_EVENT_NULL then
-                    ctrl_next <= FETCH;
-                else
-                    ctrl_next <= IDLE;
-                end if;
-
-            WHEN READNFETCH =>
-                bram_addr   <= i_evnt_rxd;
-                bram_en     <= '1';
-                evnt_cfg    <= i_bram_do;
-                data_rdy    <= '1';
-
-                if i_evnt_rxd /= c_EVENT_NULL then
-                    ctrl_next <= READNFETCH;
-                else
-                    ctrl_next <= READ;
-                end if;
-
-        end case;
-    end process;
-
-    -- Register the outputs
-    process (i_evnt_clk)
-    begin
-        if rising_edge(i_evnt_clk) then
-            o_bram_rden <= bram_en;
-            o_bram_addr <= bram_addr;
-            o_data_rdy  <= data_rdy;
-            o_evnt_cfg  <= evnt_cfg;            
-        end if;
-    end process;
-
-    
-
+    -- Assign outputs
+    o_bram_rden <= bram_en;
+    o_bram_addr <= bram_addr;
+    o_data_rdy  <= data_rdy;
+    o_evnt_cfg  <= evnt_cfg;
 end architecture;

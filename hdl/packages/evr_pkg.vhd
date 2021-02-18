@@ -83,13 +83,12 @@ package evr_pkg is
   constant c_EVR_MAP_SECONDS_0         : natural := 0;
   -- From bit 0 to 95, the Pulse Generator related bits are located
   constant c_EVR_MAP_RST_PULSE_LOW     : natural := 0;
-  constant c_EVR_MAP_RST_PULSE_HIGH    : natural := 31;
+  constant c_EVR_MAP_RST_PULSE_HIGH    : natural := 15;
   constant c_EVR_MAP_SET_PULSE_LOW     : natural := 32;
-  constant c_EVR_MAP_SET_PULSE_HIGH    : natural := 63;
+  constant c_EVR_MAP_SET_PULSE_HIGH    : natural := 47;
   constant c_EVR_MAP_TRI_PULSE_LOW     : natural := 64;
-  constant c_EVR_MAP_TRI_PULSE_HIGH    : natural := 95;
+  constant c_EVR_MAP_TRI_PULSE_HIGH    : natural := 79;
   
-
   -- Records
 
   --!@name ts_regs
@@ -606,6 +605,50 @@ package evr_pkg is
         o_pulse       : out std_logic
     );
   end component;
+  
+  component bram_controller is
+    port (
+        --! Event clock (DC compensated) - use the same clock as the one used for the
+        --! port going to the BRAM in order to avoid CDC issues.
+        i_evnt_clk  : in std_logic;
+        --! Rx path reset is a good reset source for this module 
+        i_reset     : in std_logic;
+        --! Active Event code
+        i_evnt_rxd  : in event_code;
+        --! Data output from the BRAM module (unregistered)
+        i_bram_do   : in std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
+        --! Read enable line for the port connected to the controller
+        o_bram_rden   : out std_logic;
+        --! Address line for the port connected to the controller
+        o_bram_addr : out std_logic_vector(c_EVNT_MAP_ADDR_WIDTH-1 downto 0);
+        --! Flag indicating when a data word is ready to be read from the port
+        o_data_rdy  : out std_logic;
+        --! Data word linked to the event used for addressing - 3 cycles latency
+        o_evnt_cfg  : out std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0)        
+    );
+end component bram_controller;
+
+component evnt_dec_controller is
+    port (
+        --! Rx clock with DC
+        i_evnt_clk      : in std_logic;
+        --! Rx path reset
+        i_reset         : in std_logic;
+        --! Flag which indicates when a new valid configuration word is ready 
+        --! at i_evnt_cfg
+        i_evnt_rdy      : in std_logic;
+        --! Raw data word (128 bit) as it is read from the mapping RAM
+        i_evnt_cfg      : in std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
+        --! Control flags to trigger, reset or set each one of the Pulse Generators
+        o_pgen_map_reg  : out pgen_map_reg;
+        --! Control flags to activate internal functions
+        --! Each flag will be active for 1 clock period of the event clock, and it
+        --! relates to the event code received in the previous 2 cycles before:
+        --! 1 clock cycle for fetching the configuration from the RAM
+        --! 1 clock cycle to process it
+        o_int_func_reg  : out picoevr_int_func
+    );
+end component evnt_dec_controller;
 
   -- Legacy EVR constant definitions ------------------------------------------
 

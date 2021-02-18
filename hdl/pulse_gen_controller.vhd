@@ -72,8 +72,8 @@ begin
     -- Software Set & Reset are also available using the configuration register
     i_pgen_ctrl_generate : for I in 0 to g_PULSE_GEN_CNT-1 generate
         pgen_trigx(I)  <= i_pgen_ctrl_reg(I).control(1) and  i_pgen_map_reg.triggerx(I);
-        pgen_setx(I)   <= (i_pgen_ctrl_reg(I).control(2) and i_pgen_map_reg.setx(I))   or i_pgen_ctrl_reg(I).control(6);
-        pgen_resetx(I) <= (i_pgen_ctrl_reg(I).control(3) and i_pgen_map_reg.resetx(I)) or i_pgen_ctrl_reg(I).control(5);
+        pgen_setx(I)   <= (i_pgen_ctrl_reg(I).control(2) and i_pgen_map_reg.setxNrstx(I))   or i_pgen_ctrl_reg(I).control(6);
+        pgen_resetx(I) <= (i_pgen_ctrl_reg(I).control(3) and i_pgen_map_reg.setxNrstx(I)) or i_pgen_ctrl_reg(I).control(5);
     end generate;
 
     i_pgen_generate : for I in 0 to g_PULSE_GEN_CNT-1 generate
@@ -93,7 +93,5 @@ begin
 
     -- Extra register stage needed?
     o_pgen_pxout <= pgen_pxout;
-
-    
 
 end architecture;

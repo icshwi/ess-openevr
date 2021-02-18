@@ -115,7 +115,7 @@ architecture rtl of event_decoder is
         i_evnt_cfg      : in std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
 
         o_pgen_map_reg  : out pgen_map_reg;
-        o_int_func_reg  : out picoevr_int_func;
+        o_int_func_reg  : out picoevr_int_func
     );
     end component;
 
@@ -123,9 +123,9 @@ begin
 
     i_bram_ctrl : bram_controller
     port map (
-        i_evnt_clk  => i_evnt_clk,
+        i_evnt_clk  => i_event_clk,
         i_reset     => i_reset,
-        i_evnt_rxd  => i_evnt_rxd,
+        i_evnt_rxd  => i_event_rxd,
         i_bram_do   => i_bram_data,
         o_bram_rden => o_bram_rden,
         o_bram_addr => o_bram_addr,
@@ -135,12 +135,12 @@ begin
 
     i_evnt_ctrl : evnt_dec_controller
     port map (
-        i_evnt_clk      => i_evnt_clk,
+        i_evnt_clk      => i_event_clk,
         i_reset         => i_reset,
         i_evnt_rdy      => event_rdy,
         i_evnt_cfg      => evnt_cfg_word,
         o_pgen_map_reg  => o_pgen_map_reg,
-        o_int_func_reg  => o_int_func,
+        o_int_func_reg  => o_int_func
     );
 
 end architecture;
