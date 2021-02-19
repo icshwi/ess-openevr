@@ -58,6 +58,7 @@ package evr_pkg is
 
   -- Number of Pulse Generators that will be instantiated - MAX 32
   constant c_PULSE_GENS_CNT      : natural := 16;
+  constant c_PULSE_GENS_MAX      : natural := 32;
 
   -- Mapping RAM related constants ---------------
   
@@ -83,11 +84,11 @@ package evr_pkg is
   constant c_EVR_MAP_SECONDS_0         : natural := 0;
   -- From bit 0 to 95, the Pulse Generator related bits are located
   constant c_EVR_MAP_RST_PULSE_LOW     : natural := 0;
-  constant c_EVR_MAP_RST_PULSE_HIGH    : natural := 15;
+  constant c_EVR_MAP_RST_PULSE_HIGH    : natural := c_EVR_MAP_RST_PULSE_LOW + c_PULSE_GENS_MAX - (c_PULSE_GENS_MAX - c_PULSE_GENS_CNT) - 1;
   constant c_EVR_MAP_SET_PULSE_LOW     : natural := 32;
-  constant c_EVR_MAP_SET_PULSE_HIGH    : natural := 47;
+  constant c_EVR_MAP_SET_PULSE_HIGH    : natural := c_EVR_MAP_SET_PULSE_LOW + c_PULSE_GENS_MAX - (c_PULSE_GENS_MAX - c_PULSE_GENS_CNT) - 1;
   constant c_EVR_MAP_TRI_PULSE_LOW     : natural := 64;
-  constant c_EVR_MAP_TRI_PULSE_HIGH    : natural := 79;
+  constant c_EVR_MAP_TRI_PULSE_HIGH    : natural := c_EVR_MAP_TRI_PULSE_LOW + c_PULSE_GENS_MAX - (c_PULSE_GENS_MAX - c_PULSE_GENS_CNT) - 1;
   
   -- Records
 
