@@ -60,8 +60,10 @@ architecture Behavioral of bram_controller_tb is
       );
     end component blk_mem_gen_0;
 
-    constant c_CLK_PERIOD : time := 1 ns;
-    constant c_WAIT       : time := 10*c_CLK_PERIOD;
+    constant c_CLK_PERIOD      : time := 1 ns;
+    constant c_CFGWRD_LAT      : time := 2.5 * c_CLK_PERIOD;
+    constant c_EVNT_DECODE_LAT : time := 2   * c_CLK_PERIOD;
+    constant c_WAIT            : time := 10  * c_CLK_PERIOD;
 
     signal tb_clka, tb_clkb : std_logic := '0';
     signal tb_rst           : std_logic := '1';
@@ -135,47 +137,149 @@ begin
     );
     
     stimulus : process 
+        variable passed : boolean := true;
     begin
+        -- Start with reset asserted
         tb_rst <= '1';
+        -- Wait initial 100 ps for BRAM controller to initialise
+        wait for 100 ps;
+        
+        
         wait for c_CLK_PERIOD * 2;
         tb_rst <= '0';
         wait for c_CLK_PERIOD * 2;
         wait for c_WAIT;
         
-        -- T1
+        -- Test 1: Receive event 0x0A and check correct configuration codeword is returned from the BRAM.
+        --         Also check that the event decode controller parses the trigger bits correctly
+        report "BRAM Controller - TEST1: (0x0A) Check for correct cfg word and trigger bit parsing" severity note;
         event_rxd <= x"0A";
         wait for c_CLK_PERIOD;
         event_rxd <= c_EVENT_NULL;
+        wait for c_CFGWRD_LAT - c_CLK_PERIOD;
+        
+        assert event_cfg_word =  x"00000000000000010000000000000000" report "BRAM Controller - TEST1: (0x0A) FAILED: Incorrect cfg codeword returned" severity error;
+        assert event_cfg_word /= x"00000000000000010000000000000000" report "BRAM Controller - TEST1: (0x0A) PASSED: Correct cfg codeword returned" severity note;
+        wait for c_EVNT_DECODE_LAT;
+        assert ((pgen_ctrl_reg.triggerx  =  x"0001") and (pgen_ctrl_reg.setxNrstx  = x"0000")) report "BRAM Controller - TEST1: (0x0A) FAILED: - Event decode controller parsing failure" severity error;
+        assert ((pgen_ctrl_reg.triggerx /=  x"0001") and (pgen_ctrl_reg.setxNrstx /= x"0000")) report "BRAM Controller - TEST1: (0x0A) PASSED: Event decode controller parsed correctly" severity note;
         wait for c_WAIT;
         
-        -- T2
+        -- Test 2: Receive event 0x0B followed by NULL followed by 0x0C on consecutive clock cycles. 
+        --         Check correct configuration codewords are returned from the BRAM.
+        --         Also check that the event decode controller sets/resets the bits correctly 
+        report "BRAM Controller - TEST2: (0x0B -> NULL -> 0x0C) Check for correct cfg word and event parsing" severity note;
         event_rxd <= x"0B";
         wait for c_CLK_PERIOD;
         event_rxd <= c_EVENT_NULL;
-        wait for 10*c_CLK_PERIOD;
-        event_rxd <= x"0C";
         wait for c_CLK_PERIOD;
+        event_rxd <= x"0C";
+        wait for c_CFGWRD_LAT - 1.5 * c_CLK_PERIOD;
+        
+        -- Check for correct codeword for event 0x0B 
+        assert event_cfg_word =  x"00000000000000000000002000000000" report "BRAM Controller - TEST2: (0x0B) FAILED: Incorrect cfg codeword returned" severity error;
+        assert event_cfg_word /= x"00000000000000000000002000000000" report "BRAM Controller - TEST2: (0x0B) PASSED: Correct cfg codeword returned" severity note;
+        -- Event NULL
         event_rxd <= c_EVENT_NULL;
+        wait for c_CLK_PERIOD;
+        -- Check for correct codeword for event NULL
+        assert event_cfg_word =  x"00000000000000000000000000000000" report "BRAM Controller - TEST2: (NULL) FAILED: Incorrect cfg codeword returned" severity error;
+        assert event_cfg_word /= x"00000000000000000000000000000000" report "BRAM Controller - TEST2: (NULL) PASSED: Correct cfg codeword returned" severity note;
+        wait for c_CLK_PERIOD;
+        -- Check for correct codeword for event 0x0C 
+        assert event_cfg_word =  x"00000000000000000000000000000020" report "BRAM Controller - TEST2: (0x0C) FAILED: Incorrect cfg codeword returned" severity error;
+        assert event_cfg_word /= x"00000000000000000000000000000020" report "BRAM Controller - TEST2: (0x0C) PASSED: Correct cfg codeword returned" severity note;
+        -- Check for event decode controller parsing of codeword for event 0x0B - set bit for pulsegen 5 
+        assert ((pgen_ctrl_reg.triggerx  =  x"0000") and (pgen_ctrl_reg.setxNrstx  = x"0020")) report "BRAM Controller - TEST2: (0x0B) FAILED: - Event decode controller parsing failure" severity error;
+        assert ((pgen_ctrl_reg.triggerx /=  x"0000") and (pgen_ctrl_reg.setxNrstx /= x"0020")) report "BRAM Controller - TEST2: (0x0B) PASSED: Event decode controller parsed correctly" severity note;
+        wait for c_CLK_PERIOD;
+        -- Check Pulsegen5 is still set
+        assert ((pgen_ctrl_reg.triggerx  =  x"0000") and (pgen_ctrl_reg.setxNrstx  = x"0020")) report "BRAM Controller - TEST2: (NULL) FAILED: - Event decode bits changed" severity error;
+        assert ((pgen_ctrl_reg.triggerx /=  x"0000") and (pgen_ctrl_reg.setxNrstx /= x"0020")) report "BRAM Controller - TEST2: (NULL) PASSED: Event decode bits unchanged" severity note;
+        wait for c_CLK_PERIOD;
+        -- Check for event decode controller parsing of codeword for event 0x0C - reset bit for pulsegen 5
+        assert ((pgen_ctrl_reg.triggerx  =  x"0000") and (pgen_ctrl_reg.setxNrstx  = x"0000")) report "BRAM Controller - TEST2: (0x0C) FAILED: - Event decode controller parsing failure" severity error;
+        assert ((pgen_ctrl_reg.triggerx /=  x"0000") and (pgen_ctrl_reg.setxNrstx /= x"0000")) report "BRAM Controller - TEST2: (0x0C) PASSED: Event decode controller parsed correctly" severity note;
+        
         wait for c_WAIT; 
         
-        -- T3
+        -- Test 3: Receive event 0x0B followed by 0x0C on consecutive clock cycles. 
+        --         Check correct configuration codewords are returned from the BRAM.
+        --         Also check that the event decode controller sets/resets the bits correctly 
+        report "BRAM Controller - TEST3: (0x0B -> 0x0C -> NULL) Check for correct cfg word and event parsing" severity note;
         event_rxd <= x"0B";
         wait for c_CLK_PERIOD;
         event_rxd <= x"0C";
         wait for c_CLK_PERIOD;
         event_rxd <= c_EVENT_NULL;
+        wait for c_CFGWRD_LAT - 1.5 * c_CLK_PERIOD;
+        
+        -- Check for correct codeword for event 0x0B 
+        assert event_cfg_word =  x"00000000000000000000002000000000" report "BRAM Controller - TEST3: (0x0B) FAILED: Incorrect cfg codeword returned" severity error;
+        assert event_cfg_word /= x"00000000000000000000002000000000" report "BRAM Controller - TEST3: (0x0B) PASSED: Correct cfg codeword returned" severity note;
+        wait for c_CLK_PERIOD;
+
+        -- Check for correct codeword for event 0x0C 
+        assert event_cfg_word =  x"00000000000000000000000000000020" report "BRAM Controller - TEST3: (0x0C) FAILED: Incorrect cfg codeword returned" severity error;
+        assert event_cfg_word /= x"00000000000000000000000000000020" report "BRAM Controller - TEST3: (0x0C) PASSED: Correct cfg codeword returned" severity note;
+        wait for c_CLK_PERIOD;
+        
+        -- Check for correct codeword (returned to NULL)
+        assert event_cfg_word =  x"00000000000000000000000000000000" report "BRAM Controller - TEST3: (NULL) FAILED: Incorrect cfg codeword returned" severity error;
+        assert event_cfg_word /= x"00000000000000000000000000000000" report "BRAM Controller - TEST3: (NULL) PASSED: Correct cfg codeword returned" severity note;
+        -- Check for event decode controller parsing of codeword for event 0x0B - set bit for pulsegen 5 
+        assert ((pgen_ctrl_reg.triggerx  =  x"0000") and (pgen_ctrl_reg.setxNrstx  = x"0020")) report "BRAM Controller - TEST3: (0x0B) FAILED: Event decode controller parsing failure" severity error;
+        assert ((pgen_ctrl_reg.triggerx /=  x"0000") and (pgen_ctrl_reg.setxNrstx /= x"0020")) report "BRAM Controller - TEST3: (0x0B) PASSED: Event decode controller parsed correctly" severity note;
+        wait for c_CLK_PERIOD;
+        
+        -- Check for event decode controller parsing of codeword for event 0x0C - reset bit for pulsegen 5
+        assert ((pgen_ctrl_reg.triggerx  =  x"0000") and (pgen_ctrl_reg.setxNrstx  = x"0000")) report "BRAM Controller - TEST3: (0x0C) FAILED: Event decode controller parsing failure" severity error;
+        assert ((pgen_ctrl_reg.triggerx /=  x"0000") and (pgen_ctrl_reg.setxNrstx /= x"0000")) report "BRAM Controller - TEST3: (0x0C) PASSED: Event decode controller parsed correctly" severity note;
+        
         wait for c_WAIT; 
         
-        -- T4
+        -- Test 4: Receive event 0x0A followed by 0x0B and 0x0C on consecutive clock cycles. 
+        --         Check correct configuration codewords are returned from the BRAM.
+        --         Also check that the event decode controller sets/resets the bits correctly 
+        report "BRAM Controller - TEST4: (0x0A -> 0x0B -> 0x0C -> NULL) Check for correct cfg word and event parsing" severity note;
         event_rxd <= x"0A";
         wait for c_CLK_PERIOD;
         event_rxd <= x"0B";
         wait for c_CLK_PERIOD;
         event_rxd <= x"0C";
-        wait for c_CLK_PERIOD;
-        event_rxd <= c_EVENT_NULL;
-        wait for c_WAIT; 
+        wait for c_CFGWRD_LAT - 1.5 * c_CLK_PERIOD;
         
+        event_rxd <= c_EVENT_NULL;
+        assert event_cfg_word =  x"00000000000000010000000000000000" report "BRAM Controller - TEST4: (0x0A) FAILED: Incorrect cfg codeword returned" severity error;
+        assert event_cfg_word /= x"00000000000000010000000000000000" report "BRAM Controller - TEST4: (0x0A) PASSED: Correct cfg codeword returned" severity note;
+        wait for c_CLK_PERIOD;
+
+        -- Check for correct codeword for event 0x0B 
+        assert event_cfg_word =  x"00000000000000000000002000000000" report "BRAM Controller - TEST4: (0x0B) FAILED: Incorrect cfg codeword returned" severity error;
+        assert event_cfg_word /= x"00000000000000000000002000000000" report "BRAM Controller - TEST4: (0x0B) PASSED: Correct cfg codeword returned" severity note;
+        wait for c_CLK_PERIOD;
+
+        -- Check for correct codeword for event 0x0C 
+        assert event_cfg_word =  x"00000000000000000000000000000020" report "BRAM Controller - TEST4: (0x0C) FAILED: Incorrect cfg codeword returned" severity error;
+        assert event_cfg_word /= x"00000000000000000000000000000020" report "BRAM Controller - TEST4: (0x0C) PASSED: Correct cfg codeword returned" severity note;
+        assert ((pgen_ctrl_reg.triggerx /=  x"0001") and (pgen_ctrl_reg.setxNrstx /= x"0000")) report "BRAM Controller - TEST4: (0x0A) PASSED: Event decode controller parsed correctly" severity note;
+        assert ((pgen_ctrl_reg.triggerx  =  x"0001") and (pgen_ctrl_reg.setxNrstx  = x"0000")) report "BRAM Controller - TEST4: (0x0A) FAILED: Event decode controller parsing failure" severity error;
+        wait for c_CLK_PERIOD;
+        
+        -- Check for correct codeword (returned to NULL)
+        assert event_cfg_word =  x"00000000000000000000000000000000" report "BRAM Controller - TEST4: (NULL) FAILED: Incorrect cfg codeword returned" severity error;
+        assert event_cfg_word /= x"00000000000000000000000000000000" report "BRAM Controller - TEST4: (NULL) PASSED: Correct cfg codeword returned" severity note;
+        -- Check for event decode controller parsing of codeword for event 0x0B - set bit for pulsegen 5 
+        assert ((pgen_ctrl_reg.triggerx =  x"0000") and (pgen_ctrl_reg.setxNrstx = x"0020")) report "BRAM Controller - TEST4: (0x0B) FAILED: Event decode controller parsing failure" severity error;
+        assert ((pgen_ctrl_reg.triggerx /=  x"0000") and (pgen_ctrl_reg.setxNrstx /= x"0020"))report "BRAM Controller - TEST4: (0x0B) PASSED: Event decode controller parsed correctly" severity note;
+        wait for c_CLK_PERIOD;
+        
+        -- Check for event decode controller parsing of codeword for event 0x0C - reset bit for pulsegen 5
+        assert ((pgen_ctrl_reg.triggerx =  x"0000") and (pgen_ctrl_reg.setxNrstx = x"0000")) report "BRAM Controller - TEST4: (0x0C) FAILED: Event decode controller parsing failure" severity error;
+        assert ((pgen_ctrl_reg.triggerx /=  x"0000") and (pgen_ctrl_reg.setxNrstx /= x"0000"))report "BRAM Controller - TEST4: (0x0C) PASSED: Event decode controller parsed correctly" severity note;
+        
+        wait for c_WAIT; 
+ 
         sim_end := true;
         wait;
     end process stimulus;

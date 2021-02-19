@@ -1,0 +1,11 @@
+vhdl xil_defaultlib  \
+"srcs/blk_mem_gen_0_sim_netlist.vhdl" \
+
+vhdl work  \
+"../../hdl/packages/sizing.vhd" \
+"../../hdl/packages/evr_pkg.vhd" \
+"../../hdl/bram_controller.vhd" \
+"../../hdl/evnt_dec_controller.vhd" \
+"../../hdl/testbenches/bram_controller_tb.vhd" \
+
+nosort

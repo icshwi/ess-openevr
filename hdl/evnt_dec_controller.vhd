@@ -88,7 +88,7 @@ entity evnt_dec_controller is
         i_evnt_rdy      : in std_logic;
         --! Raw data word (128 bit) as it is read from the mapping RAM
         i_evnt_cfg      : in std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
-        --! Control flags to trigger, reset ostd_logic_vectorr set each one of the Pulse Generators
+        --! Control flags to trigger, reset or set each one of the Pulse Generators
         o_pgen_map_reg  : out pgen_map_reg;
         --! Control flags to activate internal functions
         --! Each flag will be active for 1 clock period of the event clock, and it
