@@ -287,7 +287,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>625e7e42</spirit:value>
+            <spirit:value>2877fbe0</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -309,7 +309,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>625e7e42</spirit:value>
+            <spirit:value>2877fbe0</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -735,7 +735,24 @@
         </spirit:wire>
       </spirit:port>
       <spirit:port>
-        <spirit:name>i_evnt_map_data</spirit:name>
+        <spirit:name>i_evnt_map0_data</spirit:name>
+        <spirit:wire>
+          <spirit:direction>in</spirit:direction>
+          <spirit:vector>
+            <spirit:left spirit:format="long">127</spirit:left>
+            <spirit:right spirit:format="long">0</spirit:right>
+          </spirit:vector>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>std_logic_vector</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+      <spirit:port>
+        <spirit:name>i_evnt_map1_data</spirit:name>
         <spirit:wire>
           <spirit:direction>in</spirit:direction>
           <spirit:vector>
@@ -1263,6 +1280,10 @@
         <spirit:logicalName>work</spirit:logicalName>
       </spirit:file>
       <spirit:file>
+        <spirit:name>hdl/bram_controller.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+      </spirit:file>
+      <spirit:file>
         <spirit:name>hdl/buf_bsram.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>work</spirit:logicalName>
@@ -1306,6 +1327,14 @@
         <spirit:name>hdl/packages/register_bank_functions_pkg.vhdl</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>work</spirit:logicalName>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>hdl/event_decoder.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>hdl/evnt_dec_controller.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/evr_dc.vhd</spirit:name>
@@ -1443,6 +1472,10 @@
         <spirit:logicalName>work</spirit:logicalName>
       </spirit:file>
       <spirit:file>
+        <spirit:name>hdl/bram_controller.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+      </spirit:file>
+      <spirit:file>
         <spirit:name>hdl/buf_bsram.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>work</spirit:logicalName>
@@ -1486,6 +1519,14 @@
         <spirit:name>hdl/packages/register_bank_functions_pkg.vhdl</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>work</spirit:logicalName>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>hdl/event_decoder.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>hdl/evnt_dec_controller.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/evr_dc.vhd</spirit:name>

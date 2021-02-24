@@ -13,7 +13,7 @@
 --! @author Ross Elliot <ross.elliot@ess.eu>
 --!
 --! @date 20200421
---! @version 0.6
+--! @version 0.7
 --!
 --! Company: European Spallation Source ERIC \n
 --! Platform: picoZED 7030 \n
@@ -96,8 +96,10 @@ entity ess_evr_top is
     o_evnt_map_addr    : out std_logic_vector(c_EVNT_MAP_ADDR_WIDTH-1 downto 0);
     --! Data out port (shared)
     o_evnt_map_data    : out std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
-    --! Data in port (shared)
-    i_evnt_map_data    : in  std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
+    --! Data in port (Block RAM 0)
+    i_evnt_map0_data    : in  std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
+    --! Data in port (Block RAM 1)
+    i_evnt_map1_data    : in  std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
     --! Write enable port (shared)
     o_evnt_map_wren    : out std_logic;
     --! Enable line for the Block RAM 0
@@ -210,8 +212,23 @@ architecture rtl of ess_evr_top is
   signal hb_mon_cnt : unsigned(c_HEARTBEAT_CNT_SIZE-1 downto 0);
   attribute mark_debug of hb_mon_cnt : signal is "true";
 
+  ----------- mapping RAM signals ---------
+
+  -- Local BRAM read enable
+  signal bram_rden : std_logic := '0';
+  -- Data input from the active BRAM
+  signal evnt_map_data : std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0) := (others => '0');
+  -- Rx event delayed to match the latency of the event decoder logic
+  signal event_rxd_delayed : event_code := (others => '0');
+  -- Internal flags mapping 1 position -> 1 event code
+  -- Each module of the picoEVR that is activated after the arrival of a
+  -- particular event code, should read a flag from this record instead the
+  -- event_rxd feed.
+  -- This signals are matched with the event code stored in event_rxd_delayed.
+  signal picoevr_functions : picoevr_int_func := (others => '0');
+
   ------------ Pulse generators -----------
-  --! Array to hold the control register of each instance of pulse generator
+  -- Array to hold the control register of each instance of pulse generator
   signal pulse_gen_ctrl_reg : pgen_ctrl_regs;
   signal pulse_gen_map_reg  : pgen_map_reg;
   signal pulse_gen_pxout    : std_logic_vector(c_PULSE_GENS_CNT-1 downto 0);
@@ -425,11 +442,11 @@ begin
 
   o_EVR_EVENT_CLK <= event_clk;
 
-  i_standalone : standalone
-    port map (
-      i_gt_refclk   => refclk,
-      o_event_tx    => event_txd
-    );
+--  i_standalone : standalone
+--    port map (
+--      i_gt_refclk   => refclk,
+--      o_event_tx    => event_txd
+--    );
 
   databuf_dc : databuf_rx_dc
     port map (
@@ -461,6 +478,31 @@ begin
   dbus_txd <= X"00";
   databuf_txd <= X"00";
   databuf_tx_k <= '0';
+
+  i_event_decoder : event_decoder
+  port map (
+    i_ref_clk      => refclk, -- not yet used
+    i_event_clk    => event_clk,
+    i_reset        => gt0_resets.gbl_async,
+    i_enable       => evr_ctrl.map_en,
+    o_bram_addr    => o_evnt_map_addr,
+    o_bram_data    => open, -- not yet used
+    i_bram_data    => evnt_map_data,
+    o_bram_rden    => bram_rden,
+    i_event_rxd    => event_rxd,
+    o_event_rxd    => event_rxd_delayed,
+    o_int_func     => picoevr_functions,
+    o_pgen_map_reg => pulse_gen_map_reg
+  );
+
+  -- Drive the data input port from the active BRAM
+  evnt_map_data <= i_evnt_map0_data when evr_ctrl.map_rs = '0' else i_evnt_map1_data;
+
+  -- Only one external BRAM is enabled at a time, controlled by SW
+  o_evnt_map0_en <= bram_rden when evr_ctrl.map_rs = '0' else '0';
+  o_evnt_map1_en <= bram_rden when evr_ctrl.map_rs = '1' else '0';
+  -- No write support from the logic side to the mapping RAM
+  o_evnt_map_wren <= '0';
 
   i_heartbeat_mon : heartbeat_mon
     generic map (
@@ -666,55 +708,55 @@ begin
         pulse_gen_ctrl_reg(15).width   <= logic_read_data_t.Pulse15Width;
 
         -- Read back
-        logic_return_t_0.Pulse0Ctrl   <= x"0000" & pulse_gen_pxout(0) & logic_read_data_t.Pulse0Ctrl(6 downto 0);
+        logic_return_t_0.Pulse0Ctrl   <= x"000000" & pulse_gen_pxout(0) & logic_read_data_t.Pulse0Ctrl(6 downto 0);
         logic_return_t_0.Pulse0Delay  <= logic_read_data_t.Pulse0Delay;
         logic_return_t_0.Pulse0Width  <= logic_read_data_t.Pulse0Width;
-        logic_return_t_0.Pulse1Ctrl   <= x"0000" & pulse_gen_pxout(1) & logic_read_data_t.Pulse1Ctrl(6 downto 0);
+        logic_return_t_0.Pulse1Ctrl   <= x"000000" & pulse_gen_pxout(1) & logic_read_data_t.Pulse1Ctrl(6 downto 0);
         logic_return_t_0.Pulse1Delay  <= logic_read_data_t.Pulse1Delay;
         logic_return_t_0.Pulse1Width  <= logic_read_data_t.Pulse1Width;
-        logic_return_t_0.Pulse2Ctrl   <= x"0000" & pulse_gen_pxout(2) & logic_read_data_t.Pulse2Ctrl(6 downto 0);
+        logic_return_t_0.Pulse2Ctrl   <= x"000000" & pulse_gen_pxout(2) & logic_read_data_t.Pulse2Ctrl(6 downto 0);
         logic_return_t_0.Pulse2Delay  <= logic_read_data_t.Pulse2Delay;
         logic_return_t_0.Pulse2Width  <= logic_read_data_t.Pulse2Width;
-        logic_return_t_0.Pulse3Ctrl   <= x"0000" & pulse_gen_pxout(3) & logic_read_data_t.Pulse3Ctrl(6 downto 0);
+        logic_return_t_0.Pulse3Ctrl   <= x"000000" & pulse_gen_pxout(3) & logic_read_data_t.Pulse3Ctrl(6 downto 0);
         logic_return_t_0.Pulse3Delay  <= logic_read_data_t.Pulse3Delay;
         logic_return_t_0.Pulse3Width  <= logic_read_data_t.Pulse3Width;
 
-        logic_return_t_0.Pulse4Ctrl   <= x"0000" & pulse_gen_pxout(4) & logic_read_data_t.Pulse4Ctrl(6 downto 0);
+        logic_return_t_0.Pulse4Ctrl   <= x"000000" & pulse_gen_pxout(4) & logic_read_data_t.Pulse4Ctrl(6 downto 0);
         logic_return_t_0.Pulse4Delay  <= logic_read_data_t.Pulse4Delay;
         logic_return_t_0.Pulse4Width  <= logic_read_data_t.Pulse4Width;
-        logic_return_t_0.Pulse5Ctrl   <= x"0000" & pulse_gen_pxout(5) & logic_read_data_t.Pulse5Ctrl(6 downto 0);
+        logic_return_t_0.Pulse5Ctrl   <= x"000000" & pulse_gen_pxout(5) & logic_read_data_t.Pulse5Ctrl(6 downto 0);
         logic_return_t_0.Pulse5Delay  <= logic_read_data_t.Pulse5Delay;
         logic_return_t_0.Pulse5Width  <= logic_read_data_t.Pulse5Width;
-        logic_return_t_0.Pulse6Ctrl   <= x"0000" & pulse_gen_pxout(6) & logic_read_data_t.Pulse6Ctrl(6 downto 0);
+        logic_return_t_0.Pulse6Ctrl   <= x"000000" & pulse_gen_pxout(6) & logic_read_data_t.Pulse6Ctrl(6 downto 0);
         logic_return_t_0.Pulse6Delay  <= logic_read_data_t.Pulse6Delay;
         logic_return_t_0.Pulse6Width  <= logic_read_data_t.Pulse6Width;
-        logic_return_t_0.Pulse7Ctrl   <= x"0000" & pulse_gen_pxout(7) & logic_read_data_t.Pulse7Ctrl(6 downto 0);
+        logic_return_t_0.Pulse7Ctrl   <= x"000000" & pulse_gen_pxout(7) & logic_read_data_t.Pulse7Ctrl(6 downto 0);
         logic_return_t_0.Pulse7Delay  <= logic_read_data_t.Pulse7Delay;
         logic_return_t_0.Pulse7Width  <= logic_read_data_t.Pulse7Width;
 
-        logic_return_t_0.Pulse8Ctrl   <= x"0000" & pulse_gen_pxout(8) & logic_read_data_t.Pulse8Ctrl(6 downto 0);
+        logic_return_t_0.Pulse8Ctrl   <= x"000000" & pulse_gen_pxout(8) & logic_read_data_t.Pulse8Ctrl(6 downto 0);
         logic_return_t_0.Pulse8Delay  <= logic_read_data_t.Pulse8Delay;
         logic_return_t_0.Pulse8Width  <= logic_read_data_t.Pulse8Width;
-        logic_return_t_0.Pulse9Ctrl   <= x"0000" & pulse_gen_pxout(9) & logic_read_data_t.Pulse9Ctrl(6 downto 0);
+        logic_return_t_0.Pulse9Ctrl   <= x"000000" & pulse_gen_pxout(9) & logic_read_data_t.Pulse9Ctrl(6 downto 0);
         logic_return_t_0.Pulse9Delay  <= logic_read_data_t.Pulse9Delay;
         logic_return_t_0.Pulse9Width  <= logic_read_data_t.Pulse9Width;
-        logic_return_t_0.Pulse10Ctrl   <= x"0000" & pulse_gen_pxout(10) & logic_read_data_t.Pulse10Ctrl(6 downto 0);
+        logic_return_t_0.Pulse10Ctrl  <= x"000000" & pulse_gen_pxout(10) & logic_read_data_t.Pulse10Ctrl(6 downto 0);
         logic_return_t_0.Pulse10Delay <= logic_read_data_t.Pulse10Delay;
         logic_return_t_0.Pulse10Width <= logic_read_data_t.Pulse10Width;
-        logic_return_t_0.Pulse11Ctrl   <= x"0000" & pulse_gen_pxout(11) & logic_read_data_t.Pulse11Ctrl(6 downto 0);
+        logic_return_t_0.Pulse11Ctrl  <= x"000000" & pulse_gen_pxout(11) & logic_read_data_t.Pulse11Ctrl(6 downto 0);
         logic_return_t_0.Pulse11Delay <= logic_read_data_t.Pulse11Delay;
         logic_return_t_0.Pulse11Width <= logic_read_data_t.Pulse11Width;
 
-        logic_return_t_0.Pulse12Ctrl   <= x"0000" & pulse_gen_pxout(12) & logic_read_data_t.Pulse12Ctrl(6 downto 0);
+        logic_return_t_0.Pulse12Ctrl  <= x"000000" & pulse_gen_pxout(12) & logic_read_data_t.Pulse12Ctrl(6 downto 0);
         logic_return_t_0.Pulse12Delay <= logic_read_data_t.Pulse12Delay;
         logic_return_t_0.Pulse12Width <= logic_read_data_t.Pulse12Width;
-        logic_return_t_0.Pulse13Ctrl   <= x"0000" & pulse_gen_pxout(13) & logic_read_data_t.Pulse13Ctrl(6 downto 0);
+        logic_return_t_0.Pulse13Ctrl  <= x"000000" & pulse_gen_pxout(13) & logic_read_data_t.Pulse13Ctrl(6 downto 0);
         logic_return_t_0.Pulse13Delay <= logic_read_data_t.Pulse13Delay;
         logic_return_t_0.Pulse13Width <= logic_read_data_t.Pulse13Width;
-        logic_return_t_0.Pulse14Ctrl   <= x"0000" & pulse_gen_pxout(14) & logic_read_data_t.Pulse14Ctrl(6 downto 0);
+        logic_return_t_0.Pulse14Ctrl  <= x"000000" & pulse_gen_pxout(14) & logic_read_data_t.Pulse14Ctrl(6 downto 0);
         logic_return_t_0.Pulse14Delay <= logic_read_data_t.Pulse14Delay;
         logic_return_t_0.Pulse14Width <= logic_read_data_t.Pulse14Width;
-        logic_return_t_0.Pulse15Ctrl   <= x"0000" & pulse_gen_pxout(15) & logic_read_data_t.Pulse15Ctrl(6 downto 0);
+        logic_return_t_0.Pulse15Ctrl  <= x"000000" & pulse_gen_pxout(15) & logic_read_data_t.Pulse15Ctrl(6 downto 0);
         logic_return_t_0.Pulse15Delay <= logic_read_data_t.Pulse15Delay;
         logic_return_t_0.Pulse15Width <= logic_read_data_t.Pulse15Width;
 
@@ -806,7 +848,6 @@ begin
                     pulse_gen_pxout(13)   when x"000D",
                     pulse_gen_pxout(14)   when x"000E",
                     pulse_gen_pxout(15)   when x"000F",
-                    pulse_gen_pxout(16)   when x"0010",
                     event_clk             when x"003B",
                    '1'                    when x"003E",
                    '0'                    when x"003F",

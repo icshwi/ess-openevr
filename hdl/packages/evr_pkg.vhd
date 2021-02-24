@@ -61,8 +61,8 @@ package evr_pkg is
   constant c_PULSE_GENS_MAX      : natural := 32;
 
   -- Mapping RAM related constants ---------------
-  
-  -- The field "Internal functions" inside the mapping RAM allows 
+
+  -- The field "Internal functions" inside the mapping RAM allows
   -- translating event codes into actions. Each valid event code
   -- (codes from 0x1 to 0xFF) includes this field into the mapping
   -- RAM entry.
@@ -180,7 +180,7 @@ package evr_pkg is
   --!@{
   type picoevr_int_func is record
     evnttofifo  : std_logic; --! Save event in FIFO - map bit 127
-    latchts     : std_logic; --! Latch timestamp - map bit 126 
+    latchts     : std_logic; --! Latch timestamp - map bit 126
     ledevnt     : std_logic; --! Led event - map bit 125
     fwdevnt     : std_logic; --! Forward event from RX to TX - map bit 124
     stopevntlog : std_logic; --! Stop event log - map bit 123
@@ -191,7 +191,7 @@ package evr_pkg is
     tsclkevnt   : std_logic; --! Timestamp clock event (TS counter increment) - map bit 98
     secsshift1  : std_logic; --! Seconds shift register '1' - map bit 97
     secsshift0  : std_logic; --! Seconds shift register '0' - map bit 96
-  end record picoevr_int_func; 
+  end record picoevr_int_func;
   --!@}
 
   -- Custom types and arrays
@@ -551,8 +551,8 @@ package evr_pkg is
       i_target_evnt   : in event_code;
       --! Heartbeat timeout flag.
       o_heartbeat_ov  : out std_logic;
-      --! Missed heartbeat counter. Increases every time 0x7A wasn't 
-      --! received on time 
+      --! Missed heartbeat counter. Increases every time 0x7A wasn't
+      --! received on time
       o_heartbeat_ov_cnt : out unsigned(c_HEARTBEAT_CNT_SIZE-1 downto 0)
   );
   end component;
@@ -594,7 +594,7 @@ package evr_pkg is
         --! Output polarity : LOW -> Normal polarity | HIGH -> Inverted polarity
         --!                   Affects the output value always but when i_enable = '0'.
         i_polarity    : in std_logic;
-        --! Delay value : Value for the delay counter. 
+        --! Delay value : Value for the delay counter.
         --!               This value relates to the amount of time the output is set to LOW
         --!               level after a rising edge on the trigger signal was received.
         i_delay_val   : in std_logic_vector(31 downto 0);
@@ -606,13 +606,13 @@ package evr_pkg is
         o_pulse       : out std_logic
     );
   end component;
-  
+
   component bram_controller is
     port (
         --! Event clock (DC compensated) - use the same clock as the one used for the
         --! port going to the BRAM in order to avoid CDC issues.
         i_evnt_clk  : in std_logic;
-        --! Rx path reset is a good reset source for this module 
+        --! Rx path reset is a good reset source for this module
         i_reset     : in std_logic;
         --! Active Event code
         i_evnt_rxd  : in event_code;
@@ -625,7 +625,7 @@ package evr_pkg is
         --! Flag indicating when a data word is ready to be read from the port
         o_data_rdy  : out std_logic;
         --! Data word linked to the event used for addressing - 3 cycles latency
-        o_evnt_cfg  : out std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0)        
+        o_evnt_cfg  : out std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0)
     );
 end component bram_controller;
 
@@ -635,7 +635,7 @@ component evnt_dec_controller is
         i_evnt_clk      : in std_logic;
         --! Rx path reset
         i_reset         : in std_logic;
-        --! Flag which indicates when a new valid configuration word is ready 
+        --! Flag which indicates when a new valid configuration word is ready
         --! at i_evnt_cfg
         i_evnt_rdy      : in std_logic;
         --! Raw data word (128 bit) as it is read from the mapping RAM
@@ -650,6 +650,24 @@ component evnt_dec_controller is
         o_int_func_reg  : out picoevr_int_func
     );
 end component evnt_dec_controller;
+
+component event_decoder
+port (
+  i_ref_clk      : in  std_logic;
+  i_event_clk    : in  std_logic;
+  i_reset        : in  std_logic;
+  i_enable       : in  std_logic;
+  o_bram_addr    : out std_logic_vector(c_EVNT_MAP_ADDR_WIDTH-1 downto 0);
+  o_bram_data    : out std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
+  i_bram_data    : in  std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
+  o_bram_rden    : out std_logic;
+  i_event_rxd    : in  event_code;
+  o_event_rxd    : out event_code;
+  o_int_func     : out picoevr_int_func;
+  o_pgen_map_reg : out pgen_map_reg
+);
+end component event_decoder;
+
 
   -- Legacy EVR constant definitions ------------------------------------------
 
