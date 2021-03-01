@@ -30,19 +30,26 @@ SOURCES = $(SRC_PATH)/packages/sizing.vhd \
           $(SRC_PATH)/packages/evr_pkg.vhd \
           $(SRC_PATH)/heartbeat_mon.vhd \
           $(TB_PATH)/heartbeat_mon_tb.vhd \
+          $(SRC_PATH)/pulse_gen.vhd \
+          $(TB_PATH)/pulse_gen_tb.vhd \
+          $(SRC_PATH)/pulse_gen_controller.vhd \
+          $(TB_PATH)/pulse_gen_controller_tb.vhd \
           $(SRC_PATH)/packages/register_bank_config_pkg.vhdl \
           $(SRC_PATH)/interrupt_ctrl.vhd \
           $(TB_PATH)/interrupt_tb.vhd
 
 TB1 = heartbeat_mon_tb
-TB3 = interrupt_tb
+TB2 = pulse_gen_tb
+TB3 = pulse_gen_controller_tb
+TB4 = interrupt_tb
 
-TESTBENCHES = $(TB1) $(TB3)
+
+TESTBENCHES = $(TB1) $(TB2) $(TB3) $(TB4) $(TESTBENCHES)
 
 # Targets
-.PHONY: all clean opendoc run_sim $(TESTBENCHES)
+.PHONY: all clean opendoc run_sim
 
-all: doc opendoc
+all: graphs doc opendoc
 
 doc: $(DOC_OUTDIR)/index.html
 
@@ -62,6 +69,11 @@ define DO_TB
 endef
 
 # Documentation rules
+
+graphs: $(GRAPH_OBJ)
+
+$(GRAPH_OBJ): $(GRAPH_SRC)
+	dot -Tpng $^ -o $@ 
 
 $(DOC_OUTDIR)/index.html: $(DOXYGEN_FILE) $(DOC_SOURCES)
 	@echo "\033[1;92mBuilding: $@\033[0m"

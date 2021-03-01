@@ -20,36 +20,75 @@ use work.register_bank_config.all;
 
 package evr_pkg is
 
---!@name Global definitions
---!@{
+  --!@name Global definitions
+  --!@{
 
---! System clock period (ns)
-constant g_SYS_CLK_PERIOD    : integer := 10;
+  --! System clock period (ns)
+  constant g_SYS_CLK_PERIOD    : integer := 10;
 
---!@}
+  --!@}
 
-type integer_array is array (integer range <>) of integer;
+  type integer_array is array (integer range <>) of integer;
 
--- picoEVR constant definitions ---------------------------------------------
+  -- picoEVR constant definitions ---------------------------------------------
 
---! ESS Timing systems runs at 88.0525 MHz
-constant c_EVENT_RATE           : natural := 88052500;
---! Heartbeat rate - 1.6 s approx
-constant c_HEARTBEAT_TIMEOUT    : natural := 140884000;
---! Size of the missed heartbeat events counter - Up to 256 missed events
-constant c_HEARTBEAT_CNT_SIZE   : natural := 8;
+  --! ESS Timing systems runs at 88.0525 MHz
+  constant c_EVENT_RATE           : natural := 88052500;
+  --! Heartbeat rate - 1.6 s approx
+  constant c_HEARTBEAT_TIMEOUT    : natural := 140884000;
+  --! Size of the missed heartbeat events counter - Up to 256 missed events
+  constant c_HEARTBEAT_CNT_SIZE   : natural := 8;
 
---! Event codes
-constant c_EVENT_CODE_BITS      : natural := 8;
-subtype event_code is std_logic_vector(c_EVENT_CODE_BITS-1 downto 0);
+  --! Event codes
+  constant c_EVENT_CODE_BITS      : natural := 8;
+  subtype event_code is std_logic_vector(c_EVENT_CODE_BITS-1 downto 0);
 
-constant c_EVENT_NULL           : event_code := x"00";
-constant c_EVENT_HEARTBEAT      : event_code := x"7A";
-constant c_EVENT_BEACON         : event_code := X"7E";
--- Timestamp related event codes
-constant c_EVENT_SECONDS_0      : event_code := x"70";
-constant c_EVENT_SECONDS_1      : event_code := x"71";
-constant c_EVENT_TS_COUNT_RESET : event_code := x"7D";  
+  constant c_EVENT_NULL           : event_code := x"00";
+  constant c_EVENT_HEARTBEAT      : event_code := x"7A";
+  constant c_EVENT_BEACON         : event_code := X"7E";
+  -- Timestamp related event codes
+  constant c_EVENT_SECONDS_0      : event_code := x"70";
+  constant c_EVENT_SECONDS_1      : event_code := x"71";
+  constant c_EVENT_TS_COUNT_RESET : event_code := x"7D";
+
+  -- Event memory mapping RAM constants
+  constant c_EVNT_MAP_ADDR_WIDTH : natural := 8;
+  constant c_EVNT_MAP_DATA_WIDTH : natural := 128;
+  constant c_EVNT_MAP_DATA_DEPTH : natural := 256;
+
+  -- Number of Pulse Generators that will be instantiated - MAX 32
+  constant c_PULSE_GENS_CNT      : natural := 16;
+  constant c_PULSE_GENS_MAX      : natural := 32;
+
+  -- Mapping RAM related constants ---------------
+
+  -- The field "Internal functions" inside the mapping RAM allows
+  -- translating event codes into actions. Each valid event code
+  -- (codes from 0x1 to 0xFF) includes this field into the mapping
+  -- RAM entry.
+  -- The field internal functions is located from bit 96 to 127
+  constant c_EVR_MAP_FUNC_WIDTH        : natural := 32;
+  constant c_EVR_MAP_INT_FUNC_SHIFT    : natural := 96;
+  -- Each function is econded using a position (yes, let's burn memory!)
+  constant c_EVR_MAP_SAVE_EVENT        : natural := 31;
+  constant c_EVR_MAP_LATCH_TIMESTAMP   : natural := 30;
+  constant c_EVR_MAP_LED_EVENT         : natural := 29;
+  constant c_EVR_MAP_FORWARD_EVENT     : natural := 28;
+  constant c_EVR_MAP_STOP_LOG          : natural := 27;
+  constant c_EVR_MAP_LOG_EVENT         : natural := 26;
+  constant c_EVR_MAP_HEARTBEAT_EVENT   : natural := 5;
+  constant c_EVR_MAP_RESETPRESC_EVENT  : natural := 4;
+  constant c_EVR_MAP_TIMESTAMP_RESET   : natural := 3;
+  constant c_EVR_MAP_TIMESTAMP_CLK     : natural := 2;
+  constant c_EVR_MAP_SECONDS_1         : natural := 1;
+  constant c_EVR_MAP_SECONDS_0         : natural := 0;
+  -- From bit 0 to 95, the Pulse Generator related bits are located
+  constant c_EVR_MAP_RST_PULSE_LOW     : natural := 0;
+  constant c_EVR_MAP_RST_PULSE_HIGH    : natural := c_EVR_MAP_RST_PULSE_LOW + c_PULSE_GENS_MAX - (c_PULSE_GENS_MAX - c_PULSE_GENS_CNT) - 1;
+  constant c_EVR_MAP_SET_PULSE_LOW     : natural := 32;
+  constant c_EVR_MAP_SET_PULSE_HIGH    : natural := c_EVR_MAP_SET_PULSE_LOW + c_PULSE_GENS_MAX - (c_PULSE_GENS_MAX - c_PULSE_GENS_CNT) - 1;
+  constant c_EVR_MAP_TRI_PULSE_LOW     : natural := 64;
+  constant c_EVR_MAP_TRI_PULSE_HIGH    : natural := c_EVR_MAP_TRI_PULSE_LOW + c_PULSE_GENS_MAX - (c_PULSE_GENS_MAX - c_PULSE_GENS_CNT) - 1;
 
   -- Records
 
@@ -90,6 +129,7 @@ constant c_EVENT_TS_COUNT_RESET : event_code := x"7D";
     log_se      : std_logic; --! Log stop event enable
     rs_fifo     : std_logic; --! Reset Event FIFO
   end record evr_ctrl_reg;
+  --!@}
 
   --!@name gt_ctrl_flags
   --!@brief Record to group all the control flags for the EVR GTX wrapper
@@ -113,6 +153,26 @@ constant c_EVENT_TS_COUNT_RESET : event_code := x"7D";
     rx_async  : std_logic; --! Reset the Rx path - Synt to sys_clk
     gbl_async : std_logic; --! Global reset for Tx&Rx paths
   end record gt_resets;
+  --!@}
+
+  --!@name pgen_regs
+  --!@brief Record to group all the control registers for a pulse generator
+  --!@{
+  type pgen_regs is record
+    control : std_logic_vector( 6 downto 0); --! Control and status register - Only lower 8 bits used
+    --prescaler  : std_logic_vector(31 downto 0); --! Prescaler value - not used
+    delay   : std_logic_vector(31 downto 0); --! Delay value
+    width   : std_logic_vector(31 downto 0); --! Width value
+  end record pgen_regs;
+  --!@}
+
+  --!@name pgen_map_reg
+  --!@brief Record to group all the control bits which are mapped to the event decoding RAM
+  --!@{
+  type pgen_map_reg is record
+    triggerx  : std_logic_vector(c_PULSE_GENS_CNT-1 downto 0); --! Trigger bits from the mapping RAM
+    setxNrstx : std_logic_vector(c_PULSE_GENS_CNT-1 downto 0); --! Set/Reset bits from the mapping RAM
+  end record pgen_map_reg;
   --!@}
 
     --!@name irq_flags
@@ -153,6 +213,30 @@ constant c_EVENT_TS_COUNT_RESET : event_code := x"7D";
     RxViolation     : std_logic; --! Receiver violation
   end record irq_en;
   --!@}
+
+  --!@name picoevr_int_func
+  --!@brief This record gathers a set of internal flags to communicate different modules within the picoEVR
+  --!@{
+  type picoevr_int_func is record
+    evnttofifo  : std_logic; --! Save event in FIFO - map bit 127
+    latchts     : std_logic; --! Latch timestamp - map bit 126
+    ledevnt     : std_logic; --! Led event - map bit 125
+    fwdevnt     : std_logic; --! Forward event from RX to TX - map bit 124
+    stopevntlog : std_logic; --! Stop event log - map bit 123
+    logevnt     : std_logic; --! Log event - map bit 122
+    hbevnt      : std_logic; --! Heart beat event - map bit 101
+    rstprsclrs  : std_logic; --! Reset prescalers - map bit 100
+    tsrstevnt   : std_logic; --! Timestamp reset event (TS counter reset) - map bit 99
+    tsclkevnt   : std_logic; --! Timestamp clock event (TS counter increment) - map bit 98
+    secsshift1  : std_logic; --! Seconds shift register '1' - map bit 97
+    secsshift0  : std_logic; --! Seconds shift register '0' - map bit 96
+  end record picoevr_int_func;
+  --!@}
+
+  -- Custom types and arrays
+
+  --! Array for the control registers in the pulse generator controller
+  type pgen_ctrl_regs is array (0 to c_PULSE_GENS_CNT-1) of pgen_regs;
 
   component z7_gtx_evr_common_reset is
     generic (
@@ -508,12 +592,31 @@ constant c_EVENT_TS_COUNT_RESET : event_code := x"7D";
       i_target_evnt   : in event_code;
       --! Heartbeat timeout flag.
       o_heartbeat_ov  : out std_logic;
-      --! Missed heartbeat counter. Increases every time 0x7A wasn't 
-      --! received on time 
+      --! Missed heartbeat counter. Increases every time 0x7A wasn't
+      --! received on time
       o_heartbeat_ov_cnt : out unsigned(c_HEARTBEAT_CNT_SIZE-1 downto 0)
   );
   end component;
-  
+
+  -- The pulse_gen_controller includes the control logic for the individual pulse generators
+  component pulse_gen_controller is
+    generic (
+        --! Amount of pulse generators to instantiate
+        g_PULSE_GEN_CNT     : natural := c_PULSE_GENS_CNT
+    );
+    port (
+        --! Event clock (DC compensated)
+        i_event_clk     : in std_logic;
+        --! Array containing the record with the configuration register for each PGen
+        i_pgen_ctrl_reg : in pgen_ctrl_regs;
+        --! Record with the control bits coming from the mapping RAM
+        i_pgen_map_reg  : in pgen_map_reg;
+        --! Output from each Pulse Generator
+        o_pgen_pxout    : out std_logic_vector(c_PULSE_GENS_CNT-1 downto 0)
+
+    );
+  end component;
+
   -- Interrupt controller
   component interrupt_ctrl is
   generic (
@@ -557,6 +660,99 @@ constant c_EVENT_TS_COUNT_RESET : event_code := x"7D";
   );
   end component;
 
+  -- The pulse_generator implements the MRF Pulse Generators from the EVR
+  component pulse_generator is
+    port (
+        --! Rx clock with DC : Used for the time counter.
+        i_event_clk   : in std_logic;
+        --! Enable    : Activates the logic of the Pulse Generator.
+        --!             When LOW, the output of the module is set to LOW as well.
+        --!             When HIGH, the output depends on the rest of the inputs
+        i_enable      : in std_logic;
+        --! Trigger   : Activates the delay counter
+        i_trigger     : in std_logic;
+        --! Set       : Asynchronously sets the output to HIGH level (watch polarity)
+        i_set         : in std_logic;
+        --! Reset     : Asynchronously sets the output to LOW level (watch polarity)
+        i_reset       : in std_logic;
+        --! Output polarity : LOW -> Normal polarity | HIGH -> Inverted polarity
+        --!                   Affects the output value always but when i_enable = '0'.
+        i_polarity    : in std_logic;
+        --! Delay value : Value for the delay counter.
+        --!               This value relates to the amount of time the output is set to LOW
+        --!               level after a rising edge on the trigger signal was received.
+        i_delay_val   : in std_logic_vector(31 downto 0);
+        --! Width value : Value for the width counter.
+        --!               This value relates to the amount of time the output is set to HIGH
+        --!               level after the delay counter is overflowed.
+        i_width_val   : in std_logic_vector(31 downto 0);
+        --! Output pulse : Output of a D-FlipFlop with asynchronous Set, Reset and Enable inputs.
+        o_pulse       : out std_logic
+    );
+  end component;
+
+  component bram_controller is
+    port (
+        --! Event clock (DC compensated) - use the same clock as the one used for the
+        --! port going to the BRAM in order to avoid CDC issues.
+        i_evnt_clk  : in std_logic;
+        --! Rx path reset is a good reset source for this module
+        i_reset     : in std_logic;
+        --! Active Event code
+        i_evnt_rxd  : in event_code;
+        --! Data output from the BRAM module (unregistered)
+        i_bram_do   : in std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
+        --! Read enable line for the port connected to the controller
+        o_bram_rden   : out std_logic;
+        --! Address line for the port connected to the controller
+        o_bram_addr : out std_logic_vector(c_EVNT_MAP_ADDR_WIDTH-1 downto 0);
+        --! Flag indicating when a data word is ready to be read from the port
+        o_data_rdy  : out std_logic;
+        --! Data word linked to the event used for addressing - 3 cycles latency
+        o_evnt_cfg  : out std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0)
+    );
+end component bram_controller;
+
+component evnt_dec_controller is
+    port (
+        --! Rx clock with DC
+        i_evnt_clk      : in std_logic;
+        --! Rx path reset
+        i_reset         : in std_logic;
+        --! Flag which indicates when a new valid configuration word is ready
+        --! at i_evnt_cfg
+        i_evnt_rdy      : in std_logic;
+        --! Raw data word (128 bit) as it is read from the mapping RAM
+        i_evnt_cfg      : in std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
+        --! Control flags to trigger, reset or set each one of the Pulse Generators
+        o_pgen_map_reg  : out pgen_map_reg;
+        --! Control flags to activate internal functions
+        --! Each flag will be active for 1 clock period of the event clock, and it
+        --! relates to the event code received in the previous 2 cycles before:
+        --! 1 clock cycle for fetching the configuration from the RAM
+        --! 1 clock cycle to process it
+        o_int_func_reg  : out picoevr_int_func
+    );
+end component evnt_dec_controller;
+
+component event_decoder
+port (
+  i_ref_clk      : in  std_logic;
+  i_event_clk    : in  std_logic;
+  i_reset        : in  std_logic;
+  i_enable       : in  std_logic;
+  o_bram_addr    : out std_logic_vector(c_EVNT_MAP_ADDR_WIDTH-1 downto 0);
+  o_bram_data    : out std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
+  i_bram_data    : in  std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
+  o_bram_rden    : out std_logic;
+  i_event_rxd    : in  event_code;
+  o_event_rxd    : out event_code;
+  o_int_func     : out picoevr_int_func;
+  o_pgen_map_reg : out pgen_map_reg
+);
+end component event_decoder;
+
+
   -- Legacy EVR constant definitions ------------------------------------------
 
   constant MGT_RX_PRESCALER    : integer := 1024;
@@ -573,7 +769,7 @@ constant c_EVENT_TS_COUNT_RESET : event_code := x"7D";
   type we_vector is array (integer range<>) of std_logic_vector(3 downto 0);
   type data_vector is array (integer range<>) of std_logic_vector(31 downto 0);
   type short_vector is array (integer range<>) of std_logic_vector(15 downto 0);
-  
+
   constant C_EVR_DBUS_BITS      : integer := 8;
   constant C_EVR_MAX_PULSE_GENS : integer := 32;
   constant C_EVR_PULSE_GATES    : integer := 4;
@@ -874,19 +1070,6 @@ constant c_EVENT_TS_COUNT_RESET : event_code := x"7D";
   constant C_EVR_PULSE_MAP_SET_ENA    : integer := 2;
   constant C_EVR_PULSE_MAP_TRIG_ENA   : integer := 1;
   constant C_EVR_PULSE_ENA            : integer := 0;
-  -- Map RAM Internal event mappings
-  constant C_EVR_MAP_SAVE_EVENT       : integer := 31;
-  constant C_EVR_MAP_LATCH_TIMESTAMP  : integer := 30;
-  constant C_EVR_MAP_LED_EVENT        : integer := 29;
-  constant C_EVR_MAP_FORWARD_EVENT    : integer := 28;
-  constant C_EVR_MAP_STOP_LOG         : integer := 27;
-  constant C_EVR_MAP_LOG_EVENT        : integer := 26;
-  constant C_EVR_MAP_HEARTBEAT_EVENT  : integer := 5;
-  constant C_EVR_MAP_RESETPRESC_EVENT : integer := 4;
-  constant C_EVR_MAP_TIMESTAMP_RESET  : integer := 3;
-  constant C_EVR_MAP_TIMESTAMP_CLK    : integer := 2;
-  constant C_EVR_MAP_SECONDS_1        : integer := 1;
-  constant C_EVR_MAP_SECONDS_0        : integer := 0;
   -- FP Input Mapping bits
   constant C_EVR_FPIN_EXTEVENT_BASE   : integer := 0;
   constant C_EVR_FPIN_BACKEVENT_BASE  : integer := 8;
@@ -902,7 +1085,5 @@ constant c_EVENT_TS_COUNT_RESET : event_code := x"7D";
   constant C_DIAG_REG_CNT_CMP_HIGH    : integer := 24;
   constant C_DIAG_COUNTERS_INDEX_LOW  : integer := 25;
   constant C_DIAG_COUNTERS_INDEX_HIGH : integer := 29;
-
-  type gtx_data is array (natural range <>) of std_logic_vector(39 downto 0);
 
 end evr_pkg;

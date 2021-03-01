@@ -1,0 +1,39 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Tue Feb  2 13:41:20 2021
+[*]
+[dumpfile] "/data_fast/workspace/picoevr_dev/fpga/srcs/libs/hdl-ip-repo/ess-openevr/build/pulse_gen_tb.vcd"
+[dumpfile_mtime] "Tue Feb  2 13:40:12 2021"
+[dumpfile_size] 3700
+[savefile] "/data_fast/workspace/picoevr_dev/fpga/srcs/libs/hdl-ip-repo/ess-openevr/waves/wavecfg_pulse_gen_tb.gtkw"
+[timestart] 13820000
+[size] 2560 1377
+[pos] -1 -1
+*-21.000000 23690000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] pulse_gen_tb.
+[sst_width] 228
+[signals_width] 217
+[sst_expanded] 1
+[sst_vpaned_height] 412
+@28
+pulse_gen_tb.dut.i_event_clk
+@24
+pulse_gen_tb.dut.i_delay_val[31:0]
+pulse_gen_tb.dut.i_width_val[31:0]
+@28
+pulse_gen_tb.dut.i_enable
+pulse_gen_tb.dut.i_polarity
+pulse_gen_tb.dut.i_reset
+pulse_gen_tb.dut.i_set
+pulse_gen_tb.dut.i_trigger
+@29
+pulse_gen_tb.dut.int_pulse
+@28
+pulse_gen_tb.dut.encounter
+@24
+pulse_gen_tb.dut.counter[31:0]
+@28
+[color] 1
+pulse_gen_tb.dut.o_pulse
+[pattern_trace] 1
+[pattern_trace] 0

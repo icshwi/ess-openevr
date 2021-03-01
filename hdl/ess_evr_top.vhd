@@ -13,7 +13,7 @@
 --! @author Ross Elliot <ross.elliot@ess.eu>
 --!
 --! @date 20200421
---! @version 0.5
+--! @version 0.7
 --!
 --! Company: European Spallation Source ERIC \n
 --! Platform: picoZED 7030 \n
@@ -85,6 +85,28 @@ entity ess_evr_top is
       s_axi_rresp             : out std_logic_vector(AXI4_RESP_WIDTH-1 downto 0);
       s_axi_rvalid            : out std_logic;
       s_axi_rready            : in  std_logic;
+
+    --!@name Event mapping RAM interface
+    --!@brief Signals for the control of 2 external BRAM blocks used as event mapping RAMs
+    --!@desc Only one BRAM block is active at a time, thus most of the lines can be
+    --!       shared to save some resources. Only the enable lines are specific to a BRAM block.
+    --!@{
+    --! Address port (shared)
+    o_evnt_map_addr    : out std_logic_vector(c_EVNT_MAP_ADDR_WIDTH-1 downto 0);
+    --! Data out port (shared)
+    o_evnt_map_data    : out std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
+    --! Data in port (Block RAM 0)
+    i_evnt_map0_data    : in  std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
+    --! Data in port (Block RAM 1)
+    i_evnt_map1_data    : in  std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
+    --! Write enable port (shared)
+    o_evnt_map_wren    : out std_logic;
+    --! Enable line for the Block RAM 0
+    o_evnt_map0_en     : out std_logic;
+    --! Enable line for the Block RAM 1
+    o_evnt_map1_en     : out std_logic;
+    --!@}
+
 
     --! Global logic clock, differential input from Si5346 Out2
     i_ZYNQ_MRCC_LVDS_P : in std_logic;
@@ -203,6 +225,27 @@ architecture rtl of ess_evr_top is
   attribute mark_debug of irq_flags_in : signal is "true";
   attribute mark_debug of irq_flags_out : signal is "true";
 
+  ----------- mapping RAM signals ---------
+
+  -- Local BRAM read enable
+  signal bram_rden : std_logic := '0';
+  -- Data input from the active BRAM
+  signal evnt_map_data : std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0) := (others => '0');
+  -- Rx event delayed to match the latency of the event decoder logic
+  signal event_rxd_delayed : event_code := (others => '0');
+  -- Internal flags mapping 1 position -> 1 event code
+  -- Each module of the picoEVR that is activated after the arrival of a
+  -- particular event code, should read a flag from this record instead the
+  -- event_rxd feed.
+  -- This signals are matched with the event code stored in event_rxd_delayed.
+  signal picoevr_functions : picoevr_int_func := (others => '0');
+
+  ------------ Pulse generators -----------
+  -- Array to hold the control register of each instance of pulse generator
+  signal pulse_gen_ctrl_reg : pgen_ctrl_regs;
+  signal pulse_gen_map_reg  : pgen_map_reg;
+  signal pulse_gen_pxout    : std_logic_vector(c_PULSE_GENS_CNT-1 downto 0);
+
   signal event_link_ok : std_logic;
 
   signal event_rxd       : std_logic_vector(7 downto 0);
@@ -214,6 +257,7 @@ architecture rtl of ess_evr_top is
   signal databuf_rx_mode : std_logic := '1';
 
   signal rx_link_ok      : std_logic;
+  signal rx_violation    : std_logic;
   signal rx_clear_viol   : std_logic;
   attribute mark_debug of rx_clear_viol : signal is "true";
 
@@ -239,6 +283,7 @@ architecture rtl of ess_evr_top is
   signal databuf_cs_flag     : std_logic_vector(0 to 127);
   signal databuf_ov_flag     : std_logic_vector(0 to 127);
   signal databuf_clear_flag  : std_logic_vector(0 to 127);
+  signal databuf_irq_dc      : std_logic;
 
   signal ext_trig_ts_data    : std_logic_vector(63 downto 0);
   signal ext_trig_ts_valid   : std_logic;
@@ -291,8 +336,6 @@ architecture rtl of ess_evr_top is
   -- attribute mark_debug of ext_ts_trig : signal is "true";
   -- attribute mark_debug of ext_ts_trig_t : signal is "true";
 
-  signal trig_1kHz : std_logic := '0';
-
 begin
 
   sys_clk_difbuf_gen:
@@ -342,7 +385,6 @@ begin
       if rising_edge(event_clk) then
         dc_mode_0     <= dc_mode_r;
         ext_ts_trig_t <= i_TS_req;
-
         gbl_reset_0   <= not gt0_status.link_up;
 
         dc_mode       <= dc_mode_0;
@@ -434,6 +476,31 @@ begin
   databuf_txd <= X"00";
   databuf_tx_k <= '0';
 
+  i_event_decoder : event_decoder
+  port map (
+    i_ref_clk      => refclk, -- not yet used
+    i_event_clk    => event_clk,
+    i_reset        => gt0_resets.gbl_async,
+    i_enable       => evr_ctrl.map_en,
+    o_bram_addr    => o_evnt_map_addr,
+    o_bram_data    => open, -- not yet used
+    i_bram_data    => evnt_map_data,
+    o_bram_rden    => bram_rden,
+    i_event_rxd    => event_rxd,
+    o_event_rxd    => event_rxd_delayed,
+    o_int_func     => picoevr_functions,
+    o_pgen_map_reg => pulse_gen_map_reg
+  );
+
+  -- Drive the data input port from the active BRAM
+  evnt_map_data <= i_evnt_map0_data when evr_ctrl.map_rs = '0' else i_evnt_map1_data;
+
+  -- Only one external BRAM is enabled at a time, controlled by SW
+  o_evnt_map0_en <= bram_rden when evr_ctrl.map_rs = '0' else '0';
+  o_evnt_map1_en <= bram_rden when evr_ctrl.map_rs = '1' else '0';
+  -- No write support from the logic side to the mapping RAM
+  o_evnt_map_wren <= '0';
+
   i_heartbeat_mon : heartbeat_mon
     generic map (
       g_PRESCALER_SIZE => bit_size(c_HEARTBEAT_TIMEOUT)
@@ -446,7 +513,18 @@ begin
       o_heartbeat_ov      => irq_flag_logic.Heartbeat,
       o_heartbeat_ov_cnt  => hb_mon_cnt
     );
-    
+
+  i_pulse_gen_controller : pulse_gen_controller
+    generic map (
+      g_PULSE_GEN_CNT => c_PULSE_GENS_CNT
+    )
+    port map (
+      i_event_clk     => event_clk,         -- The event_clock is down when no link is present, is this a problem?
+      i_pgen_ctrl_reg => pulse_gen_ctrl_reg,
+      i_pgen_map_reg  => pulse_gen_map_reg,
+      o_pgen_pxout    => pulse_gen_pxout
+    );
+
   -- Interrupt controller
   interrupt_controller : interrupt_ctrl
       generic map (
@@ -475,8 +553,8 @@ begin
 
   axi_reg_bank : register_bank_axi
     generic map (
-      AXI_ADDR_WIDTH => ADDRESS_WIDTH+2,
-      REG_ADDR_WIDTH	=> ADDRESS_WIDTH,    --! Width of the address signals
+      AXI_ADDR_WIDTH  => ADDRESS_WIDTH+2,
+      REG_ADDR_WIDTH  => ADDRESS_WIDTH,    --! Width of the address signals
       AXI_WSTRB_WIDTH => 4,                --! Width of the AXI wstrb signal, may be determined by ADDRESS_WIDTH
       REGISTER_WIDTH  => REGISTER_WIDTH,   --! Width of the registers
       AXI_DATA_WIDTH  => AXI4L_DATA_WIDTH) --! Width of the AXI data signals
@@ -608,22 +686,129 @@ begin
          logic_return_t_0.ESSExtSecCounter   <= ext_trig_ts_data(63 downto 32);
          logic_return_t_0.ESSExtEventCounter <= ext_trig_ts_data(31 downto 0);
 
-         -- Front Panel registers
-         -- From processor
-         fp_out_map(0) <= logic_read_data_t.FPOutMap0_1(15 downto 0);
-         fp_out_map(1) <= logic_read_data_t.FPOutMap0_1(31 downto 16);
+        -- Pulse generators -- 16 by now
+        -- From processor
+        pulse_gen_ctrl_reg(0).control(6 downto 0)  <= logic_read_data_t.Pulse0Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(0).delay    <= logic_read_data_t.Pulse0Delay;
+        pulse_gen_ctrl_reg(0).width    <= logic_read_data_t.Pulse0Width;
+        pulse_gen_ctrl_reg(1).control(6 downto 0)  <= logic_read_data_t.Pulse1Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(1).delay    <= logic_read_data_t.Pulse1Delay;
+        pulse_gen_ctrl_reg(1).width    <= logic_read_data_t.Pulse1Width;
+        pulse_gen_ctrl_reg(2).control(6 downto 0)  <= logic_read_data_t.Pulse2Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(2).delay    <= logic_read_data_t.Pulse2Delay;
+        pulse_gen_ctrl_reg(2).width    <= logic_read_data_t.Pulse2Width;
+        pulse_gen_ctrl_reg(3).control(6 downto 0)  <= logic_read_data_t.Pulse3Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(3).delay    <= logic_read_data_t.Pulse3Delay;
+        pulse_gen_ctrl_reg(3).width    <= logic_read_data_t.Pulse3Width;
 
-         fp_univ_out_map(0) <= logic_read_data_t.UnivOUTMap0_1(15 downto 0);
-         fp_univ_out_map(1) <= logic_read_data_t.UnivOUTMap0_1(31 downto 16);
+        pulse_gen_ctrl_reg(4).control(6 downto 0)  <= logic_read_data_t.Pulse4Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(4).delay    <= logic_read_data_t.Pulse4Delay;
+        pulse_gen_ctrl_reg(4).width    <= logic_read_data_t.Pulse4Width;
+        pulse_gen_ctrl_reg(5).control(6 downto 0)  <= logic_read_data_t.Pulse5Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(5).delay    <= logic_read_data_t.Pulse5Delay;
+        pulse_gen_ctrl_reg(5).width    <= logic_read_data_t.Pulse5Width;
+        pulse_gen_ctrl_reg(6).control(6 downto 0)  <= logic_read_data_t.Pulse6Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(6).delay    <= logic_read_data_t.Pulse6Delay;
+        pulse_gen_ctrl_reg(6).width    <= logic_read_data_t.Pulse6Width;
+        pulse_gen_ctrl_reg(7).control(6 downto 0)  <= logic_read_data_t.Pulse7Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(7).delay    <= logic_read_data_t.Pulse7Delay;
+        pulse_gen_ctrl_reg(7).width    <= logic_read_data_t.Pulse7Width;
 
-         -- Read back
-         logic_return_t_0.FPOutMap0_1 <= logic_read_data_t.FPOutMap0_1;
-         logic_return_t_0.UnivOUTMap0_1 <= logic_read_data_t.UnivOUTMap0_1;
+        pulse_gen_ctrl_reg(8).control(6 downto 0)  <= logic_read_data_t.Pulse8Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(8).delay    <= logic_read_data_t.Pulse8Delay;
+        pulse_gen_ctrl_reg(8).width    <= logic_read_data_t.Pulse8Width;
+        pulse_gen_ctrl_reg(9).control(6 downto 0)  <= logic_read_data_t.Pulse9Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(9).delay    <= logic_read_data_t.Pulse9Delay;
+        pulse_gen_ctrl_reg(9).width    <= logic_read_data_t.Pulse9Width;
+        pulse_gen_ctrl_reg(10).control(6 downto 0) <= logic_read_data_t.Pulse10Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(10).delay   <= logic_read_data_t.Pulse10Delay;
+        pulse_gen_ctrl_reg(10).width   <= logic_read_data_t.Pulse10Width;
+        pulse_gen_ctrl_reg(11).control(6 downto 0) <= logic_read_data_t.Pulse11Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(11).delay   <= logic_read_data_t.Pulse11Delay;
+        pulse_gen_ctrl_reg(11).width   <= logic_read_data_t.Pulse11Width;
 
-         -- register read (from FPGA to processor)
-         logic_return_t <= logic_return_t_0;
-       end if;
-     end process reg_assign;
+        pulse_gen_ctrl_reg(12).control(6 downto 0) <= logic_read_data_t.Pulse12Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(12).delay   <= logic_read_data_t.Pulse12Delay;
+        pulse_gen_ctrl_reg(12).width   <= logic_read_data_t.Pulse13Width;
+        pulse_gen_ctrl_reg(13).control(6 downto 0) <= logic_read_data_t.Pulse13Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(13).delay   <= logic_read_data_t.Pulse13Delay;
+        pulse_gen_ctrl_reg(13).width   <= logic_read_data_t.Pulse14Width;
+        pulse_gen_ctrl_reg(14).control(6 downto 0) <= logic_read_data_t.Pulse14Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(14).delay   <= logic_read_data_t.Pulse14Delay;
+        pulse_gen_ctrl_reg(14).width   <= logic_read_data_t.Pulse1Width;
+        pulse_gen_ctrl_reg(15).control(6 downto 0) <= logic_read_data_t.Pulse15Ctrl(6 downto 0);
+        pulse_gen_ctrl_reg(15).delay   <= logic_read_data_t.Pulse15Delay;
+        pulse_gen_ctrl_reg(15).width   <= logic_read_data_t.Pulse15Width;
+
+        -- Read back
+        logic_return_t_0.Pulse0Ctrl   <= x"000000" & pulse_gen_pxout(0) & logic_read_data_t.Pulse0Ctrl(6 downto 0);
+        logic_return_t_0.Pulse0Delay  <= logic_read_data_t.Pulse0Delay;
+        logic_return_t_0.Pulse0Width  <= logic_read_data_t.Pulse0Width;
+        logic_return_t_0.Pulse1Ctrl   <= x"000000" & pulse_gen_pxout(1) & logic_read_data_t.Pulse1Ctrl(6 downto 0);
+        logic_return_t_0.Pulse1Delay  <= logic_read_data_t.Pulse1Delay;
+        logic_return_t_0.Pulse1Width  <= logic_read_data_t.Pulse1Width;
+        logic_return_t_0.Pulse2Ctrl   <= x"000000" & pulse_gen_pxout(2) & logic_read_data_t.Pulse2Ctrl(6 downto 0);
+        logic_return_t_0.Pulse2Delay  <= logic_read_data_t.Pulse2Delay;
+        logic_return_t_0.Pulse2Width  <= logic_read_data_t.Pulse2Width;
+        logic_return_t_0.Pulse3Ctrl   <= x"000000" & pulse_gen_pxout(3) & logic_read_data_t.Pulse3Ctrl(6 downto 0);
+        logic_return_t_0.Pulse3Delay  <= logic_read_data_t.Pulse3Delay;
+        logic_return_t_0.Pulse3Width  <= logic_read_data_t.Pulse3Width;
+
+        logic_return_t_0.Pulse4Ctrl   <= x"000000" & pulse_gen_pxout(4) & logic_read_data_t.Pulse4Ctrl(6 downto 0);
+        logic_return_t_0.Pulse4Delay  <= logic_read_data_t.Pulse4Delay;
+        logic_return_t_0.Pulse4Width  <= logic_read_data_t.Pulse4Width;
+        logic_return_t_0.Pulse5Ctrl   <= x"000000" & pulse_gen_pxout(5) & logic_read_data_t.Pulse5Ctrl(6 downto 0);
+        logic_return_t_0.Pulse5Delay  <= logic_read_data_t.Pulse5Delay;
+        logic_return_t_0.Pulse5Width  <= logic_read_data_t.Pulse5Width;
+        logic_return_t_0.Pulse6Ctrl   <= x"000000" & pulse_gen_pxout(6) & logic_read_data_t.Pulse6Ctrl(6 downto 0);
+        logic_return_t_0.Pulse6Delay  <= logic_read_data_t.Pulse6Delay;
+        logic_return_t_0.Pulse6Width  <= logic_read_data_t.Pulse6Width;
+        logic_return_t_0.Pulse7Ctrl   <= x"000000" & pulse_gen_pxout(7) & logic_read_data_t.Pulse7Ctrl(6 downto 0);
+        logic_return_t_0.Pulse7Delay  <= logic_read_data_t.Pulse7Delay;
+        logic_return_t_0.Pulse7Width  <= logic_read_data_t.Pulse7Width;
+
+        logic_return_t_0.Pulse8Ctrl   <= x"000000" & pulse_gen_pxout(8) & logic_read_data_t.Pulse8Ctrl(6 downto 0);
+        logic_return_t_0.Pulse8Delay  <= logic_read_data_t.Pulse8Delay;
+        logic_return_t_0.Pulse8Width  <= logic_read_data_t.Pulse8Width;
+        logic_return_t_0.Pulse9Ctrl   <= x"000000" & pulse_gen_pxout(9) & logic_read_data_t.Pulse9Ctrl(6 downto 0);
+        logic_return_t_0.Pulse9Delay  <= logic_read_data_t.Pulse9Delay;
+        logic_return_t_0.Pulse9Width  <= logic_read_data_t.Pulse9Width;
+        logic_return_t_0.Pulse10Ctrl  <= x"000000" & pulse_gen_pxout(10) & logic_read_data_t.Pulse10Ctrl(6 downto 0);
+        logic_return_t_0.Pulse10Delay <= logic_read_data_t.Pulse10Delay;
+        logic_return_t_0.Pulse10Width <= logic_read_data_t.Pulse10Width;
+        logic_return_t_0.Pulse11Ctrl  <= x"000000" & pulse_gen_pxout(11) & logic_read_data_t.Pulse11Ctrl(6 downto 0);
+        logic_return_t_0.Pulse11Delay <= logic_read_data_t.Pulse11Delay;
+        logic_return_t_0.Pulse11Width <= logic_read_data_t.Pulse11Width;
+
+        logic_return_t_0.Pulse12Ctrl  <= x"000000" & pulse_gen_pxout(12) & logic_read_data_t.Pulse12Ctrl(6 downto 0);
+        logic_return_t_0.Pulse12Delay <= logic_read_data_t.Pulse12Delay;
+        logic_return_t_0.Pulse12Width <= logic_read_data_t.Pulse12Width;
+        logic_return_t_0.Pulse13Ctrl  <= x"000000" & pulse_gen_pxout(13) & logic_read_data_t.Pulse13Ctrl(6 downto 0);
+        logic_return_t_0.Pulse13Delay <= logic_read_data_t.Pulse13Delay;
+        logic_return_t_0.Pulse13Width <= logic_read_data_t.Pulse13Width;
+        logic_return_t_0.Pulse14Ctrl  <= x"000000" & pulse_gen_pxout(14) & logic_read_data_t.Pulse14Ctrl(6 downto 0);
+        logic_return_t_0.Pulse14Delay <= logic_read_data_t.Pulse14Delay;
+        logic_return_t_0.Pulse14Width <= logic_read_data_t.Pulse14Width;
+        logic_return_t_0.Pulse15Ctrl  <= x"000000" & pulse_gen_pxout(15) & logic_read_data_t.Pulse15Ctrl(6 downto 0);
+        logic_return_t_0.Pulse15Delay <= logic_read_data_t.Pulse15Delay;
+        logic_return_t_0.Pulse15Width <= logic_read_data_t.Pulse15Width;
+
+        -- Front Panel registers
+        -- From processor
+        fp_out_map(0) <= logic_read_data_t.FPOutMap0_1(15 downto 0);
+        fp_out_map(1) <= logic_read_data_t.FPOutMap0_1(31 downto 16);
+
+        fp_univ_out_map(0) <= logic_read_data_t.UnivOUTMap0_1(15 downto 0);
+        fp_univ_out_map(1) <= logic_read_data_t.UnivOUTMap0_1(31 downto 16);
+
+        -- Read back
+        logic_return_t_0.FPOutMap0_1 <= logic_read_data_t.FPOutMap0_1;
+        logic_return_t_0.UnivOUTMap0_1 <= logic_read_data_t.UnivOUTMap0_1;
+
+        -- register read (from FPGA to processor)
+        logic_return_t <= logic_return_t_0;
+      end if;
+    end process reg_assign;
 
    -- Instantiate timestamp component
    event_timestamp : timestamp
@@ -646,20 +831,6 @@ begin
 
   o_TS_data  <= ext_trig_ts_data;
   o_TS_valid <= ext_trig_ts_valid;
-
-  -- Process to send out event 0x01 periodically
-  process (refclk)
-    variable count : unsigned(31 downto 0) := X"FFFFFFFF";
-  begin
-    if rising_edge(refclk) then
-      event_txd <= X"00";
-      if count(26) = '0' then
-        event_txd <= X"01";
-        count := X"FFFFFFFF";
-      end if;
-      count := count - 1;
-    end if;
-  end process;
 
   -- Generate slow signals for the status LEDs --------------------------------
   evr_event_led : process(event_clk)
@@ -696,10 +867,26 @@ begin
   -- Only one UNIV Module socket - up to 2 channels
   univ_omapping : for I in 0 to 1 generate
     with fp_univ_out_map(I) select
-    univ_out(I) <= event_clk          when x"003B",
-                   '1'                when x"003E",
-                   '0'                when x"003F",
-                   '0'                when others;
+    univ_out(I) <=  pulse_gen_pxout(0)    when x"0000", -- Up to 16 pulse generators in the default configuration of the picoEVR
+                    pulse_gen_pxout(1)    when x"0001",
+                    pulse_gen_pxout(2)    when x"0002",
+                    pulse_gen_pxout(3)    when x"0003",
+                    pulse_gen_pxout(4)    when x"0004",
+                    pulse_gen_pxout(5)    when x"0005",
+                    pulse_gen_pxout(6)    when x"0006",
+                    pulse_gen_pxout(7)    when x"0007",
+                    pulse_gen_pxout(8)    when x"0008",
+                    pulse_gen_pxout(9)    when x"0009",
+                    pulse_gen_pxout(10)   when x"000A",
+                    pulse_gen_pxout(11)   when x"000B",
+                    pulse_gen_pxout(12)   when x"000C",
+                    pulse_gen_pxout(13)   when x"000D",
+                    pulse_gen_pxout(14)   when x"000E",
+                    pulse_gen_pxout(15)   when x"000F",
+                    event_clk             when x"003B",
+                   '1'                    when x"003E",
+                   '0'                    when x"003F",
+                   '0'                    when others;
   end generate;
 
   o_MRF_UNIVMOD_OUT0 <= univ_out(0);

@@ -1,0 +1,151 @@
+[*]
+[*] GTKWave Analyzer v3.3.103 (w)1999-2019 BSI
+[*] Wed Feb  3 13:55:11 2021
+[*]
+[dumpfile] "/data_fast/workspace/picoevr_dev/fpga/srcs/libs/hdl-ip-repo/ess-openevr/build/pulse_gen_controller_tb.vcd"
+[dumpfile_mtime] "Wed Feb  3 13:54:09 2021"
+[dumpfile_size] 5014
+[savefile] "/data_fast/workspace/picoevr_dev/fpga/srcs/libs/hdl-ip-repo/ess-openevr/waves/wavecfg_pulse_gen_controller_tb.gtkw"
+[timestart] 0
+[size] 2560 1377
+[pos] -1 -1
+*-21.000000 1050000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] pulse_gen_controller_tb.
+[treeopen] pulse_gen_controller_tb.dut.
+[treeopen] pulse_gen_controller_tb.dut.i_pgen_generate(0).
+[treeopen] pulse_gen_controller_tb.dut.i_pgen_generate(1).
+[treeopen] pulse_gen_controller_tb.dut.i_pgen_generate(2).
+[treeopen] pulse_gen_controller_tb.dut.i_pgen_generate(3).
+[sst_width] 228
+[signals_width] 243
+[sst_expanded] 1
+[sst_vpaned_height] 357
+@28
+pulse_gen_controller_tb.tb_clk
+pulse_gen_controller_tb.tb_rst
+[color] 3
+pulse_gen_controller_tb.pgen_pxout[3:0]
+@200
+-GEN0
+@24
+[color] 5
+pulse_gen_controller_tb.dut.i_pgen_generate(0).i_pgenx.counter[31:0]
+@28
+[color] 5
+pulse_gen_controller_tb.dut.i_pgen_generate(0).i_pgenx.encounter
+@24
+[color] 5
+pulse_gen_controller_tb.dut.i_pgen_generate(0).i_pgenx.i_delay_val[31:0]
+@28
+[color] 5
+pulse_gen_controller_tb.dut.i_pgen_generate(0).i_pgenx.i_enable
+[color] 5
+pulse_gen_controller_tb.dut.i_pgen_generate(0).i_pgenx.i_polarity
+[color] 5
+pulse_gen_controller_tb.dut.i_pgen_generate(0).i_pgenx.i_reset
+[color] 5
+pulse_gen_controller_tb.dut.i_pgen_generate(0).i_pgenx.i_set
+[color] 5
+pulse_gen_controller_tb.dut.i_pgen_generate(0).i_pgenx.i_trigger
+@24
+[color] 5
+pulse_gen_controller_tb.dut.i_pgen_generate(0).i_pgenx.i_width_val[31:0]
+@28
+[color] 5
+pulse_gen_controller_tb.dut.i_pgen_generate(0).i_pgenx.int_pulse
+[color] 5
+pulse_gen_controller_tb.dut.i_pgen_generate(0).i_pgenx.o_pulse
+@200
+-GEN1
+@24
+[color] 4
+pulse_gen_controller_tb.dut.i_pgen_generate(1).i_pgenx.counter[31:0]
+@28
+[color] 4
+pulse_gen_controller_tb.dut.i_pgen_generate(1).i_pgenx.encounter
+@24
+[color] 4
+pulse_gen_controller_tb.dut.i_pgen_generate(1).i_pgenx.i_delay_val[31:0]
+@28
+[color] 4
+pulse_gen_controller_tb.dut.i_pgen_generate(1).i_pgenx.i_enable
+[color] 4
+pulse_gen_controller_tb.dut.i_pgen_generate(1).i_pgenx.i_polarity
+@29
+[color] 4
+pulse_gen_controller_tb.dut.i_pgen_generate(1).i_pgenx.i_reset
+@28
+[color] 4
+pulse_gen_controller_tb.dut.i_pgen_generate(1).i_pgenx.i_set
+[color] 4
+pulse_gen_controller_tb.dut.i_pgen_generate(1).i_pgenx.i_trigger
+@24
+[color] 4
+pulse_gen_controller_tb.dut.i_pgen_generate(1).i_pgenx.i_width_val[31:0]
+@28
+[color] 4
+pulse_gen_controller_tb.dut.i_pgen_generate(1).i_pgenx.int_pulse
+[color] 4
+pulse_gen_controller_tb.dut.i_pgen_generate(1).i_pgenx.o_pulse
+@200
+-GEN2
+@24
+[color] 5
+pulse_gen_controller_tb.dut.i_pgen_generate(2).i_pgenx.counter[31:0]
+@28
+[color] 5
+pulse_gen_controller_tb.dut.i_pgen_generate(2).i_pgenx.encounter
+@24
+[color] 5
+pulse_gen_controller_tb.dut.i_pgen_generate(2).i_pgenx.i_delay_val[31:0]
+@28
+[color] 5
+pulse_gen_controller_tb.dut.i_pgen_generate(2).i_pgenx.i_enable
+[color] 5
+pulse_gen_controller_tb.dut.i_pgen_generate(2).i_pgenx.i_polarity
+[color] 5
+pulse_gen_controller_tb.dut.i_pgen_generate(2).i_pgenx.i_reset
+[color] 5
+pulse_gen_controller_tb.dut.i_pgen_generate(2).i_pgenx.i_set
+[color] 5
+pulse_gen_controller_tb.dut.i_pgen_generate(2).i_pgenx.i_trigger
+@24
+[color] 5
+pulse_gen_controller_tb.dut.i_pgen_generate(2).i_pgenx.i_width_val[31:0]
+@28
+[color] 5
+pulse_gen_controller_tb.dut.i_pgen_generate(2).i_pgenx.int_pulse
+[color] 5
+pulse_gen_controller_tb.dut.i_pgen_generate(2).i_pgenx.o_pulse
+@200
+-GEN3
+@24
+[color] 4
+pulse_gen_controller_tb.dut.i_pgen_generate(3).i_pgenx.counter[31:0]
+@28
+[color] 4
+pulse_gen_controller_tb.dut.i_pgen_generate(3).i_pgenx.encounter
+@24
+[color] 4
+pulse_gen_controller_tb.dut.i_pgen_generate(3).i_pgenx.i_delay_val[31:0]
+@28
+[color] 4
+pulse_gen_controller_tb.dut.i_pgen_generate(3).i_pgenx.i_enable
+[color] 4
+pulse_gen_controller_tb.dut.i_pgen_generate(3).i_pgenx.i_polarity
+[color] 4
+pulse_gen_controller_tb.dut.i_pgen_generate(3).i_pgenx.i_reset
+[color] 4
+pulse_gen_controller_tb.dut.i_pgen_generate(3).i_pgenx.i_set
+[color] 4
+pulse_gen_controller_tb.dut.i_pgen_generate(3).i_pgenx.i_trigger
+@24
+[color] 4
+pulse_gen_controller_tb.dut.i_pgen_generate(3).i_pgenx.i_width_val[31:0]
+@28
+[color] 4
+pulse_gen_controller_tb.dut.i_pgen_generate(3).i_pgenx.int_pulse
+[color] 4
+pulse_gen_controller_tb.dut.i_pgen_generate(3).i_pgenx.o_pulse
+[pattern_trace] 1
+[pattern_trace] 0

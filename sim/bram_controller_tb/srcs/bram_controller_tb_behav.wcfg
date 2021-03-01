@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="bram_controller_tb_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="bram_controller_tb" />
+            <top_module name="evr_pkg" />
+            <top_module name="sizing" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="0fs"></ZoomStartTime>
+      <ZoomEndTime time="79001fs"></ZoomEndTime>
+      <Cursor1Time time="0fs"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="348"></NameColumnWidth>
+      <ValueColumnWidth column_width="257"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="33" />
+   <wvobject type="other" fp_name="/bram_controller_tb/c_CLK_PERIOD">
+      <obj_property name="ElementShortName">c_CLK_PERIOD</obj_property>
+      <obj_property name="ObjectShortName">c_CLK_PERIOD</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/bram_controller_tb/tb_clka">
+      <obj_property name="ElementShortName">tb_clka</obj_property>
+      <obj_property name="ObjectShortName">tb_clka</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/bram_controller_tb/tb_rst">
+      <obj_property name="ElementShortName">tb_rst</obj_property>
+      <obj_property name="ObjectShortName">tb_rst</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider27" type="divider">
+      <obj_property name="label">Top-Level</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/bram_controller_tb/event_rxd">
+      <obj_property name="ElementShortName">event_rxd[7:0]</obj_property>
+      <obj_property name="ObjectShortName">event_rxd[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/bram_controller_tb/bram_addr">
+      <obj_property name="ElementShortName">bram_addr[7:0]</obj_property>
+      <obj_property name="ObjectShortName">bram_addr[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/bram_controller_tb/bram_enb">
+      <obj_property name="ElementShortName">bram_enb</obj_property>
+      <obj_property name="ObjectShortName">bram_enb</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/bram_controller_tb/bram_din">
+      <obj_property name="ElementShortName">bram_din[127:0]</obj_property>
+      <obj_property name="ObjectShortName">bram_din[127:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/bram_controller_tb/bram_dout">
+      <obj_property name="ElementShortName">bram_dout[127:0]</obj_property>
+      <obj_property name="ObjectShortName">bram_dout[127:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/bram_controller_tb/data_ready">
+      <obj_property name="ElementShortName">data_ready</obj_property>
+      <obj_property name="ObjectShortName">data_ready</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/bram_controller_tb/event_cfg_word">
+      <obj_property name="ElementShortName">event_cfg_word[127:0]</obj_property>
+      <obj_property name="ObjectShortName">event_cfg_word[127:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/bram_controller_tb/pgen_ctrl_reg">
+      <obj_property name="ElementShortName">pgen_ctrl_reg</obj_property>
+      <obj_property name="ObjectShortName">pgen_ctrl_reg</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/bram_controller_tb/internal_func_reg">
+      <obj_property name="ElementShortName">internal_func_reg</obj_property>
+      <obj_property name="ObjectShortName">internal_func_reg</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider31" type="divider">
+      <obj_property name="label">Event Dec Ctrl</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/bram_controller_tb/evnt_dec_ctrl_0/i_evnt_rdy">
+      <obj_property name="ElementShortName">i_evnt_rdy</obj_property>
+      <obj_property name="ObjectShortName">i_evnt_rdy</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/bram_controller_tb/evnt_dec_ctrl_0/o_pgen_map_reg">
+      <obj_property name="ElementShortName">o_pgen_map_reg</obj_property>
+      <obj_property name="ObjectShortName">o_pgen_map_reg</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/bram_controller_tb/evnt_dec_ctrl_0/o_int_func_reg">
+      <obj_property name="ElementShortName">o_int_func_reg</obj_property>
+      <obj_property name="ObjectShortName">o_int_func_reg</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/bram_controller_tb/evnt_dec_ctrl_0/setxNrstx_prev">
+      <obj_property name="ElementShortName">setxNrstx_prev[15:0]</obj_property>
+      <obj_property name="ObjectShortName">setxNrstx_prev[15:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/bram_controller_tb/evnt_dec_ctrl_0/pgen_ctrl_reg">
+      <obj_property name="ElementShortName">pgen_ctrl_reg</obj_property>
+      <obj_property name="ObjectShortName">pgen_ctrl_reg</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/bram_controller_tb/evnt_dec_ctrl_0/cfg_word_reg">
+      <obj_property name="ElementShortName">cfg_word_reg[127:0]</obj_property>
+      <obj_property name="ObjectShortName">cfg_word_reg[127:0]</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/bram_controller_tb/evnt_dec_ctrl_0/ctrl_cur">
+      <obj_property name="ElementShortName">ctrl_cur</obj_property>
+      <obj_property name="ObjectShortName">ctrl_cur</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider27" type="divider">
+      <obj_property name="label">BRAM Controller</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/bram_controller_tb/bram_ctrl_0/bram_addr">
+      <obj_property name="ElementShortName">bram_addr[7:0]</obj_property>
+      <obj_property name="ObjectShortName">bram_addr[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/bram_controller_tb/bram_ctrl_0/bram_en">
+      <obj_property name="ElementShortName">bram_en</obj_property>
+      <obj_property name="ObjectShortName">bram_en</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/bram_controller_tb/bram_ctrl_0/data_rdy">
+      <obj_property name="ElementShortName">data_rdy</obj_property>
+      <obj_property name="ObjectShortName">data_rdy</obj_property>
+   </wvobject>
+   <wvobject type="other" fp_name="/bram_controller_tb/bram_ctrl_0/ctrl_cur">
+      <obj_property name="ElementShortName">ctrl_cur</obj_property>
+      <obj_property name="ObjectShortName">ctrl_cur</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider27" type="divider">
+      <obj_property name="label">BRAM</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/bram_controller_tb/bram_instance_0/addrb">
+      <obj_property name="ElementShortName">addrb[7:0]</obj_property>
+      <obj_property name="ObjectShortName">addrb[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/bram_controller_tb/bram_instance_0/U0/ena">
+      <obj_property name="ElementShortName">ena</obj_property>
+      <obj_property name="ObjectShortName">ena</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/bram_controller_tb/bram_instance_0/U0/clkb">
+      <obj_property name="ElementShortName">clkb</obj_property>
+      <obj_property name="ObjectShortName">clkb</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/bram_controller_tb/bram_instance_0/U0/rstb">
+      <obj_property name="ElementShortName">rstb</obj_property>
+      <obj_property name="ObjectShortName">rstb</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/bram_controller_tb/bram_instance_0/U0/enb">
+      <obj_property name="ElementShortName">enb</obj_property>
+      <obj_property name="ObjectShortName">enb</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/bram_controller_tb/bram_instance_0/U0/doutb">
+      <obj_property name="ElementShortName">doutb[127:0]</obj_property>
+      <obj_property name="ObjectShortName">doutb[127:0]</obj_property>
+   </wvobject>
+</wave_config>
