@@ -3,6 +3,7 @@ vhdl xil_defaultlib  \
 
 vhdl work  \
 "../../hdl/packages/sizing.vhd" \
+"../../hdl/packages/register_bank_config_pkg.vhdl" \
 "../../hdl/packages/evr_pkg.vhd" \
 "../../hdl/bram_controller.vhd" \
 "../../hdl/evnt_dec_controller.vhd" \
