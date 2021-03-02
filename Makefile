@@ -44,7 +44,7 @@ TB3 = pulse_gen_controller_tb
 TB4 = interrupt_tb
 
 
-TESTBENCHES = $(TB1) $(TB2) $(TB3) $(TB4) $(TESTBENCHES)
+TESTBENCHES = $(TB1) $(TB2) $(TB3) $(TB4)
 
 # Targets
 .PHONY: all clean opendoc run_sim
