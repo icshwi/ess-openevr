@@ -590,7 +590,7 @@ begin
    reg_assign : process(sys_clk)
      begin
        if rising_edge(sys_clk) then
-         -- ESS-Control register 0xB004
+         -- ESS-Control register 0x704
          -- from processor to FPGA
          -- gbl_evr_rst              <= gbl_reset_t;
          -- -- FROM bit 0 to 30 - check if the net improves
@@ -607,7 +607,7 @@ begin
          -- Temporally assigned here
          logic_return_t_0.ESSControl(31) <= logic_read_data_t.ESSControl(31);
 
-         -- ESS-Status register - 0xB000
+         -- ESS-Status register - 0x700
          logic_return_t_0.ESSStatus(0)  <= gt0_status.tx_fsm_done;
          logic_return_t_0.ESSStatus(1)  <= gt0_status.rx_fsm_done;
          logic_return_t_0.ESSStatus(2)  <= gt0_status.fbclk_lost;

@@ -425,7 +425,7 @@ begin
             register_write_en_o.FPOutMap0_1          <= '1';
           when 16#440# =>
             register_write_en_o.UnivOUTMap0_1        <= '1';
-          when 16#B004# =>
+          when 16#704# =>
             register_write_en_o.ESSControl           <= '1';
 
 
