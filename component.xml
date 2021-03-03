@@ -272,9 +272,155 @@
       <spirit:parameters>
         <spirit:parameter>
           <spirit:name>SENSITIVITY</spirit:name>
-          <spirit:value spirit:id="BUSIFPARAM_VALUE.O_IRQ.SENSITIVITY" spirit:choiceRef="choice_list_9ca20931">LEVEL_HIGH</spirit:value>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.O_IRQ.SENSITIVITY" spirit:choiceRef="choice_list_99a1d2b9">LEVEL_HIGH</spirit:value>
         </spirit:parameter>
       </spirit:parameters>
+    </spirit:busInterface>
+    <spirit:busInterface>
+      <spirit:name>o_evnt_map0_clk</spirit:name>
+      <spirit:busType spirit:vendor="xilinx.com" spirit:library="signal" spirit:name="clock" spirit:version="1.0"/>
+      <spirit:abstractionType spirit:vendor="xilinx.com" spirit:library="signal" spirit:name="clock_rtl" spirit:version="1.0"/>
+      <spirit:master/>
+      <spirit:portMaps>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>CLK</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>o_evnt_map0_clk</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+      </spirit:portMaps>
+    </spirit:busInterface>
+    <spirit:busInterface>
+      <spirit:name>o_evnt_map1_clk</spirit:name>
+      <spirit:busType spirit:vendor="xilinx.com" spirit:library="signal" spirit:name="clock" spirit:version="1.0"/>
+      <spirit:abstractionType spirit:vendor="xilinx.com" spirit:library="signal" spirit:name="clock_rtl" spirit:version="1.0"/>
+      <spirit:master/>
+      <spirit:portMaps>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>CLK</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>o_evnt_map1_clk</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+      </spirit:portMaps>
+    </spirit:busInterface>
+    <spirit:busInterface>
+      <spirit:name>o_EVNT_RAM_0</spirit:name>
+      <spirit:displayName>Event Mapping RAM 0</spirit:displayName>
+      <spirit:busType spirit:vendor="xilinx.com" spirit:library="interface" spirit:name="bram" spirit:version="1.0"/>
+      <spirit:abstractionType spirit:vendor="xilinx.com" spirit:library="interface" spirit:name="bram_rtl" spirit:version="1.0"/>
+      <spirit:master/>
+      <spirit:portMaps>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>DIN</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>o_evnt_map0_data</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>EN</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>o_evnt_map0_en</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>DOUT</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>i_evnt_map0_data</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>CLK</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>o_evnt_map0_clk</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>WE</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>o_evnt_map0_wren</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>ADDR</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>o_evnt_map0_addr</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+      </spirit:portMaps>
+    </spirit:busInterface>
+    <spirit:busInterface>
+      <spirit:name>o_EVNT_RAM_1</spirit:name>
+      <spirit:displayName>Event Mapping RAM 1</spirit:displayName>
+      <spirit:busType spirit:vendor="xilinx.com" spirit:library="interface" spirit:name="bram" spirit:version="1.0"/>
+      <spirit:abstractionType spirit:vendor="xilinx.com" spirit:library="interface" spirit:name="bram_rtl" spirit:version="1.0"/>
+      <spirit:master/>
+      <spirit:portMaps>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>DIN</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>o_evnt_map1_data</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>EN</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>o_evnt_map1_en</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>DOUT</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>i_evnt_map1_data</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>CLK</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>o_evnt_map1_clk</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>WE</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>o_evnt_map1_wren</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>ADDR</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>o_evnt_map1_addr</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+      </spirit:portMaps>
     </spirit:busInterface>
   </spirit:busInterfaces>
   <spirit:memoryMaps>
@@ -309,7 +455,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>11212cb5</spirit:value>
+            <spirit:value>d3ed23a5</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -331,7 +477,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>11212cb5</spirit:value>
+            <spirit:value>d3ed23a5</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -708,7 +854,7 @@
         </spirit:wire>
       </spirit:port>
       <spirit:port>
-        <spirit:name>o_evnt_map_addr</spirit:name>
+        <spirit:name>o_evnt_map0_addr</spirit:name>
         <spirit:wire>
           <spirit:direction>out</spirit:direction>
           <spirit:vector>
@@ -725,7 +871,41 @@
         </spirit:wire>
       </spirit:port>
       <spirit:port>
-        <spirit:name>o_evnt_map_data</spirit:name>
+        <spirit:name>o_evnt_map1_addr</spirit:name>
+        <spirit:wire>
+          <spirit:direction>out</spirit:direction>
+          <spirit:vector>
+            <spirit:left spirit:format="long">7</spirit:left>
+            <spirit:right spirit:format="long">0</spirit:right>
+          </spirit:vector>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>std_logic_vector</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+      <spirit:port>
+        <spirit:name>o_evnt_map0_data</spirit:name>
+        <spirit:wire>
+          <spirit:direction>out</spirit:direction>
+          <spirit:vector>
+            <spirit:left spirit:format="long">127</spirit:left>
+            <spirit:right spirit:format="long">0</spirit:right>
+          </spirit:vector>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>std_logic_vector</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+      <spirit:port>
+        <spirit:name>o_evnt_map1_data</spirit:name>
         <spirit:wire>
           <spirit:direction>out</spirit:direction>
           <spirit:vector>
@@ -776,7 +956,46 @@
         </spirit:wire>
       </spirit:port>
       <spirit:port>
-        <spirit:name>o_evnt_map_wren</spirit:name>
+        <spirit:name>o_evnt_map0_clk</spirit:name>
+        <spirit:wire>
+          <spirit:direction>out</spirit:direction>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>std_logic</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+      <spirit:port>
+        <spirit:name>o_evnt_map1_clk</spirit:name>
+        <spirit:wire>
+          <spirit:direction>out</spirit:direction>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>std_logic</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+      <spirit:port>
+        <spirit:name>o_evnt_map0_wren</spirit:name>
+        <spirit:wire>
+          <spirit:direction>out</spirit:direction>
+          <spirit:wireTypeDefs>
+            <spirit:wireTypeDef>
+              <spirit:typeName>std_logic</spirit:typeName>
+              <spirit:viewNameRef>xilinx_anylanguagesynthesis</spirit:viewNameRef>
+              <spirit:viewNameRef>xilinx_anylanguagebehavioralsimulation</spirit:viewNameRef>
+            </spirit:wireTypeDef>
+          </spirit:wireTypeDefs>
+        </spirit:wire>
+      </spirit:port>
+      <spirit:port>
+        <spirit:name>o_evnt_map1_wren</spirit:name>
         <spirit:wire>
           <spirit:direction>out</spirit:direction>
           <spirit:wireTypeDefs>
@@ -1268,7 +1487,7 @@
   </spirit:model>
   <spirit:choices>
     <spirit:choice>
-      <spirit:name>choice_list_9ca20931</spirit:name>
+      <spirit:name>choice_list_99a1d2b9</spirit:name>
       <spirit:enumeration>LEVEL_HIGH</spirit:enumeration>
       <spirit:enumeration>LEVEL_LOW</spirit:enumeration>
       <spirit:enumeration>EDGE_RISING</spirit:enumeration>
@@ -1291,12 +1510,10 @@
       <spirit:file>
         <spirit:name>ip/z7_gtx_evr.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_i_evr_dc/i_upstream/gt0_x0y0/z7_gtx_evr</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>src/fifo_generator_0.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_event_timestamp/event_fifo/fifo_generator_0</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/average.vhd</spirit:name>
@@ -1305,11 +1522,6 @@
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/packages/axi4_pkg.vhdl</spirit:name>
-        <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:logicalName>work</spirit:logicalName>
-      </spirit:file>
-      <spirit:file>
-        <spirit:name>hdl/buf_bsram.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>work</spirit:logicalName>
       </spirit:file>
@@ -1325,6 +1537,16 @@
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/packages/evr_pkg.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+        <spirit:logicalName>work</spirit:logicalName>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>hdl/bram_controller.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+        <spirit:logicalName>work</spirit:logicalName>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>hdl/buf_bsram.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>work</spirit:logicalName>
       </spirit:file>
@@ -1354,6 +1576,16 @@
         <spirit:logicalName>work</spirit:logicalName>
       </spirit:file>
       <spirit:file>
+        <spirit:name>hdl/event_decoder.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+        <spirit:logicalName>work</spirit:logicalName>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>hdl/evnt_dec_controller.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+        <spirit:logicalName>work</spirit:logicalName>
+      </spirit:file>
+      <spirit:file>
         <spirit:name>hdl/evr_dc.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>work</spirit:logicalName>
@@ -1365,6 +1597,11 @@
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/heartbeat_mon.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+        <spirit:logicalName>work</spirit:logicalName>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>hdl/interrupt_ctrl.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>work</spirit:logicalName>
       </spirit:file>
@@ -1444,27 +1681,7 @@
       <spirit:file>
         <spirit:name>hdl/ess_evr_top.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:logicalName>work</spirit:logicalName>
-      </spirit:file>
-      <spirit:file>
-        <spirit:name>hdl/bram_controller.vhd</spirit:name>
-        <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:logicalName>work</spirit:logicalName>
-      </spirit:file>
-      <spirit:file>
-        <spirit:name>hdl/event_decoder.vhd</spirit:name>
-        <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:logicalName>work</spirit:logicalName>
-      </spirit:file>
-      <spirit:file>
-        <spirit:name>hdl/evnt_dec_controller.vhd</spirit:name>
-        <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:logicalName>work</spirit:logicalName>
-      </spirit:file>
-      <spirit:file>
-        <spirit:name>hdl/interrupt_ctrl.vhd</spirit:name>
-        <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:userFileType>CHECKSUM_d75c3693</spirit:userFileType>
+        <spirit:userFileType>CHECKSUM_f8f879f4</spirit:userFileType>
         <spirit:logicalName>work</spirit:logicalName>
       </spirit:file>
     </spirit:fileSet>
@@ -1493,12 +1710,10 @@
       <spirit:file>
         <spirit:name>ip/z7_gtx_evr.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_i_evr_dc/i_upstream/gt0_x0y0/z7_gtx_evr</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>src/fifo_generator_0.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
-        <spirit:userFileType>CELL_NAME_event_timestamp/event_fifo/fifo_generator_0</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/average.vhd</spirit:name>
@@ -1507,11 +1722,6 @@
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/packages/axi4_pkg.vhdl</spirit:name>
-        <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:logicalName>work</spirit:logicalName>
-      </spirit:file>
-      <spirit:file>
-        <spirit:name>hdl/buf_bsram.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>work</spirit:logicalName>
       </spirit:file>
@@ -1527,6 +1737,16 @@
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/packages/evr_pkg.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+        <spirit:logicalName>work</spirit:logicalName>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>hdl/bram_controller.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+        <spirit:logicalName>work</spirit:logicalName>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>hdl/buf_bsram.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>work</spirit:logicalName>
       </spirit:file>
@@ -1556,6 +1776,16 @@
         <spirit:logicalName>work</spirit:logicalName>
       </spirit:file>
       <spirit:file>
+        <spirit:name>hdl/event_decoder.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+        <spirit:logicalName>work</spirit:logicalName>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>hdl/evnt_dec_controller.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+        <spirit:logicalName>work</spirit:logicalName>
+      </spirit:file>
+      <spirit:file>
         <spirit:name>hdl/evr_dc.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>work</spirit:logicalName>
@@ -1567,6 +1797,11 @@
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/heartbeat_mon.vhd</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+        <spirit:logicalName>work</spirit:logicalName>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>hdl/interrupt_ctrl.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>work</spirit:logicalName>
       </spirit:file>
@@ -1645,26 +1880,6 @@
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/ess_evr_top.vhd</spirit:name>
-        <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:logicalName>work</spirit:logicalName>
-      </spirit:file>
-      <spirit:file>
-        <spirit:name>hdl/bram_controller.vhd</spirit:name>
-        <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:logicalName>work</spirit:logicalName>
-      </spirit:file>
-      <spirit:file>
-        <spirit:name>hdl/event_decoder.vhd</spirit:name>
-        <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:logicalName>work</spirit:logicalName>
-      </spirit:file>
-      <spirit:file>
-        <spirit:name>hdl/evnt_dec_controller.vhd</spirit:name>
-        <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:logicalName>work</spirit:logicalName>
-      </spirit:file>
-      <spirit:file>
-        <spirit:name>hdl/interrupt_ctrl.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>work</spirit:logicalName>
       </spirit:file>
@@ -1789,11 +2004,11 @@
         <xilinx:xpmLibrary>XPM_MEMORY</xilinx:xpmLibrary>
       </xilinx:xpmLibraries>
       <xilinx:vendorDisplayName>European Spallation Source</xilinx:vendorDisplayName>
-      <xilinx:coreRevision>33</xilinx:coreRevision>
+      <xilinx:coreRevision>36</xilinx:coreRevision>
       <xilinx:upgrades>
         <xilinx:canUpgradeFrom>ESS:ess:ess_openEVR:0.1</xilinx:canUpgradeFrom>
       </xilinx:upgrades>
-      <xilinx:coreCreationDateTime>2021-03-01T11:29:08Z</xilinx:coreCreationDateTime>
+      <xilinx:coreCreationDateTime>2021-03-03T09:30:45Z</xilinx:coreCreationDateTime>
       <xilinx:tags>
         <xilinx:tag xilinx:name="ui.data.coregen.dd@2440bbe3_ARCHIVE_LOCATION">/home/felipe/workspace/ess-openevr_ip</xilinx:tag>
         <xilinx:tag xilinx:name="ui.data.coregen.dd@64b86440_ARCHIVE_LOCATION">/home/felipe/workspace/ess-openevr_ip</xilinx:tag>
@@ -2557,14 +2772,47 @@
         <xilinx:tag xilinx:name="ui.data.coregen.dd@fc823a5_ARCHIVE_LOCATION">/data_fast/workspace/picoevr_dev/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
         <xilinx:tag xilinx:name="ui.data.coregen.dd@54f2d1ed_ARCHIVE_LOCATION">/data_fast/workspace/picoevr_dev/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
         <xilinx:tag xilinx:name="ui.data.coregen.dd@393a9a21_ARCHIVE_LOCATION">/data_fast/workspace/picoevr_dev/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6bdaff28_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3e56203e_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@22646e8d_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@45616ac0_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4b786589_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@480ba2b2_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@219d7de5_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5834c43e_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5325d67_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7d646f76_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5a62fb07_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@1f23ff35_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@59f1adbc_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@74c6e6c0_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@49429e02_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@21cb4d5_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@484657d2_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@1f2e05cc_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@f56cad_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@67d8f267_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7413117_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@57a1eef6_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@a7a0b18_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@8390289_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@7540c06c_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@2f881f8a_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6d2169d4_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@1a678f65_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@34c9ac4f_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@3ac04f08_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@6ecadf5d_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@5c8d25f4_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.dd@4213d71f_ARCHIVE_LOCATION">/home/rosselliot/sandbox/git/ESS/tallinn-in-kind/picoevr/fpga/srcs/libs/hdl-ip-repo/ess-openevr</xilinx:tag>
       </xilinx:tags>
     </xilinx:coreExtensions>
     <xilinx:packagingInfo>
-      <xilinx:xilinxVersion>2020.2</xilinx:xilinxVersion>
-      <xilinx:checksum xilinx:scope="busInterfaces" xilinx:value="0e8af982"/>
+      <xilinx:xilinxVersion>2019.2</xilinx:xilinxVersion>
+      <xilinx:checksum xilinx:scope="busInterfaces" xilinx:value="42dd001a"/>
       <xilinx:checksum xilinx:scope="memoryMaps" xilinx:value="124ad674"/>
-      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="2c6ff002"/>
-      <xilinx:checksum xilinx:scope="ports" xilinx:value="bf10924c"/>
+      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="3cddc1d6"/>
+      <xilinx:checksum xilinx:scope="ports" xilinx:value="b71932aa"/>
       <xilinx:checksum xilinx:scope="hdlParameters" xilinx:value="867682df"/>
       <xilinx:checksum xilinx:scope="parameters" xilinx:value="f8d19bbc"/>
     </xilinx:packagingInfo>
