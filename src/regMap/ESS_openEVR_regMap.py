@@ -253,10 +253,10 @@ bank.add_register("FPOutMap0_1",     address=0x400,    modes="RW", reset_value=0
 bank.add_register("UnivOUTMap0_1",   address=0x440,    modes="RW", reset_value=0x3f003f) # FP Universal Output 0 Map register
 
 # ESS OpenEVR specific registers
-bank.add_register("ESSStatus",          address=0xB000, reset_value=0x0, modes="R")
-bank.add_register("ESSControl",         address=0xB004, reset_value=0x0, modes="RW")
-bank.add_register("ESSExtSecCounter",   address=0xB060, reset_value=0x0, modes="R")
-bank.add_register("ESSExtEventCounter", address=0xB064, reset_value=0x0, modes="R")
+bank.add_register("ESSStatus",          address=0x700, reset_value=0x0, modes="R")
+bank.add_register("ESSControl",         address=0x704, reset_value=0x0, modes="RW")
+bank.add_register("ESSExtSecCounter",   address=0x760, reset_value=0x0, modes="R")
+bank.add_register("ESSExtEventCounter", address=0x764, reset_value=0x0, modes="R")
 
 print()
 print(str(bank))

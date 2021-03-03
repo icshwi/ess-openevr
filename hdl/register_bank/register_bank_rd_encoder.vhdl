@@ -450,13 +450,13 @@ begin
               bus_data_o <= register_data_i.FPOutMap0_1;
             when 16#440# =>
               bus_data_o <= register_data_i.UnivOUTMap0_1;
-            when 16#B000# =>
+            when 16#700# =>
               bus_data_o <= register_data_i.ESSStatus;
-            when 16#B004# =>
+            when 16#704# =>
               bus_data_o <= register_data_i.ESSControl;
-            when 16#B060# =>
+            when 16#760# =>
               bus_data_o <= register_data_i.ESSExtSecCounter;
-            when 16#B064# =>
+            when 16#764# =>
               bus_data_o <= register_data_i.ESSExtEventCounter;
 
 
