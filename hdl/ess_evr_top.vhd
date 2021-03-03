@@ -91,16 +91,26 @@ entity ess_evr_top is
     --!@desc Only one BRAM block is active at a time, thus most of the lines can be
     --!       shared to save some resources. Only the enable lines are specific to a BRAM block.
     --!@{
-    --! Address port (shared)
-    o_evnt_map_addr    : out std_logic_vector(c_EVNT_MAP_ADDR_WIDTH-1 downto 0);
-    --! Data out port (shared)
-    o_evnt_map_data    : out std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
+    --! Address port (Block RAM 0)
+    o_evnt_map0_addr    : out std_logic_vector(c_EVNT_MAP_ADDR_WIDTH-1 downto 0);
+    --! Address port (Block RAM 1)
+    o_evnt_map1_addr    : out std_logic_vector(c_EVNT_MAP_ADDR_WIDTH-1 downto 0);
+    --! Data out port (Block RAM 0)
+    o_evnt_map0_data    : out std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
+    --! Data out port (Block RAM 1)
+    o_evnt_map1_data    : out std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
     --! Data in port (Block RAM 0)
     i_evnt_map0_data    : in  std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
     --! Data in port (Block RAM 1)
     i_evnt_map1_data    : in  std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0);
-    --! Write enable port (shared)
-    o_evnt_map_wren    : out std_logic;
+    --! BRAM clock port (Block RAM 0)
+    o_evnt_map0_clk     : out std_logic;
+    --! BRAM clock port (Block RAM 1)
+    o_evnt_map1_clk     : out std_logic;
+    --! Write enable port (Block RAM 0)
+    o_evnt_map0_wren    : out std_logic;
+    --! Write enable port (Block RAM 0)
+    o_evnt_map1_wren    : out std_logic;
     --! Enable line for the Block RAM 0
     o_evnt_map0_en     : out std_logic;
     --! Enable line for the Block RAM 1
@@ -230,7 +240,11 @@ architecture rtl of ess_evr_top is
   -- Local BRAM read enable
   signal bram_rden : std_logic := '0';
   -- Data input from the active BRAM
-  signal evnt_map_data : std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0) := (others => '0');
+  signal evnt_map_data_in : std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0) := (others => '0');
+  -- Data output to BRAMs (shared)
+  signal evnt_map_data_out : std_logic_vector(c_EVNT_MAP_DATA_WIDTH-1 downto 0) := (others => '0');
+  -- Address output to BRAMs (shared)
+  signal evnt_map_addr_out : std_logic_vector(c_EVNT_MAP_ADDR_WIDTH-1 downto 0) := (others => '0');
   -- Rx event delayed to match the latency of the event decoder logic
   signal event_rxd_delayed : event_code := (others => '0');
   -- Internal flags mapping 1 position -> 1 event code
@@ -482,9 +496,9 @@ begin
     i_event_clk    => event_clk,
     i_reset        => gt0_resets.gbl_async,
     i_enable       => evr_ctrl.map_en,
-    o_bram_addr    => o_evnt_map_addr,
-    o_bram_data    => open, -- not yet used
-    i_bram_data    => evnt_map_data,
+    o_bram_addr    => evnt_map_addr_out,
+    o_bram_data    => evnt_map_data_out, -- not yet used
+    i_bram_data    => evnt_map_data_in,
     o_bram_rden    => bram_rden,
     i_event_rxd    => event_rxd,
     o_event_rxd    => event_rxd_delayed,
@@ -493,13 +507,23 @@ begin
   );
 
   -- Drive the data input port from the active BRAM
-  evnt_map_data <= i_evnt_map0_data when evr_ctrl.map_rs = '0' else i_evnt_map1_data;
+  evnt_map_data_in <= i_evnt_map0_data when evr_ctrl.map_rs = '0' else i_evnt_map1_data;
 
   -- Only one external BRAM is enabled at a time, controlled by SW
   o_evnt_map0_en <= bram_rden when evr_ctrl.map_rs = '0' else '0';
   o_evnt_map1_en <= bram_rden when evr_ctrl.map_rs = '1' else '0';
   -- No write support from the logic side to the mapping RAM
-  o_evnt_map_wren <= '0';
+  o_evnt_map0_wren <= '0';
+  o_evnt_map1_wren <= '0';
+  -- Drive event clock to BRAMs
+  o_evnt_map0_clk  <= event_clk;
+  o_evnt_map1_clk  <= event_clk;
+  -- Drive data out to BRAMs
+  o_evnt_map0_data <= evnt_map_data_out;
+  o_evnt_map1_data <= evnt_map_data_out;
+  -- Drive address out to BRAMs
+  o_evnt_map0_addr <= evnt_map_addr_out;
+  o_evnt_map1_addr <= evnt_map_addr_out;
 
   i_heartbeat_mon : heartbeat_mon
     generic map (
